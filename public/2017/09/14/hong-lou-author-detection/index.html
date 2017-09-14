@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Hugo 0.27.1" />
+
+
+<title>Dream of the Red Chamber - Detection of Authorship  - A Hugo website</title>
+<meta property="og:title" content="Dream of the Red Chamber - A Hugo website">
+
+
+
+  
+
+
+
+
+
+
+
+
+<link href='//cdn.bootcss.com/highlight.js/9.11.0/styles/github.min.css' rel='stylesheet' type='text/css' />
+
+
+
+<link rel="stylesheet" href="/css/fonts.css" media="all">
+<link rel="stylesheet" href="/css/main.css" media="all">
+
+
+
+  </head>
+  <body>
+    <div class="wrapper">
+      <header class="header">
+        <nav class="nav">
+  <a href="/" class="nav-logo">
+    <img src="/images/logo.png"
+         width="50"
+         height="50"
+         alt="Logo">
+  </a>
+
+  <ul class="nav-links">
+    
+    <li><a href="/about/">About</a></li>
+    
+    <li><a href="https://github.com/rstudio/blogdown">GitHub</a></li>
+    
+    <li><a href="https://twitter.com/rstudio">Twitter</a></li>
+    
+  </ul>
+</nav>
+
+      </header>
+
+
+<main class="content" role="main">
+
+  <article class="article">
+    
+    <span class="article-duration">7 min read</span>
+    
+
+    <h1 class="article-title">Dream of the Red Chamber</h1>
+
+    
+    <span class="article-date">2017/09/14</span>
+    
+
+    <div class="article-content">
+      <div id="introduction" class="section level1">
+<h1>Introduction</h1>
+<p>In this post, I am trying to study the authorship of Dream of the Red Chamber (<a href="https://en.wikipedia.org/wiki/Dream_of_the_Red_Chamber" class="uri">https://en.wikipedia.org/wiki/Dream_of_the_Red_Chamber</a>). It has been controvertial who the author of the last 40 chapters of this most-well-known book in China. Many people believed that the first 80 chapters were written by Cao Xueqin, but the last 40 were additions by someone else.</p>
+<p>The original text was downloaded here: <a href="http://www.shuyaya.cc/book/2034/#download" class="uri">http://www.shuyaya.cc/book/2034/#download</a></p>
+<p>I used R’s packages “Rwordseg” to get tokens from the original text. I rely on “cleanNLP” to get the term frequency matrix. Then finally, in round 3, I used “topicmodels” to detect authorship.</p>
+</div>
+<div id="read-in-text-and-tokenize" class="section level1">
+<h1>Read in text and tokenize</h1>
+<pre class="r"><code># analysis starts here
+library(rticles)
+library(cleanNLP)
+library(readr)
+library(stringi)
+library(ggplot2)
+library(glmnet)</code></pre>
+<pre><code>## Loading required package: Matrix</code></pre>
+<pre><code>## Loading required package: foreach</code></pre>
+<pre><code>## Loaded glmnet 2.0-5</code></pre>
+<pre class="r"><code>library(ggrepel)
+library(viridis)
+library(magrittr)
+
+library(topicmodels)
+library(tidyverse)</code></pre>
+<pre><code>## + ggplot2 2.2.1        Date: 2017-09-14
+## + tibble  1.3.4           R: 3.4.1
+## + tidyr   0.7.1          OS: Ubuntu 14.04.5 LTS
+## + readr   1.1.1         GUI: X11
+## + purrr   0.2.3      Locale: en_US.UTF-8
+## + dplyr   0.7.3          TZ: America/New_York
+## + stringr 1.2.0      
+## + forcats 0.2.0</code></pre>
+<pre><code>## ── Conflicts ────────────────────────────────────────────────────</code></pre>
+<pre><code>## * accumulate(),  from purrr, masks foreach::accumulate()
+## * expand(),      from tidyr, masks Matrix::expand()
+## * filter(),      from dplyr, masks stats::filter()
+## * lag(),         from dplyr, masks stats::lag()
+## * when(),        from purrr, masks foreach::when()</code></pre>
+<pre class="r"><code>library(rJava)
+library(Rwordseg)</code></pre>
+<pre><code>## # Version: 0.2-1</code></pre>
+<pre class="r"><code>library(RColorBrewer)
+library(wordcloud)
+library(tm)</code></pre>
+<pre><code>## Loading required package: NLP</code></pre>
+<pre><code>## 
+## Attaching package: &#39;NLP&#39;</code></pre>
+<pre><code>## The following object is masked from &#39;package:ggplot2&#39;:
+## 
+##     annotate</code></pre>
+<pre class="r"><code>require(readtext)</code></pre>
+<pre><code>## Loading required package: readtext</code></pre>
+<pre class="r"><code>honglou1 &lt;- readtext(&quot;~/projects/honglongmeng/honglou1.txt&quot;, text_field = &quot;texts&quot;)
+
+# here is to split into chapters using stringr&#39;s splitting functions
+my_split &lt;- function(text) {
+    pattern &lt;- &#39;第.{1,3}回 &#39;
+    x &lt;- str_split(text, pattern)[[1]]
+    y &lt;- str_extract_all(text, pattern)[[1]]
+    data.frame(
+        chapter = (1:length(x)) - 1,
+        text = str_trim(x),
+        header = c(y, &quot;&quot;)
+    )
+}
+
+chaps &lt;- my_split(honglou1$text)
+
+
+hong &lt;- chaps %&gt;%
+    mutate(txt = as.character(text))
+
+# use Rwordseg&#39;s segmentCN to get tokens from text.
+honglou &lt;- tbl_df(hong) %&gt;%
+     mutate(token=segmentCN(txt)) %&gt;%
+     mutate(id=chapter) %&gt;%
+     select(id, token)</code></pre>
+</div>
+<div id="text-analysis-and-author-detection-round-1" class="section level1">
+<h1>Text analysis and author detection round 1</h1>
+<p>After generating tokens, I use cleanNLP's function called “get_tfidf” to get the term-frequency matrix. The basic idea is to see in each chapter, how often does each term (token) apprear.</p>
+<p>Then we use this matrix to detect authorship. First I divide the chapters into training and test samples, 50% and 50%. Among the training samples, if they belong to the first 80 chapters, I label the author as “cao”, otherwise, the label will be “unknown”. Then I train the model on the training sample, and predict authorship on the test sample.</p>
+<p>I use package glmnet to do a elastic net (combination of lasso and ridge). Then use this model to predict authorship on the test sample.</p>
+<p>We got the graph of probability of each chapter being written by Cao.</p>
+<pre class="r"><code># make it long format: from each row for each chapter to one row for each token.
+hongloumeng &lt;- honglou %&gt;%
+    group_by(id) %&gt;%
+    unnest(token) %&gt;%
+    filter(id&gt;0) %&gt;%
+    ungroup()
+
+# get length (how many tokens in each chapter) on the way for each chapter
+hongloumeng %&gt;%
+  group_by(id) %&gt;%
+  summarize(sent_len = n()) %$%
+  quantile(sent_len, seq(0,1,0.1))</code></pre>
+<pre><code>##     0%    10%    20%    30%    40%    50%    60%    70%    80%    90% 
+##  594.0 3229.6 3591.4 3852.2 4154.2 4311.5 4570.4 4750.0 5055.0 5744.5 
+##   100% 
+## 7114.0</code></pre>
+<pre class="r"><code># frequency of tokens; get the top ones 
+freq &lt;- hongloumeng %&gt;%
+  group_by(token) %&gt;%
+  summarize(count = n()) %&gt;%
+  top_n(n = 100, count) %&gt;%
+  arrange(desc(count))
+
+# set up the ususal format for text analysis
+honglou2 &lt;- hongloumeng %&gt;%
+    mutate(sid=1, tid=1, lemma=NA, upos=NA, pos=NA, cid=NA, word=token)
+
+# assign first 80 chapters to Cao and the last 40 to unknown.
+chapters &lt;- honglou2 %&gt;%
+    group_by(id) %&gt;%
+    summarise(chapter=mean(id)) %&gt;%
+    mutate(author=ifelse(chapter&lt;81, &quot;cao&quot;, &quot;unknown&quot;))
+
+# use cleanNLP&#39;s get_tfidf to get the term frequency matrix
+# tfidf &lt;- honglou2 %&gt;%
+#      get_tfidf(type = &quot;tfidf&quot;, tf_weight = &quot;dnorm&quot;, token_var=&quot;word&quot;)
+
+
+#honglou_pca &lt;- tidy_pca(tfidf$tfidf, chapters)
+
+#ggplot(honglou_pca, aes(PC1, PC2)) +
+#  geom_point(aes(color=chapter))
+
+
+#mat.honglou &lt;- get_tfidf(honglou2, min_df = 0.1, max_df = .9, type = &quot;tf&quot;,
+#                 tf_weight = &quot;raw&quot;, doc_var = &quot;id&quot;, token_var=&quot;word&quot;)
+
+# a second specification for the term freqency matrix.
+mat.honglou &lt;- honglou2 %&gt;%
+    get_tfidf(type = &quot;tf&quot;, tf_weight = &quot;dnorm&quot;, token_var=&quot;word&quot;)
+
+## tf2 &lt;-  honglou2 %&gt;%
+##     get_tfidf(min_df = 0, max_df = 1, type = &quot;tf&quot;,
+##                  tf_weight = &quot;raw&quot;,  token_var=&quot;word&quot;)
+
+# random assign traing and testing samples
+set.seed(1)
+chapters &lt;- chapters %&gt;%
+    mutate(training = as.logical(rbinom(length(chapter), 1, .5))) %&gt;%
+    mutate(y=as.numeric(author==&quot;cao&quot;))
+
+chapters.train &lt;- chapters %&gt;% filter(training==1)
+model &lt;- cv.glmnet(mat.honglou$tf[chapters$training,], chapters.train$y,
+                   family = &quot;binomial&quot;, alpha=.9)
+
+chapters$pred &lt;- predict(model, newx=mat.honglou$tf, type=&#39;response&#39;, s=model$lambda.1se)
+
+## ggplot(chapters, aes(chapter, pred)) +
+##   geom_boxplot(aes(fill = author))
+
+ggplot(chapters, aes(x = chapter, y = pred, color = training))  +geom_point() +geom_vline(xintercept=80) +geom_vline(xintercept=108) + geom_text(aes(chapter-3,pred, label = chapter), data = chapters %&gt;% filter((pred&lt;.85 &amp; chapter&lt;81 &amp; training==0) | (pred &gt; .5 &amp; chapter&gt;80 &amp; training==0)))</code></pre>
+<p><img src="/post/2017-09-14-hong-lou-author-detection_files/figure-html/chunk2-1.png" width="672" /></p>
+<p>In this graph, we have two vertical lines, Chapters 80 and 108. It was believed that first 80 chpaters are by Cao Xueqin, and the last 40 are not. There is also belief that originally Cao’s manuscript has only 108 chapters.</p>
+<p>The two colors indicate whether they are in training, or test sample. We can see that if the first 80 chapters were by Cao, then it’s unlikely the last 40 were by him too. There are also a few chapters in the first 80 chapters are not that consistent with Cao’s style, for example, chapters 10, 11, 60, 64, and 67. Especially 67, very likely it’s not by Cao. On the other hand, there are a few chapters in the last 40 chapters that are possibly to be from Cao: chapters 84, 98, and 119.</p>
+</div>
+<div id="text-analysis-and-author-detection-round-2" class="section level1">
+<h1>Text analysis and author detection round 2</h1>
+<p>In the last section, we labelled first 80 chapters's author as “Cao”, and last 40 chapters as “unknown”. Suppose we do know the first 80 are by Cao, but the last 40 we are not sure. Let us randomly assign authorship to each chapter for the last 40 chapters, 20% by Cao and 80% by unknown author, then repeat this many time, to see each chapter's probability of each author. This way I introduce some uncertainty about the last 40 chapters's authorship, instead of labeling them first, then test it.</p>
+<pre class="r"><code># here we introduce uncertainty: suppose the last 40 chapters have 20% chance been written by Cao.  
+
+set.seed(1)
+chapters.matrix &lt;- matrix(NA,120,100)
+training.matrix &lt;- matrix(NA, 120, 100)
+for (i in (1:100)){
+
+chapters2 &lt;- honglou2 %&gt;%
+    group_by(id) %&gt;%
+    summarise(chapter=mean(id)) %&gt;%
+    mutate(author=ifelse(chapter&lt;81, &quot;cao&quot;, ifelse(rbinom(40,1,.2),&quot;cao&quot;,&quot;unknown&quot;))) %&gt;%
+    mutate(training = as.logical(rbinom(length(chapter), 1, .5))) %&gt;%
+    mutate(y=as.numeric(author==&quot;cao&quot;))
+
+chapters2.train &lt;- chapters2 %&gt;% filter(training==1)
+model2 &lt;- cv.glmnet(mat.honglou$tf[chapters2$training,], chapters2.train$y,
+                   family = &quot;binomial&quot;, alpha=.9)
+
+chapters2$pred &lt;- predict(model2, newx=mat.honglou$tf, type=&#39;response&#39;, s=model2$lambda.1se)
+
+chapters.matrix[, i] &lt;- chapters2$pred
+training.matrix[,i] &lt;- chapters2$training
+
+}
+## ggplot(chapters, aes(chapter, pred)) +
+##   geom_boxplot(aes(fill = author))
+
+wide &lt;- bind_cols(data.frame(chapter=1:120), as.data.frame(chapters.matrix))
+wide2 &lt;- bind_cols(data.frame(chapter=1:120), as.data.frame(training.matrix))
+long &lt;- wide %&gt;% gather(&quot;sim&quot;, &quot;yhat&quot;,2:101)
+long &lt;- long %&gt;% mutate(sim = as.integer(sub(&quot;V&quot;, &quot;&quot;, sim)))
+long2 &lt;- wide2 %&gt;% gather(&quot;sim&quot;, &quot;training&quot;,2:101)
+long2 &lt;- long2 %&gt;% mutate(sim = as.integer(sub(&quot;V&quot;, &quot;&quot;, sim)))
+long3 &lt;- bind_cols(long, long2)[,c(1:3, 6)]
+
+merged &lt;- long3 %&gt;% left_join(chapters2 %&gt;% select(-training), by = &quot;chapter&quot;)
+
+#ggplot(merged, aes(y = yhat, x = chapter, group = chapter)) + geom_boxplot()
+ggplot(merged, aes(y = yhat, x = chapter, group = chapter)) +
+  geom_boxplot() + facet_grid(training ~ .)</code></pre>
+<p><img src="/post/2017-09-14-hong-lou-author-detection_files/figure-html/chunk3-1.png" width="672" /></p>
+</div>
+<div id="text-analysis-and-author-detection-round-3" class="section level1">
+<h1>Text analysis and author detection round 3</h1>
+<p>In the last section, we assigned some probability of different authorships to the last 40 chapters. What about we assign each chapter some probability of authorship to each of the two authors, then estimate these probabilities. This seems to fall in the field of topic models.</p>
+<p>The only assumption we make here is that we have two authors. Stictly speaking, we assume there are two “topics” or “groups” for the 120 chapters. Whether it’s due to different authors, we don’t know. But we assume authorship is the difference between two groups here. LDA (Linear Dirichlet Allocation) helps us calculating the probability of each chapter belongs to each author.</p>
+<pre class="r"><code>set.seed(1)
+
+mat.honglou2 &lt;- honglou2 %&gt;%
+    get_tfidf(type = &quot;tf&quot;, tf_weight = &quot;raw&quot;, token_var=&quot;word&quot;,
+    min_df=.05, max_df=.95)
+
+lda2 &lt;- LDA(mat.honglou2$tf, k = 2, method=&quot;Gibbs&quot;, control = list(seed = 1, burnin = 1000, thin = 100, iter = 1000))
+
+plot(topics(lda2))</code></pre>
+<p><img src="/post/2017-09-14-hong-lou-author-detection_files/figure-html/chunk4-1.png" width="672" /></p>
+<pre class="r"><code>lda_topics &lt;- as.data.frame(posterior(lda2)$topics)
+names(lda_topics) &lt;- c(&#39;prob1&#39;, &#39;prob2&#39;)
+
+newdata &lt;- bind_cols(chapters, lda_topics)
+topics &lt;- posterior(lda2)[[&quot;topics&quot;]]
+#heatmap(topics, scale = &quot;none&quot;)
+
+ggplot(newdata, aes(y = prob1, x = chapter, group = chapter)) +
+ geom_point() +geom_vline(xintercept=80) +geom_vline(xintercept=108) + geom_text(aes(chapter-3,prob1, label = chapter), data = newdata %&gt;% filter((prob1&lt;.5 &amp; chapter&lt;81 ) | (prob1 &gt; .5 &amp; chapter&gt;80 )))</code></pre>
+<p><img src="/post/2017-09-14-hong-lou-author-detection_files/figure-html/chunk4-2.png" width="672" /></p>
+<p>We can see here 19 of the first 80 chapters have lower than 50% probability belonging to Author 1. Strikingly, we found none of the last 40 chapters have higher than 50% chance belonging to Author 1, confirming that it’s not the same author who wrote the last 40 chapters. Meanwhile, Chapter 67 has only 25% chance written by Author 1 (presumably Cao Xueqin).</p>
+</div>
+
+    </div>
+  </article>
+
+  
+
+
+</main>
+
+      <footer class="footer">
+        <ul class="footer-links">
+          <li>
+            <a href="/index.xml" type="application/rss+xml" target="_blank">RSS feed</a>
+          </li>
+          <li>
+            <a href="https://gohugo.io/" class="footer-links-kudos">Made with <img src="/images/hugo-logo.png" width="22" height="22"></a>
+          </li>
+        </ul>
+      </footer>
+
+    </div>
+    
+
+
+
+<script src="//cdn.bootcss.com/highlight.js/9.11.0/highlight.min.js"></script>
+
+
+
+<script src="//cdn.bootcss.com/highlight.js/9.11.0/languages/r.min.js"></script>
+<script src="//cdn.bootcss.com/highlight.js/9.11.0/languages/yaml.min.js"></script>
+<script>hljs.configure({languages: []}); hljs.initHighlightingOnLoad();</script>
+
+
+
+    
+<script src="/js/math-code.js"></script>
+<script async src="//cdn.bootcss.com/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+
+
+    
+  </body>
+</html>
+
