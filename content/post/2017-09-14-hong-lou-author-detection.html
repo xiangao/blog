@@ -2,7 +2,7 @@
 title: Dream of the Red Chamber
 subtitle: Detection of Authorship
 author: Xiang Ao
-date: '2017-09-14'
+date: '2017-09-15'
 slug: hong-lou-author-detection
 categories:
   - R
@@ -35,45 +35,21 @@ library(cleanNLP)
 library(readr)
 library(stringi)
 library(ggplot2)
-library(glmnet)</code></pre>
-<pre><code>## Loading required package: Matrix</code></pre>
-<pre><code>## Loading required package: foreach</code></pre>
-<pre><code>## Loaded glmnet 2.0-5</code></pre>
-<pre class="r"><code>library(ggrepel)
+library(glmnet)
+library(ggrepel)
 library(viridis)
 library(magrittr)
 
 library(topicmodels)
-library(tidyverse)</code></pre>
-<pre><code>## + ggplot2 2.2.1        Date: 2017-09-14
-## + tibble  1.3.4           R: 3.4.1
-## + tidyr   0.7.1          OS: Ubuntu 14.04.5 LTS
-## + readr   1.1.1         GUI: X11
-## + purrr   0.2.3      Locale: en_US.UTF-8
-## + dplyr   0.7.3          TZ: America/New_York
-## + stringr 1.2.0      
-## + forcats 0.2.0</code></pre>
-<pre><code>## ── Conflicts ────────────────────────────────────────────────────</code></pre>
-<pre><code>## * accumulate(),  from purrr, masks foreach::accumulate()
-## * expand(),      from tidyr, masks Matrix::expand()
-## * filter(),      from dplyr, masks stats::filter()
-## * lag(),         from dplyr, masks stats::lag()
-## * when(),        from purrr, masks foreach::when()</code></pre>
-<pre class="r"><code>library(rJava)
-library(Rwordseg)</code></pre>
-<pre><code>## # Version: 0.2-1</code></pre>
-<pre class="r"><code>library(RColorBrewer)
+library(tidyverse)
+library(rJava)
+library(Rwordseg)
+library(RColorBrewer)
 library(wordcloud)
-library(tm)</code></pre>
-<pre><code>## Loading required package: NLP</code></pre>
-<pre><code>## 
-## Attaching package: &#39;NLP&#39;</code></pre>
-<pre><code>## The following object is masked from &#39;package:ggplot2&#39;:
-## 
-##     annotate</code></pre>
-<pre class="r"><code>require(readtext)</code></pre>
-<pre><code>## Loading required package: readtext</code></pre>
-<pre class="r"><code>honglou1 &lt;- readtext(&quot;~/projects/honglongmeng/honglou1.txt&quot;, text_field = &quot;texts&quot;)
+library(tm)
+
+require(readtext)
+honglou1 &lt;- readtext(&quot;~/projects/honglongmeng/honglou1.txt&quot;, text_field = &quot;texts&quot;)
 
 # here is to split into chapters using stringr&#39;s splitting functions
 my_split &lt;- function(text) {
@@ -224,6 +200,7 @@ merged &lt;- long3 %&gt;% left_join(chapters2 %&gt;% select(-training), by = &qu
 ggplot(merged, aes(y = yhat, x = chapter, group = chapter)) +
   geom_boxplot() + facet_grid(training ~ .)</code></pre>
 <p><img src="/post/2017-09-14-hong-lou-author-detection_files/figure-html/chunk3-1.png" width="672" /></p>
+<p>This plot is the boxplot of probability of each chapter been written by Cao. The upper pane is for the test sample, the lower pane is for the training sample. This plot basically tells the same story as round 1, but with some uncertainty included.</p>
 </div>
 <div id="text-analysis-and-author-detection-round-3" class="section level1">
 <h1>Text analysis and author detection round 3</h1>

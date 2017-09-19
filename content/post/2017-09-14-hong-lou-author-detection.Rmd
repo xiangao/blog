@@ -4,7 +4,7 @@
 title: Dream of the Red Chamber
 subtitle: Detection of Authorship
 author: Xiang Ao
-date: '2017-09-14'
+date: '2017-09-15'
 slug: hong-lou-author-detection
 categories:
   - R
