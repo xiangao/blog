@@ -6,10 +6,23 @@
     <description>Recent content in R Markdown on A Hugo website</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Thu, 23 Jul 2015 21:13:14 -0500</lastBuildDate>
+    <lastBuildDate>Tue, 19 Sep 2017 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/tags/r-markdown/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>红楼梦 作者分析</title>
+      <link>/2017/09/19/red-chamber/</link>
+      <pubDate>Tue, 19 Sep 2017 00:00:00 +0000</pubDate>
+      
+      <guid>/2017/09/19/red-chamber/</guid>
+      <description>简介 在本文中我们用机器学习的方法来分析红楼梦的作者。红楼梦是中国最著名的小说之一(https://en.wikipedia.org/wiki/Dream_of_the_Red_Chamber)。 大多数人认为前八十回为曹雪芹所作， 后四十回为后人续作。 除非我们从考古中发现证据，唯一能告诉我们的便是小说本身。我们可以从文章的用词风格来判断作者。 即使续作者尽量模仿原作者的风格，也很难不在字里行间露出自己固有的风格。（我们也许可以用同样的方法来鉴定真画和假画，但是需要有原作者的大量画作）。
+我是从这里下载的红楼梦原著120回版（具体哪个版本我也没仔细研究）: http://www.shuyaya.cc/book/2034/#download
+我用了R 中的 “Rwordseg” 来做中文分词。 就是把一句话分成词和词组。 然后用了 “cleanNLP” 得到分词频率矩阵 （“term frenquency matrix”）。 然后在最后一个模型用到 “topicmodels”。
+ 读入文本进行分词 这一部分就是读入文本， 把它分为120回，每一回作为一个文本， 然后分词。
+# analysis starts here library(rticles) library(cleanNLP) library(readr) library(stringi) library(ggplot2) library(glmnet) library(ggrepel) library(viridis) library(magrittr) library(topicmodels) library(tidyverse) library(rJava) library(Rwordseg) library(RColorBrewer) library(wordcloud) library(tm) require(readtext) honglou1 &amp;lt;- readtext(&amp;quot;~/projects/honglongmeng/honglou1.txt&amp;quot;, text_field = &amp;quot;texts&amp;quot;) # here is to split into chapters using stringr&amp;#39;s splitting functions my_split &amp;lt;- function(text) { pattern &amp;lt;- &amp;#39;第.</description>
+    </item>
     
     <item>
       <title>Hello R Markdown</title>
