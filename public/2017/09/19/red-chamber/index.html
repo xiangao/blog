@@ -71,9 +71,9 @@
     <div class="article-content">
       <div class="section level1">
 <h1>简介</h1>
-<p>在本文中我们用机器学习的方法来分析红楼梦的作者。红楼梦是中国最著名的小说之一(<a href="https://en.wikipedia.org/wiki/Dream_of_the_Red_Chamber" class="uri">https://en.wikipedia.org/wiki/Dream_of_the_Red_Chamber</a>)。 大多数人认为前八十回为曹雪芹所作， 后四十回为后人续作。 除非我们从考古中发现证据，唯一能告诉我们的便是小说本身。我们可以从文章的用词风格来判断作者。 即使续作者尽量模仿原作者的风格，也很难不在字里行间露出自己固有的风格。（我们也许可以用同样的方法来鉴定真画和假画，但是需要有原作者的大量画作）。</p>
+<p>在本文中我们用机器学习和统计的方法来分析红楼梦的作者。红楼梦是中国最著名的小说之一(<a href="https://en.wikipedia.org/wiki/Dream_of_the_Red_Chamber" class="uri">https://en.wikipedia.org/wiki/Dream_of_the_Red_Chamber</a>)。 大多数人认为前八十回为曹雪芹所作， 后四十回为后人续作。 除非我们从考古中发现证据，唯一能告诉我们的便是小说本身。我们可以从文章的用词风格来判断作者。 即使续作者尽量模仿原作者的风格，也很难不在字里行间露出自己固有的风格。（我们也许可以用同样的方法来鉴定真画和假画，但是需要有原作者的大量画作）。</p>
 <p>我是从这里下载的红楼梦原著120回版（具体哪个版本我也没仔细研究）: <a href="http://www.shuyaya.cc/book/2034/#download" class="uri">http://www.shuyaya.cc/book/2034/#download</a></p>
-<p>我用了R 中的 “Rwordseg” 来做中文分词。 就是把一句话分成词和词组。 然后用了 “cleanNLP” 得到分词频率矩阵 （“term frenquency matrix”）。 然后在最后一个模型用到 “topicmodels”。</p>
+<p>我用了R中的 “Rwordseg” 来做中文分词。 就是把一句话分成词和词组。 然后用了 “cleanNLP” 得到分词频率矩阵 （“term frenquency matrix”）。 然后在最后一个模型用到 “topicmodels”。</p>
 </div>
 <div class="section level1">
 <h1>读入文本进行分词</h1>
@@ -202,7 +202,7 @@ chapters$pred &lt;- predict(model, newx=mat.honglou$tf, type=&#39;response&#39;,
 
 ggplot(chapters, aes(x = chapter, y = pred, color = training))  +geom_point() +geom_vline(xintercept=80) +geom_vline(xintercept=108) + geom_text(aes(chapter-3,pred, label = chapter), data = chapters %&gt;% filter((pred&lt;.85 &amp; chapter&lt;81 &amp; training==0) | (pred &gt; .5 &amp; chapter&gt;80 &amp; training==0)))</code></pre>
 <p><img src="/post/2017-09-19-red-chamber_files/figure-html/chunk2-1.png" width="672" /></p>
-<p>在图中， 我画了两条竖线， 80 和 108回。 有些人认为曹的原作只有108回。</p>
+<p>在图中， 我画了两条竖线， 80和108回。 有些人认为曹的原作只有108回。</p>
 <p>两种不同颜色代表training or testing。 我们看到如果说前80回作者是“Cao”， 那么后40回作者不大可能是“Cao”. 甚至前80回中有几回也与其他章用词不太一致， 例如10, 11, 60, 64, 67。 特别是67, 不太可能作者是“Cao”。 在后40回中， 84,98,119 则与前80回风格较为一致。</p>
 </div>
 <div class="section level1">
@@ -276,7 +276,7 @@ topics &lt;- posterior(lda2)[[&quot;topics&quot;]]
 ggplot(newdata, aes(y = prob1, x = chapter, group = chapter)) +
  geom_point() +geom_vline(xintercept=80) +geom_vline(xintercept=108) + geom_text(aes(chapter-3,prob1, label = chapter), data = newdata %&gt;% filter((prob1&lt;.5 &amp; chapter&lt;81 ) | (prob1 &gt; .5 &amp; chapter&gt;80 )))</code></pre>
 <p><img src="/post/2017-09-19-red-chamber_files/figure-html/chunk4-2.png" width="672" /></p>
-<p>我们看到前80回有19回作者是1 的概率低于50%。 尤其第67回， 只有25% 是作者1写的。 在后40回中， 没有一回概率大于50%！ 作者1应该是曹雪芹。这里我们不能分析出作者是谁，只是说后40回的作者与前80回大多数章节的作者不同。</p>
+<p>我们看到前80回有19回是作者1写的概率低于50%。 尤其第67回， 只有25%的概率是作者1写的。 在后40回中， 没有一回概率大于50%！ 作者1应该是曹雪芹。这里我们不能分析出作者是谁，只是说后40回的作者与前80回大多数章节的作者不同。</p>
 </div>
 
     </div>
