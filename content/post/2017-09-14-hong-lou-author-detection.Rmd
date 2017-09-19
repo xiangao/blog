@@ -38,7 +38,7 @@ round 3, I used "topicmodels" to detect authorship.
 
 # Read in text and tokenize
 
-```{r chunk1, warning=FALSE,  cache=TRUE}
+```{r chunk1, warning=FALSE,  cache=TRUE, message=FALSE}
 # analysis starts here
 library(rticles)
 library(cleanNLP)
@@ -252,6 +252,7 @@ ggplot(merged, aes(y = yhat, x = chapter, group = chapter)) +
 
 ```
 
+This plot is the boxplot of probability of each chapter been written by Cao.  The upper pane is for the test sample, the lower pane is for the training sample.  This plot basically tells the same story as round 1, but with some uncertainty included.
 
 #  Text analysis and author detection round 3
 
