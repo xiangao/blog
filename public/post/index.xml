@@ -6,17 +6,17 @@
     <description>Recent content in Posts on A Hugo website</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Wed, 20 Sep 2017 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Thu, 21 Sep 2017 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/post/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
-      <title>Use machine learning for causal effect in observational study</title>
-      <link>/2017/09/20/tmle/</link>
-      <pubDate>Wed, 20 Sep 2017 00:00:00 +0000</pubDate>
+      <title>Using machine learning for causal effect in observational study</title>
+      <link>/2017/09/21/tmle/</link>
+      <pubDate>Thu, 21 Sep 2017 00:00:00 +0000</pubDate>
       
-      <guid>/2017/09/20/tmle/</guid>
+      <guid>/2017/09/21/tmle/</guid>
       <description>A simulation for an OLS model In an observational study, we need to assume we have the functional form to get causal effect estimated correctly, in addtion to the assumption of treatment being exogenous.
 library(MASS) library(ggplot2) library(dplyr) ## ## Attaching package: &amp;#39;dplyr&amp;#39; ## The following object is masked from &amp;#39;package:MASS&amp;#39;: ## ## select ## The following objects are masked from &amp;#39;package:stats&amp;#39;: ## ## filter, lag ## The following objects are masked from &amp;#39;package:base&amp;#39;: ## ## intersect, setdiff, setequal, union library(tmle) ## Loading required package: SuperLearner ## Loading required package: nnls ## Super Learner ## Version: 2.</description>
     </item>
