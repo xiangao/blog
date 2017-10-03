@@ -24,27 +24,5 @@
 # analysis starts here library(rticles) library(cleanNLP) library(readr) library(stringi) library(ggplot2) library(glmnet) library(ggrepel) library(viridis) library(magrittr) library(topicmodels) library(tidyverse) library(rJava) library(Rwordseg) library(RColorBrewer) library(wordcloud) library(tm) require(readtext) honglou1 &amp;lt;- readtext(&amp;quot;~/projects/honglongmeng/honglou1.txt&amp;quot;, text_field = &amp;quot;texts&amp;quot;) # here is to split into chapters using stringr&amp;#39;s splitting functions my_split &amp;lt;- function(text) { pattern &amp;lt;- &amp;#39;第.{1,3}回 &amp;#39; x &amp;lt;- str_split(text, pattern)[[1]] y &amp;lt;- str_extract_all(text, pattern)[[1]] data.</description>
     </item>
     
-    <item>
-      <title>Dream of the Red Chamber</title>
-      <link>/2017/09/15/hong-lou-author-detection/</link>
-      <pubDate>Fri, 15 Sep 2017 00:00:00 +0000</pubDate>
-      
-      <guid>/2017/09/15/hong-lou-author-detection/</guid>
-      <description>Introduction In this post, I am trying to study the authorship of Dream of the Red Chamber (https://en.wikipedia.org/wiki/Dream_of_the_Red_Chamber). It has been controvertial who the author of the last 40 chapters of this most-well-known book in China. Many people believed that the first 80 chapters were written by Cao Xueqin, but the last 40 were additions by someone else.
-The original text was downloaded here: http://www.shuyaya.cc/book/2034/#download
-I used R’s packages “Rwordseg” to get tokens from the original text.</description>
-    </item>
-    
-    <item>
-      <title>Hello R Markdown</title>
-      <link>/2015/07/23/hello-r-markdown/</link>
-      <pubDate>Thu, 23 Jul 2015 21:13:14 -0500</pubDate>
-      
-      <guid>/2015/07/23/hello-r-markdown/</guid>
-      <description>R Markdown This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see http://rmarkdown.rstudio.com.
-You can embed an R code chunk like this:
-summary(cars) ## speed dist ## Min. : 4.0 Min. : 2.00 ## 1st Qu.:12.0 1st Qu.: 26.00 ## Median :15.0 Median : 36.00 ## Mean :15.4 Mean : 42.98 ## 3rd Qu.</description>
-    </item>
-    
   </channel>
 </rss>

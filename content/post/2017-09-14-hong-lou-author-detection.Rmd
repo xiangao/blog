@@ -9,7 +9,7 @@ slug: hong-lou-author-detection
 categories:
   - R
 tags:
-  - regression
+  - R
 
 output:
   pdf_document:
