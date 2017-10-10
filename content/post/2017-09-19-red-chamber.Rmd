@@ -252,7 +252,7 @@ ggplot(newdata, aes(y = prob1, x = chapter, group = chapter)) +
 
 
 
-下面我们看看作者1,2最常用的前50个词：
+下面我们看看作者1,2最常用的前50个词， 严格说是从LDA模型中的posterior得到的主题1,2最常出现的50个词。
 
 ```{r  chunk5, warning=FALSE, cache=TRUE}
 terms1 <- posterior(lda2)$terms[1,]

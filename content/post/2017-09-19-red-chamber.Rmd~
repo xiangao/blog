@@ -231,7 +231,7 @@ set.seed(1)
 mat.honglou2 <- honglou2 %>%
     get_tfidf(type = "tf", tf_weight = "raw", token_var="word",
     min_df=.05, max_df=.95)
-
+colnames(mat.honglou2$tf) <- mat.honglou2$vocab
 lda2 <- LDA(mat.honglou2$tf, k = 2, method="Gibbs", control = list(seed = 1, burnin = 1000, thin = 100, iter = 1000))
 
 plot(topics(lda2))
@@ -252,14 +252,12 @@ ggplot(newdata, aes(y = prob1, x = chapter, group = chapter)) +
 
 
 
-下面我们看看作者1,2最常用的词：
+下面我们看看作者1,2最常用的前50个词：
 
 ```{r  chunk5, warning=FALSE, cache=TRUE}
-
-terms <- posterior(lda2)$terms
-top_terms <- apply(terms, 1,
-               function(v) paste(mat.honglou2$vocab[order(v,
-                  decreasing = TRUE)[1:100]], collapse = ", "))
-top_terms
+terms1 <- posterior(lda2)$terms[1,]
+terms2 <- posterior(lda2)$terms[2,]
+head(sort(terms1, decreasing=TRUE), 50)
+head(sort(terms2, decreasing=TRUE), 50)
 
 ```

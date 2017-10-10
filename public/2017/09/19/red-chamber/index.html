@@ -278,7 +278,7 @@ ggplot(newdata, aes(y = prob1, x = chapter, group = chapter)) +
  geom_point() +geom_vline(xintercept=80) +geom_vline(xintercept=108) + geom_text(aes(chapter-3,prob1, label = chapter), data = newdata %&gt;% filter((prob1&lt;.5 &amp; chapter&lt;81 ) | (prob1 &gt; .5 &amp; chapter&gt;80 )))</code></pre>
 <p><img src="/post/2017-09-19-red-chamber_files/figure-html/chunk4-2.png" width="672" /></p>
 <p>我们看到前80回有19回是作者1写的概率低于50%。 尤其第67回， 只有25%的概率是作者1写的。 在后40回中， 没有一回概率大于50%！ 作者1应该是曹雪芹。这里我们不能分析出作者是谁，只是说后40回的作者与前80回大多数章节的作者不同。</p>
-<p>下面我们看看作者1,2最常用的前50个词：</p>
+<p>下面我们看看作者1,2最常用的前50个词， 严格说是从LDA模型中的posterior得到的主题1,2最常出现的50个词。</p>
 <pre class="r"><code>terms1 &lt;- posterior(lda2)$terms[1,]
 terms2 &lt;- posterior(lda2)$terms[2,]
 head(sort(terms1, decreasing=TRUE), 50)</code></pre>
