@@ -3,22 +3,17 @@ title: 红楼梦 作者分析
 author: Xiang Ao
 date: '2017-09-19'
 slug: red-chamber
-categories:
-  - R
-tags:
-  - plot
-  - regression
-  - R Markdown
+
 ---
 
 
 # 简介
 
-在本文中我们用机器学习的方法来分析红楼梦的作者。红楼梦是中国最著名的小说之一(https://en.wikipedia.org/wiki/Dream_of_the_Red_Chamber)。  大多数人认为前八十回为曹雪芹所作， 后四十回为后人续作。 除非我们从考古中发现证据，唯一能告诉我们的便是小说本身。我们可以从文章的用词风格来判断作者。 即使续作者尽量模仿原作者的风格，也很难不在字里行间露出自己固有的风格。（我们也许可以用同样的方法来鉴定真画和假画，但是需要有原作者的大量画作）。
+在本文中我们用机器学习和统计的方法来分析红楼梦的作者。红楼梦是中国最著名的小说之一(https://en.wikipedia.org/wiki/Dream_of_the_Red_Chamber)。  大多数人认为前八十回为曹雪芹所作， 后四十回为后人续作。 除非我们从考古中发现证据，唯一能告诉我们的便是小说本身。我们可以从文章的用词风格来判断作者。 即使续作者尽量模仿原作者的风格，也很难不在字里行间露出自己固有的风格。（我们也许可以用同样的方法来鉴定真画和假画，但是需要有原作者的大量画作）。
 
 我是从这里下载的红楼梦原著120回版（具体哪个版本我也没仔细研究）: http://www.shuyaya.cc/book/2034/#download
 
-我用了R 中的 "Rwordseg" 来做中文分词。 就是把一句话分成词和词组。 然后用了 "cleanNLP" 得到分词频率矩阵 （"term frenquency matrix"）。 然后在最后一个模型用到 "topicmodels"。
+我用了R中的 "Rwordseg" 来做中文分词。 就是把一句话分成词和词组。 然后用了 "cleanNLP" 得到分词频率矩阵 （"term frenquency matrix"）。 然后在最后一个模型用到 "topicmodels"。
 
 
 
@@ -43,7 +38,6 @@ library(tidyverse)
 library(rJava)
 library(Rwordseg)
 library(RColorBrewer)
-library(wordcloud)
 library(tm)
 
 require(readtext)
@@ -77,11 +71,11 @@ honglou <- tbl_df(hong) %>%
 
 #  第一种模型
 
-生成分词以后， 我用"cleanNLP" 里的一个函数叫 "get_tfidf" 来取得分词频率矩阵。
+生成分词以后， 我用"cleanNLP"里的一个函数叫"get_tfidf"来取得分词频率矩阵。
 
-首先我想到的办法是把所有章节分为"training" 和 "testing"。 这是机器学习的常用办法。 在"training" 章节中， 如果是前八十章， 我标识作者为 "Cao"， 否则标识为 "unknown"。
+首先我想到的办法是把所有章节分为"training" 和"test"。 这是机器学习的常用办法。 在"training" 章节中， 如果是前八十章， 我标识作者为"Cao"，否则标识为"unknown"。
 
-然后我用"elastic net" (combination of lasso and ridge) （一种机器学习方法）在 training sample。 然后在testing sample中来预测作者。 
+然后我用"elastic net" (combination of lasso and ridge) （一种机器学习方法）在training sample。 然后在test sample中来预测作者。 
 
 这样我们得到每一章作者是曹雪芹的概率。
 
@@ -157,15 +151,15 @@ chapters$pred <- predict(model, newx=mat.honglou$tf, type='response', s=model$la
 ggplot(chapters, aes(x = chapter, y = pred, color = training))  +geom_point() +geom_vline(xintercept=80) +geom_vline(xintercept=108) + geom_text(aes(chapter-3,pred, label = chapter), data = chapters %>% filter((pred<.85 & chapter<81 & training==0) | (pred > .5 & chapter>80 & training==0)))
 ```
 
-在图中， 我画了两条竖线， 80 和 108回。 有些人认为曹的原作只有108回。
+在图中，我画了两条竖线，80和108回。有些人认为曹的原作只有108回。
 
-两种不同颜色代表training or testing。 我们看到如果说前80回作者是"Cao"， 那么后40回作者不大可能是"Cao".  甚至前80回中有几回也与其他章用词不太一致， 例如10, 11, 60, 64, 67。 特别是67, 不太可能作者是"Cao"。  在后40回中， 84,98,119 则与前80回风格较为一致。
+两种不同颜色代表training or test。 我们看到如果说前80回作者是"Cao"，那么后40回作者不大可能是"Cao"。 甚至前80回中有几回也与其他章用词不太一致，例如10, 11, 60, 64, 67。 特别是67, 不太可能作者是"Cao"。 在后40回中， 84,98,119 则与前80回风格较为一致。
 
 
 
 #  第二种模型
 
-第二种模型是某种程度上的改善。  在第一种模型中， 我们把前80回标为"Cao"， 后40回为"unknown"。我们没有引入不确定性。 这里， 我们假设后40回有百分之二十可能作者是"Cao"。 这样我们引入不确定性。  我们还是用同一种统计模型elastic net。
+第二种模型是某种程度上的改善。 在第一种模型中，我们把前80回标为"Cao"，后40回为"unknown"。我们没有引入不确定性。 这里，我们假设后40回有百分之二十可能作者是"Cao"。这样我们引入不确定性。 我们还是用同一种统计模型elastic net。
 
 
 
@@ -218,9 +212,13 @@ ggplot(merged, aes(y = yhat, x = chapter, group = chapter)) +
 
 #  第三种模型
 
-从前两次的模型中我想到也许应该用一种更好的模型， 就是每一章都有一定的概率属于"Cao"。 然后我们来估计这些概率。我发现这属于"topic models"。
+前两次的模型有个显然的假设，就是我们假设前80回是同一个作者，然后我们来判断是否后40回是否属于同一作者。也就是说这里我们只能根据前80回为同一作者来推断后40回的作者。  如果前80回不是一个作者那么我们的推断就不成立。
 
-现在我们唯一的假设是有两个作者， 严格说，是有两个”主题“，或者说，这120回可以分为两组，至于两组为什么不同，我姑且认为是作者不同，因为我们是从用词频率分析的。 也可能可以假设有三个作者，等等， 分析方法都一样。
+我想到也许应该用一种更好的模型， 就是每一章都有一定的概率属于"Cao"。 然后我们来估计这些概率。我发现这属于"topic models"。
+
+"topic models" 是用来研究文本中有几个主题的，但是我们没有理由不能把它用于研究作者。因为归根结底主题就是词汇组合，而作者也可视为词汇组合。
+
+现在我们唯一的假设是有两个作者， 严格说，是有两个"主题"，或者说，这120回可以分为两组，至于两组为什么不同，我姑且认为是作者不同，因为我们是从用词频率分析的。 也可以假设有三个作者来分析，等等，分析方法都一样。
 
 这里我们用LDA(Linear Dirichlet Allocation) 分析每一章属于"Cao" 的概率。
 
@@ -250,5 +248,18 @@ ggplot(newdata, aes(y = prob1, x = chapter, group = chapter)) +
 
 ```
 
-我们看到前80回有19回作者是1 的概率低于50%。 尤其第67回， 只有25% 是作者1写的。 在后40回中， 没有一回概率大于50%！ 作者1应该是曹雪芹。这里我们不能分析出作者是谁，只是说后40回的作者与前80回大多数章节的作者不同。
+我们看到前80回有19回是作者1写的概率低于50%。 尤其第67回， 只有25%的概率是作者1写的。 在后40回中， 没有一回概率大于50%！ 作者1应该是曹雪芹。这里我们不能分析出作者是谁，只是说后40回的作者与前80回大多数章节的作者不同。
 
+
+
+下面我们看看作者1,2最常用的词：
+
+```{r  chunk5, warning=FALSE, cache=TRUE}
+
+terms <- posterior(lda2)$terms
+top_terms <- apply(terms, 1,
+               function(v) paste(mat.honglou2$vocab[order(v,
+                  decreasing = TRUE)[1:100]], collapse = ", "))
+top_terms
+
+```

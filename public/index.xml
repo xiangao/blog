@@ -31,7 +31,7 @@ library(MASS) library(ggplot2) library(dplyr) ## ## Attaching package: &amp;#39;
 我是从这里下载的红楼梦原著120回版（具体哪个版本我也没仔细研究）: http://www.shuyaya.cc/book/2034/#download
 我用了R中的 “Rwordseg” 来做中文分词。 就是把一句话分成词和词组。 然后用了 “cleanNLP” 得到分词频率矩阵 （“term frenquency matrix”）。 然后在最后一个模型用到 “topicmodels”。
  读入文本进行分词 这一部分就是读入文本， 把它分为120回，每一回作为一个文本， 然后分词。
-# analysis starts here library(rticles) library(cleanNLP) library(readr) library(stringi) library(ggplot2) library(glmnet) library(ggrepel) library(viridis) library(magrittr) library(topicmodels) library(tidyverse) library(rJava) library(Rwordseg) library(RColorBrewer) library(wordcloud) library(tm) require(readtext) honglou1 &amp;lt;- readtext(&amp;quot;~/projects/honglongmeng/honglou1.txt&amp;quot;, text_field = &amp;quot;texts&amp;quot;) # here is to split into chapters using stringr&amp;#39;s splitting functions my_split &amp;lt;- function(text) { pattern &amp;lt;- &amp;#39;第.{1,3}回 &amp;#39; x &amp;lt;- str_split(text, pattern)[[1]] y &amp;lt;- str_extract_all(text, pattern)[[1]] data.</description>
+# analysis starts here library(rticles) library(cleanNLP) library(readr) library(stringi) library(ggplot2) library(glmnet) library(ggrepel) library(viridis) library(magrittr) library(topicmodels) library(tidyverse) library(rJava) library(Rwordseg) library(RColorBrewer) library(tm) require(readtext) honglou1 &amp;lt;- readtext(&amp;quot;~/projects/honglongmeng/honglou1.txt&amp;quot;, text_field = &amp;quot;texts&amp;quot;) # here is to split into chapters using stringr&amp;#39;s splitting functions my_split &amp;lt;- function(text) { pattern &amp;lt;- &amp;#39;第.{1,3}回 &amp;#39; x &amp;lt;- str_split(text, pattern)[[1]] y &amp;lt;- str_extract_all(text, pattern)[[1]] data.</description>
     </item>
     
     <item>

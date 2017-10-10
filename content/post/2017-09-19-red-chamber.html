@@ -33,7 +33,6 @@ library(tidyverse)
 library(rJava)
 library(Rwordseg)
 library(RColorBrewer)
-library(wordcloud)
 library(tm)
 
 require(readtext)
@@ -65,9 +64,9 @@ honglou &lt;- tbl_df(hong) %&gt;%
 </div>
 <div class="section level1">
 <h1>第一种模型</h1>
-<p>生成分词以后， 我用“cleanNLP” 里的一个函数叫 “get_tfidf” 来取得分词频率矩阵。</p>
-<p>首先我想到的办法是把所有章节分为“training” 和 “testing”。 这是机器学习的常用办法。 在“training” 章节中， 如果是前八十章， 我标识作者为 “Cao”， 否则标识为 “unknown”。</p>
-<p>然后我用“elastic net” (combination of lasso and ridge) （一种机器学习方法）在 training sample。 然后在testing sample中来预测作者。</p>
+<p>生成分词以后， 我用“cleanNLP”里的一个函数叫“get_tfidf”来取得分词频率矩阵。</p>
+<p>首先我想到的办法是把所有章节分为“training” 和“test”。 这是机器学习的常用办法。 在“training” 章节中， 如果是前八十章， 我标识作者为“Cao”，否则标识为“unknown”。</p>
+<p>然后我用“elastic net” (combination of lasso and ridge) （一种机器学习方法）在training sample。 然后在test sample中来预测作者。</p>
 <p>这样我们得到每一章作者是曹雪芹的概率。</p>
 <pre class="r"><code># make it long format: from each row for each chapter to one row for each token.
 hongloumeng &lt;- honglou %&gt;%
@@ -141,12 +140,12 @@ chapters$pred &lt;- predict(model, newx=mat.honglou$tf, type=&#39;response&#39;,
 
 ggplot(chapters, aes(x = chapter, y = pred, color = training))  +geom_point() +geom_vline(xintercept=80) +geom_vline(xintercept=108) + geom_text(aes(chapter-3,pred, label = chapter), data = chapters %&gt;% filter((pred&lt;.85 &amp; chapter&lt;81 &amp; training==0) | (pred &gt; .5 &amp; chapter&gt;80 &amp; training==0)))</code></pre>
 <p><img src="/post/2017-09-19-red-chamber_files/figure-html/chunk2-1.png" width="672" /></p>
-<p>在图中， 我画了两条竖线， 80和108回。 有些人认为曹的原作只有108回。</p>
-<p>两种不同颜色代表training or testing。 我们看到如果说前80回作者是“Cao”， 那么后40回作者不大可能是“Cao”. 甚至前80回中有几回也与其他章用词不太一致， 例如10, 11, 60, 64, 67。 特别是67, 不太可能作者是“Cao”。 在后40回中， 84,98,119 则与前80回风格较为一致。</p>
+<p>在图中，我画了两条竖线，80和108回。有些人认为曹的原作只有108回。</p>
+<p>两种不同颜色代表training or test。 我们看到如果说前80回作者是“Cao”，那么后40回作者不大可能是“Cao”。 甚至前80回中有几回也与其他章用词不太一致，例如10, 11, 60, 64, 67。 特别是67, 不太可能作者是“Cao”。 在后40回中， 84,98,119 则与前80回风格较为一致。</p>
 </div>
 <div class="section level1">
 <h1>第二种模型</h1>
-<p>第二种模型是某种程度上的改善。 在第一种模型中， 我们把前80回标为“Cao”， 后40回为“unknown”。我们没有引入不确定性。 这里， 我们假设后40回有百分之二十可能作者是“Cao”。 这样我们引入不确定性。 我们还是用同一种统计模型elastic net。</p>
+<p>第二种模型是某种程度上的改善。 在第一种模型中，我们把前80回标为“Cao”，后40回为“unknown”。我们没有引入不确定性。 这里，我们假设后40回有百分之二十可能作者是“Cao”。这样我们引入不确定性。 我们还是用同一种统计模型elastic net。</p>
 <pre class="r"><code># here we introduce uncertainty: suppose the last 40 chapters have 20% chance been written by Cao.  
 
 set.seed(1)
@@ -192,15 +191,17 @@ ggplot(merged, aes(y = yhat, x = chapter, group = chapter)) +
 </div>
 <div class="section level1">
 <h1>第三种模型</h1>
-<p>从前两次的模型中我想到也许应该用一种更好的模型， 就是每一章都有一定的概率属于“Cao”。 然后我们来估计这些概率。我发现这属于“topic models”。</p>
-<p>现在我们唯一的假设是有两个作者， 严格说，是有两个”主题“，或者说，这120回可以分为两组，至于两组为什么不同，我姑且认为是作者不同，因为我们是从用词频率分析的。 也可能可以假设有三个作者，等等， 分析方法都一样。</p>
+<p>前两次的模型有个显然的假设，就是我们假设前80回是同一个作者，然后我们来判断是否后40回是否属于同一作者。也就是说这里我们只能根据前80回为同一作者来推断后40回的作者。 如果前80回不是一个作者那么我们的推断就不成立。</p>
+<p>我想到也许应该用一种更好的模型， 就是每一章都有一定的概率属于“Cao”。 然后我们来估计这些概率。我发现这属于“topic models”。</p>
+<p>“topic models” 是用来研究文本中有几个主题的，但是我们没有理由不能把它用于研究作者。因为归根结底主题就是词汇组合，而作者也可视为词汇组合。</p>
+<p>现在我们唯一的假设是有两个作者， 严格说，是有两个“主题”，或者说，这120回可以分为两组，至于两组为什么不同，我姑且认为是作者不同，因为我们是从用词频率分析的。 也可以假设有三个作者来分析，等等，分析方法都一样。</p>
 <p>这里我们用LDA(Linear Dirichlet Allocation) 分析每一章属于“Cao” 的概率。</p>
 <pre class="r"><code>set.seed(1)
 
 mat.honglou2 &lt;- honglou2 %&gt;%
     get_tfidf(type = &quot;tf&quot;, tf_weight = &quot;raw&quot;, token_var=&quot;word&quot;,
     min_df=.05, max_df=.95)
-
+colnames(mat.honglou2$tf) &lt;- mat.honglou2$vocab
 lda2 &lt;- LDA(mat.honglou2$tf, k = 2, method=&quot;Gibbs&quot;, control = list(seed = 1, burnin = 1000, thin = 100, iter = 1000))
 
 plot(topics(lda2))</code></pre>
@@ -216,4 +217,45 @@ ggplot(newdata, aes(y = prob1, x = chapter, group = chapter)) +
  geom_point() +geom_vline(xintercept=80) +geom_vline(xintercept=108) + geom_text(aes(chapter-3,prob1, label = chapter), data = newdata %&gt;% filter((prob1&lt;.5 &amp; chapter&lt;81 ) | (prob1 &gt; .5 &amp; chapter&gt;80 )))</code></pre>
 <p><img src="/post/2017-09-19-red-chamber_files/figure-html/chunk4-2.png" width="672" /></p>
 <p>我们看到前80回有19回是作者1写的概率低于50%。 尤其第67回， 只有25%的概率是作者1写的。 在后40回中， 没有一回概率大于50%！ 作者1应该是曹雪芹。这里我们不能分析出作者是谁，只是说后40回的作者与前80回大多数章节的作者不同。</p>
+<p>下面我们看看作者1,2最常用的前50个词：</p>
+<pre class="r"><code>terms1 &lt;- posterior(lda2)$terms[1,]
+terms2 &lt;- posterior(lda2)$terms[2,]
+head(sort(terms1, decreasing=TRUE), 50)</code></pre>
+<pre><code>##          吃        贾母          至        众人          方          贾 
+## 0.010980743 0.006512404 0.005828384 0.005401982 0.005401982 0.005330915 
+##          凤          珍        一面        黛玉          字          酒 
+## 0.004593594 0.004167192 0.004007291 0.003971758 0.003794090 0.003660840 
+##          此        两个          花        如此          茶          皆 
+## 0.003625306 0.003536472 0.003367688 0.003341038 0.003296621 0.003190021 
+##        大家        他们          竟          亦        尤氏        晴雯 
+## 0.003074537 0.003047887 0.003039003 0.003030120 0.002994586 0.002914636 
+##          向          使          日          未          如        湘云 
+## 0.002896869 0.002887986 0.002852452 0.002834686 0.002754735 0.002754735 
+##          比        不过          老        听说          忽          三 
+## 0.002674785 0.002621485 0.002612601 0.002577068 0.002568184 0.002541534 
+##        薛蟠          其          或          香          所          毕 
+## 0.002523767 0.002514884 0.002506001 0.002497117 0.002488234 0.002488234 
+##          生          让          并        只见          后        原来 
+## 0.002479351 0.002470467 0.002443817 0.002399400 0.002319450 0.002310566 
+##          岂          而 
+## 0.002301683 0.002301683</code></pre>
+<pre class="r"><code>head(sort(terms2, decreasing=TRUE), 50)</code></pre>
+<pre><code>##        袭人        凤姐        姑娘      王夫人        宝钗          给 
+## 0.009255081 0.009173040 0.008836671 0.008730017 0.008286994 0.007753725 
+##      老太太        贾母        丫头        太太        贾琏        你们 
+## 0.007745521 0.007245069 0.006744617 0.006695392 0.006252369 0.006194940 
+##        奶奶        贾政          死        平儿        老爷        听见 
+## 0.006030857 0.005792938 0.005472976 0.005341710 0.005095586 0.005054566 
+##        黛玉        告诉        东西        他们        回来          爷 
+## 0.005038157 0.004865871 0.004562318 0.004307990 0.004307990 0.004225948 
+##        进来          病          哭          做      薛姨妈        只见 
+## 0.004193132 0.003963416 0.003897783 0.003782925 0.003717292 0.003586026 
+##          瞧        紫鹃        鸳鸯        过来        这个        这样 
+## 0.003577822 0.003405535 0.003405535 0.003356310 0.003339902 0.003274269 
+##          找        咱们        心里          闹        这些        一面 
+## 0.003266065 0.003159411 0.003118391 0.003077370 0.003044553 0.003028145 
+##          跟          却        两个          林        这么        姐姐 
+## 0.003019941 0.002987124 0.002831246 0.002782021 0.002749205 0.002699980 
+##        所以        出去 
+## 0.002699980 0.002683572</code></pre>
 </div>
