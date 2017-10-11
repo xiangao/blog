@@ -6,10 +6,20 @@
     <description>Recent content in R on A Hugo website</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Thu, 21 Sep 2017 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Tue, 10 Oct 2017 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/categories/r/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Which count data model to use</title>
+      <link>/2017/10/10/poisson/</link>
+      <pubDate>Tue, 10 Oct 2017 00:00:00 +0000</pubDate>
+      
+      <guid>/2017/10/10/poisson/</guid>
+      <description>A comparison of various count data models with extra zeros In empirical studies, data sets with a lot of zeros are often hard to model. There are various models to deal with it: zero-inflated Poisson model, Negative Binomial (NB)model, hurdle model, etc.
+Here we are following a zero-inflated model’s thinking: model the data with two processes. One is a Bernoulli process, the other one is a count data process (Poisson or NB).</description>
+    </item>
     
     <item>
       <title>Using machine learning for causal effect in observational study</title>
