@@ -1,7 +1,7 @@
 ---
 title: 'Causal Forest in panel data '
 author: Xiang Ao
-date: '2017-10-20'
+date: '2017-10-23'
 slug: causal-forest-in-panel-data
 categories:
   - R
@@ -276,9 +276,9 @@ ggplot() + geom_errorbar(graph.data3, mapping=aes(x=cate,  ymin=lower,ymax=upper
 
 In the second situation, we assume DGP:
 
-$$y_{it} = 1 +  \alpha_i + log(V1_{it})*W_{it} +  \epsilon_{it} $$
+$$y_{it} = 1 +  \alpha_i + log(V1_{it}^2)*W_{it} +  \epsilon_{it} $$
 
-But we only observe $V1$, not the log of it.
+But we only observe $V1$, not the log of the squared $V1$.
 
 ```{r chunk6, warning=FALSE,  cache=TRUE,  message=FALSE}
 

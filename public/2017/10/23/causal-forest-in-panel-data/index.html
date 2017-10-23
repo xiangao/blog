@@ -1,19 +1,71 @@
----
-title: 'Causal Forest in panel data '
-author: Xiang Ao
-date: '2017-10-23'
-slug: causal-forest-in-panel-data
-categories:
-  - R
-tags:
-  - R
-  - regression
-  - causal forest
----
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Hugo 0.27.1" />
+
+
+<title>Causal Forest in panel data  - A Hugo website</title>
+<meta property="og:title" content="Causal Forest in panel data  - A Hugo website">
 
 
 
-<div id="introduction" class="section level1">
+  
+
+
+
+
+
+
+
+
+<link href='//cdn.bootcss.com/highlight.js/9.11.0/styles/github.min.css' rel='stylesheet' type='text/css' />
+
+
+
+<link rel="stylesheet" href="/css/fonts.css" media="all">
+<link rel="stylesheet" href="/css/main.css" media="all">
+
+
+
+  </head>
+  <body>
+    <div class="wrapper">
+      <header class="header">
+        <nav class="nav">
+  <a href="/" class="nav-logo">
+    <img src="/images/logo.png"
+         width="50"
+         height="50"
+         alt="Logo">
+  </a>
+
+  <ul class="nav-links">
+    
+    <li><a href="/about/">About me</a></li>
+    
+  </ul>
+</nav>
+
+      </header>
+
+
+<main class="content" role="main">
+
+  <article class="article">
+    
+    <span class="article-duration">14 min read</span>
+    
+
+    <h1 class="article-title">Causal Forest in panel data </h1>
+
+    
+    <span class="article-date">2017/10/23</span>
+    
+
+    <div class="article-content">
+      <div id="introduction" class="section level1">
 <h1>Introduction</h1>
 <p>In this simulation exercise, we use Causal Forest (Now is implemented in Generalized Random Forest) (<a href="https://github.com/swager/grf" class="uri">https://github.com/swager/grf</a>) to calculated conditional average treatment effect (or heterogenous treatment effect). We assume three different data generating processes. The first one is a linear interaction between a variable of interest and the treatment dummy. The second one assumes a nonlinear function (a step function) of a variable of interest, say <span class="math inline">\(X\)</span>, and the treatment dummy <span class="math inline">\(W\)</span>. The third one is also nonlinear, assuming we have variable <span class="math inline">\(X\)</span>, but the real DGP is the interaction of log of <span class="math inline">\(X\)</span> and <span class="math inline">\(W\)</span>.</p>
 </div>
@@ -576,3 +628,57 @@ ggplot(graph.data4, aes(x=cate, y=predictions)) + geom_point()  + geom_abline(sl
 <h1>Summary</h1>
 <p>We see in these examples, Causal Forest performs fairly well, while other linear models will not work in the nonlinear DGP situations.</p>
 </div>
+
+    </div>
+  </article>
+
+  
+
+
+</main>
+
+      <footer class="footer">
+        <ul class="footer-links">
+          <li>
+            <a href="/index.xml" type="application/rss+xml" target="_blank">RSS feed</a>
+          </li>
+          <li>
+            <a href="https://gohugo.io/" class="footer-links-kudos">Made with <img src="/images/hugo-logo.png" width="22" height="22"></a>
+          </li>
+        </ul>
+      </footer>
+
+    </div>
+    
+
+
+
+<script src="//cdn.bootcss.com/highlight.js/9.11.0/highlight.min.js"></script>
+
+
+
+<script src="//cdn.bootcss.com/highlight.js/9.11.0/languages/r.min.js"></script>
+<script src="//cdn.bootcss.com/highlight.js/9.11.0/languages/yaml.min.js"></script>
+<script>hljs.configure({languages: []}); hljs.initHighlightingOnLoad();</script>
+
+
+
+    
+<script src="/js/math-code.js"></script>
+<script async src="//cdn.bootcss.com/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+
+
+    
+<script>
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-106731399-1', 'auto');
+ga('send', 'pageview');
+</script>
+
+  </body>
+</html>
+

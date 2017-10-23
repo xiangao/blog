@@ -6,17 +6,17 @@
     <description>Recent content in Causal Forest on A Hugo website</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Fri, 20 Oct 2017 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Mon, 23 Oct 2017 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/tags/causal-forest/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>Causal Forest in panel data </title>
-      <link>/2017/10/20/causal-forest-in-panel-data/</link>
-      <pubDate>Fri, 20 Oct 2017 00:00:00 +0000</pubDate>
+      <link>/2017/10/23/causal-forest-in-panel-data/</link>
+      <pubDate>Mon, 23 Oct 2017 00:00:00 +0000</pubDate>
       
-      <guid>/2017/10/20/causal-forest-in-panel-data/</guid>
+      <guid>/2017/10/23/causal-forest-in-panel-data/</guid>
       <description>Introduction In this simulation exercise, we use Causal Forest (Now is implemented in Generalized Random Forest) (https://github.com/swager/grf) to calculated conditional average treatment effect (or heterogenous treatment effect). We assume three different data generating processes. The first one is a linear interaction between a variable of interest and the treatment dummy. The second one assumes a nonlinear function (a step function) of a variable of interest, say \(X\), and the treatment dummy \(W\).</description>
     </item>
     
