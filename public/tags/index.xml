@@ -21,6 +21,15 @@
     </item>
     
     <item>
+      <title>Logit</title>
+      <link>/tags/logit/</link>
+      <pubDate>Thu, 26 Oct 2017 00:00:00 +0000</pubDate>
+      
+      <guid>/tags/logit/</guid>
+      <description></description>
+    </item>
+    
+    <item>
       <title>Plot</title>
       <link>/tags/plot/</link>
       <pubDate>Tue, 10 Oct 2017 00:00:00 +0000</pubDate>
@@ -32,9 +41,18 @@
     <item>
       <title>R</title>
       <link>/tags/r/</link>
-      <pubDate>Mon, 23 Oct 2017 00:00:00 +0000</pubDate>
+      <pubDate>Thu, 26 Oct 2017 00:00:00 +0000</pubDate>
       
       <guid>/tags/r/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>R Rare Event</title>
+      <link>/tags/r-rare-event/</link>
+      <pubDate>Thu, 26 Oct 2017 00:00:00 +0000</pubDate>
+      
+      <guid>/tags/r-rare-event/</guid>
       <description></description>
     </item>
     

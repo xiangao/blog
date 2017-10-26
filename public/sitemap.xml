@@ -3,6 +3,11 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
+    <loc>/2017/10/26/rare-event/</loc>
+    <lastmod>2017-10-26T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
     <loc>/2017/10/23/causal-forest-in-panel-data/</loc>
     <lastmod>2017-10-23T00:00:00+00:00</lastmod>
   </url>
@@ -34,7 +39,7 @@
   
   <url>
     <loc>/</loc>
-    <lastmod>2017-10-23T00:00:00+00:00</lastmod>
+    <lastmod>2017-10-26T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
@@ -50,6 +55,12 @@
   </url>
   
   <url>
+    <loc>/tags/logit/</loc>
+    <lastmod>2017-10-26T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
     <loc>/tags/plot/</loc>
     <lastmod>2017-10-10T00:00:00+00:00</lastmod>
     <priority>0</priority>
@@ -57,19 +68,25 @@
   
   <url>
     <loc>/post/</loc>
-    <lastmod>2017-10-23T00:00:00+00:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>/tags/r/</loc>
-    <lastmod>2017-10-23T00:00:00+00:00</lastmod>
+    <lastmod>2017-10-26T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>/categories/r/</loc>
-    <lastmod>2017-10-23T00:00:00+00:00</lastmod>
+    <lastmod>2017-10-26T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/tags/r/</loc>
+    <lastmod>2017-10-26T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/tags/r-rare-event/</loc>
+    <lastmod>2017-10-26T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   

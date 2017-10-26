@@ -6,10 +6,21 @@
     <description>Recent content in R on A Hugo website</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Mon, 23 Oct 2017 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Thu, 26 Oct 2017 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/tags/r/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>What model to use for rare event</title>
+      <link>/2017/10/26/rare-event/</link>
+      <pubDate>Thu, 26 Oct 2017 00:00:00 +0000</pubDate>
+      
+      <guid>/2017/10/26/rare-event/</guid>
+      <description>Introducation In empirical studies, people are worried about rare event situation. That is, when you have, for example, lots of 0’s and only a few 1’s, or vice versa. Do you run a logit model, or do you use a “rare event logit”? When should you use either approach? Or there is a third approach?
+Paul Allison said in his blog (https://statisticalhorizons.com/logistic-regression-for-rare-events):
+“Prompted by a 2001 article by King and Zeng, many researchers worry about whether they can legitimately use conventional logistic regression for data in which events are rare.</description>
+    </item>
     
     <item>
       <title>Causal Forest in panel data </title>
