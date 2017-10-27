@@ -126,7 +126,11 @@ write.csv(forshiny, &#39;results.csv&#39;)
 <p>We simulate 100 times with <span class="math inline">\(\theta\)</span> ranging from -4 to 4, lower number means higher percentage of zeros; number of observations from <span class="math inline">\(e^4\)</span> to <span class="math inline">\(e^9\)</span> (roughly from 50 to 8000).</p>
 <p>Since there are many simulations, we used “snowfall” library to speed things up.</p>
 <p>For raw code, please visit <a href="https://github.com/xiangao/poisson">case1: poisson</a> and <a href="https://github.com/xiangao/poisson2">case2: normal</a>.</p>
-<p><a href="https://xiangao.shinyapps.io/poisson/">The shiny app Poisson</a> <a href="https://xiangao.shinyapps.io/poisson2/">The shiny app Normal</a></p>
+<p>Here are two Shiny apps: the first one I generated data from Poisson distribution, the secone is generated from normal distribution.</p>
+<iframe src="https://xiangao.shinyapps.io/poisson/" height="1000" width="600" frameborder="0">
+</iframe>
+<iframe src="https://xiangao.shinyapps.io/poisson/" height="1000" width="600" frameborder="0">
+</iframe>
 <p>In the graph, there are two vertical lines. The lighter one is the bias, the other one is MSE.</p>
 <p>If we can compare the situations that data generated from Poisson process and normal process, we can see using count data models to model normal distributed data is still valid, just with bigger standard deviations. With large sample, actually Poisson model out-performs NB, and Log-linear model, without having to model the extra zeros. NB model does not do well, in general. Log-linear model is the worst. Zero-inflated Poisson with correct specification of the binary process performs the best, naturally. But that relies on correct specification of the binary process, which is not always realistic. Zero-inflated Poisson or hurdle model without correct specification of the binary process are not too bad, especially when sample size is large. These two are very close since only the difference between the two is that hurdle is modeling all zeros from binary process and all positive numbers from count data process; while zip2 is modeling some zeros (probably most) from binary process and all other values (including some zeros) from a Poisson process.</p>
 </div>

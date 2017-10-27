@@ -143,8 +143,11 @@ Since there are many simulations, we used "snowfall" library to speed things up.
 
 For raw code, please visit [case1: poisson](https://github.com/xiangao/poisson) and  [case2: normal](https://github.com/xiangao/poisson2).
 
-[The shiny app Poisson](https://xiangao.shinyapps.io/poisson/)
-[The shiny app Normal](https://xiangao.shinyapps.io/poisson2/)
+Here are two Shiny apps: the first one I generated data from Poisson distribution, the secone is generated from normal distribution.
+
+<iframe src="https://xiangao.shinyapps.io/poisson/" height="1000" width="600" frameborder="0"></iframe>
+
+<iframe src="https://xiangao.shinyapps.io/poisson/" height="1000" width="600" frameborder="0"></iframe>
 
 In the graph, there are two vertical lines.  The lighter one is the bias, the other one is MSE.
 
