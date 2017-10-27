@@ -91,7 +91,7 @@ write.csv(forshiny, &#39;results.csv&#39;)</code></pre>
 <p>We simulate 100 times with sample size from 10 to 10000, event probability .01, .05, and .1.</p>
 <p>Since there are many simulations, we used “snowfall” library to speed things up.</p>
 <p>Here is the Shiny app: <iframe src="https://xiangao.shinyapps.io/rareevent/" height="1000" width="600" frameborder="0"></iframe></p>
-<p>In the graphse are two vertical lines. The lighter one is the bias, the other one is MSE.</p>
+<p>In the graphes are two vertical lines. The lighter one is the bias, the other one is MSE.</p>
 <p>In the case of small sample and rare event (for example, any situation that the product of sample size and probability is less than 5), none of these three models perform well. This is understandable, after all, the rarer of the two groups has only less than 5 observations. When the product is more than 50, there is not much difference between these three models. For the situations in between, that is, the product of sample size and probability is greater than 5 but less than 50, we found that relogit and logistf perform better than logit. In most cases, logistf is the best.</p>
 <p>In the small sample situation, maybe it’s better to use the exact logistic regression.</p>
 </div>

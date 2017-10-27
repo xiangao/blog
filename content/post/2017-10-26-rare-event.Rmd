@@ -105,7 +105,7 @@ Since there are many simulations, we used "snowfall" library to speed things up.
 Here is the Shiny app:
 <iframe src="https://xiangao.shinyapps.io/rareevent/" height="1000" width="600" frameborder="0"></iframe>
 
-In the graphse are two vertical lines.  The lighter one is the bias, the other one is MSE.
+In the graphes are two vertical lines.  The lighter one is the bias, the other one is MSE.
 
 In the case of small sample and rare event (for example, any situation that the product of sample size and probability is less than 5), none of these three models perform well.  This is understandable, after all, the rarer of the two groups has only less than 5 observations.  When the product is more than 50, there is not much difference between these three models.  For the situations in between, that is, the product of sample size and probability is greater than 5 but less than 50, we found that relogit and logistf perform better than logit.  In most cases, logistf is the best.
 
