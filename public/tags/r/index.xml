@@ -12,6 +12,15 @@
     
     
     <item>
+      <title>Interaction term in a non-linear model</title>
+      <link>/2017/12/07/interaction-term-in-a-non-linear-model/</link>
+      <pubDate>Thu, 07 Dec 2017 00:00:00 +0000</pubDate>
+      
+      <guid>/2017/12/07/interaction-term-in-a-non-linear-model/</guid>
+      <description>Interaction term in a non-linear model In a non-linear model (for example, logit or poisson model), the interpretation of the coefficient on the interaction term is tricky. Ai and Norton (2003) points out that the interaction term coefficient is not the same as people can interpret as in a linear model; that is, how much effect of \(x1\) changes with the value of \(x2\). They interpret this as a cross</description>
+    </item>
+    
+    <item>
       <title>Interpreting interaction in a regression model</title>
       <link>/2017/12/07/interpreting-interaction/</link>
       <pubDate>Thu, 07 Dec 2017 00:00:00 +0000</pubDate>
