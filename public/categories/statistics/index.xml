@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Stata on A Hugo website</title>
-    <link>/categories/stata/</link>
-    <description>Recent content in Stata on A Hugo website</description>
+    <title>Statistics on A Hugo website</title>
+    <link>/categories/statistics/</link>
+    <description>Recent content in Statistics on A Hugo website</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Thu, 07 Dec 2017 00:00:00 +0000</lastBuildDate>
     
-	<atom:link href="/categories/stata/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="/categories/statistics/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
@@ -21,15 +21,6 @@
 Let’s start with the simpliest situation: \(x_1\) and \(x_2\) are binary and coded 0/1.
 \[ E(y) = \beta_1 x_1 + \beta_2 x_2 + \beta_{12} x_1x_2 \]
 In this case, we have a saturated model; that is, we have three coefficients representing additive effects from the baseline situation (both \(x_1\) and \(x_2\) being 0).</description>
-    </item>
-    
-    <item>
-      <title>Marginal effects in models with fixed effects</title>
-      <link>/2017/12/07/marginal-effects-in-models-with-fixed-effects/</link>
-      <pubDate>Thu, 07 Dec 2017 00:00:00 +0000</pubDate>
-      
-      <guid>/2017/12/07/marginal-effects-in-models-with-fixed-effects/</guid>
-      <description>Marginal effects in a linear model Stata’s margins command has been a powerful tool for many economists. It can calculate predicted means as well as predicted marginal effects. However, we do need to be careful when we use it when fixed effects are included. In a linear model, everything works out fine. However, in a non-linear model, you may not want to use margins, since it’s not calculating what you have in mind.</description>
     </item>
     
   </channel>

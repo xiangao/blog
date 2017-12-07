@@ -6,10 +6,22 @@
     <description>Recent content in R on A Hugo website</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Thu, 26 Oct 2017 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Thu, 07 Dec 2017 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/tags/r/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Interpreting interaction in a regression model</title>
+      <link>/2017/12/07/interpreting-interaction/</link>
+      <pubDate>Thu, 07 Dec 2017 00:00:00 +0000</pubDate>
+      
+      <guid>/2017/12/07/interpreting-interaction/</guid>
+      <description>Interaction with two binary variables In a regression model with interaction term, people tend to pay attention to only the coefficient of the interaction term.
+Let’s start with the simpliest situation: \(x_1\) and \(x_2\) are binary and coded 0/1.
+\[ E(y) = \beta_1 x_1 + \beta_2 x_2 + \beta_{12} x_1x_2 \]
+In this case, we have a saturated model; that is, we have three coefficients representing additive effects from the baseline situation (both \(x_1\) and \(x_2\) being 0).</description>
+    </item>
     
     <item>
       <title>What model to use for rare events</title>
