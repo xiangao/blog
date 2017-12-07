@@ -13,7 +13,7 @@ tags:
 ---
 
 
-# Interaction with two binary variables
+# Interaction with two binary variables 
 
 In a regression model with interaction term, people tend to pay attention to only the coefficient of the interaction term.  
 
