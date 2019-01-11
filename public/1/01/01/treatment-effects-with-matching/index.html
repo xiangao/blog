@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Hugo 0.49" />
+
+
+<title>Treatment effects and matching - A Hugo website</title>
+<meta property="og:title" content="Treatment effects and matching - A Hugo website">
+
+
+
+  
+
+
+
+
+
+
+
+
+<link href='//cdn.bootcss.com/highlight.js/9.11.0/styles/github.min.css' rel='stylesheet' type='text/css' />
+
+
+
+<link rel="stylesheet" href="/css/fonts.css" media="all">
+<link rel="stylesheet" href="/css/main.css" media="all">
+
+
+
+  </head>
+  <body>
+    <div class="wrapper">
+      <header class="header">
+        <nav class="nav">
+  <a href="/" class="nav-logo">
+    <img src="/images/logo.png"
+         width="50"
+         height="50"
+         alt="Logo">
+  </a>
+
+  <ul class="nav-links">
+    
+    <li><a href="/about/">About me</a></li>
+    
+  </ul>
+</nav>
+
+      </header>
+
+
+<main class="content" role="main">
+
+  <article class="article">
+    
+    <span class="article-duration">17 min read</span>
+    
+
+    <h1 class="article-title">Treatment effects and matching</h1>
+
+    
+    <span class="article-date">0001/01/01</span>
+    
+
+    <div class="article-content">
+      <div id="treatment-effects-in-observational-studies" class="section level1">
+<h1>Treatment effects in observational studies</h1>
+<p>Despite the popularity of randomized experiements in economics nowadays, most situations we have observational data in economic studies. One reason is experiemnts are expensive; the other reason is that sometimes it is simply not feasible to have experiments. If we have observational data, and we’d like to draw causal conclusions, then we have a few different situations. The worse situation is that we have an endogenous treatement. Or to say, we have unobserved confounders. In that case, we need instrumental variables. However instruments are hard to find, and even harder to justify. If we assume we don’t have unobserved counfounders. Or to say, we have conditional independence of the treatment variable. That is, conditional on other variables in the model, there is no unobserved confounders. If that assumption holds, then we can make causal inference.</p>
+<p>Stata has a set of eteffects and teffects commands are designed for treatment effects. eteffects is for treatment effects when you have endogenous treatment. In that case, you’ll need instruments to model treatment at first stage. Then eteffects use control function approach for the second stage of modeling treatment effects on outcome. In this blog, we are trying to understand how teffects works. That is, when we don’t need an instruments, or say we assume no unobserved confounders.</p>
+<div id="regression-adjustement-ra" class="section level2">
+<h2>Regression adjustement (RA)</h2>
+<p>The RA method is to allow all coveriates’ effects differ between treatment and control. That is, it is the same model as an outcome model with treatment interacting with all other coveriates.</p>
+<div id="example" class="section level3">
+<h3>Example:</h3>
+<pre class="stata"><code>clear
+webuse bweightex
+teffects ra (bweight prenatal1 mmarried mage fbaby) (mbsmoke)
+reg bweight i.mbsmoke##c.(prenatal1 mmarried mage fbaby)
+margins r.mbsmoke</code></pre>
+<pre><code>## 
+## . clear
+## 
+## . webuse bweightex
+## (Hypothetical birthweight data)
+## 
+## . teffects ra (bweight prenatal1 mmarried mage fbaby) (mbsmoke)
+## 
+## Iteration 0:   EE criterion =  2.967e-25  
+## Iteration 1:   EE criterion =  1.674e-26  
+## 
+## Treatment-effects estimation                    Number of obs     =         60
+## Estimator      : regression adjustment
+## Outcome model  : linear
+## Treatment model: none
+## ------------------------------------------------------------------------------
+##              |               Robust
+##      bweight |      Coef.   Std. Err.      z    P&gt;|z|     [95% Conf. Interval]
+## -------------+----------------------------------------------------------------
+## ATE          |
+##      mbsmoke |
+##     (smoker  |
+##          vs  |
+##  nonsmoker)  |  -389.3099   37.00882   -10.52   0.000    -461.8458   -316.7739
+## -------------+----------------------------------------------------------------
+## POmean       |
+##      mbsmoke |
+##   nonsmoker  |   3613.769   29.97438   120.56   0.000     3555.021    3672.518
+## ------------------------------------------------------------------------------
+## 
+## . reg bweight i.mbsmoke##c.(prenatal1 mmarried mage fbaby)
+## 
+##       Source |       SS           df       MS      Number of obs   =        60
+## -------------+----------------------------------   F(9, 50)        =     18.11
+##        Model |  1376306.34         9  152922.927   Prob &gt; F        =    0.0000
+##     Residual |  422241.592        50  8444.83184   R-squared       =    0.7652
+## -------------+----------------------------------   Adj R-squared   =    0.7230
+##        Total |  1798547.93        59  30483.8633   Root MSE        =    91.896
+## 
+## ------------------------------------------------------------------------------
+##      bweight |      Coef.   Std. Err.      t    P&gt;|t|     [95% Conf. Interval]
+## -------------+----------------------------------------------------------------
+##      mbsmoke |
+##      smoker  |  -32.87702   193.2827    -0.17   0.866    -421.0967    355.3426
+##    prenatal1 |   -23.8431   38.31014    -0.62   0.537    -100.7913    53.10507
+##     mmarried |  -40.39753   50.21942    -0.80   0.425    -141.2662    60.47114
+##         mage |    27.9537   7.671423     3.64   0.001     12.54519    43.36221
+##        fbaby |  -2.030497   40.76029    -0.05   0.960    -83.89995    79.83896
+##              |
+##      mbsmoke#|
+##  c.prenatal1 |
+##      smoker  |   8.436558   56.38855     0.15   0.882    -104.8232    121.6963
+##              |
+##      mbsmoke#|
+##   c.mmarried |
+##      smoker  |   33.92362   61.34015     0.55   0.583     -89.2817    157.1289
+##              |
+##      mbsmoke#|
+##       c.mage |
+##      smoker  |  -15.98608   9.006494    -1.77   0.082    -34.07616    2.103995
+##              |
+##      mbsmoke#|
+##      c.fbaby |
+##      smoker  |   14.86782   57.58771     0.26   0.797    -100.8005    130.5362
+##              |
+##        _cons |   2976.807   151.0117    19.71   0.000     2673.491    3280.123
+## ------------------------------------------------------------------------------
+## 
+## . margins r.mbsmoke
+## 
+## Contrasts of predictive margins
+## Model VCE    : OLS
+## 
+## Expression   : Linear prediction, predict()
+## 
+## ------------------------------------------------
+##              |         df           F        P&gt;F
+## -------------+----------------------------------
+##      mbsmoke |          1      116.06     0.0000
+##              |
+##  Denominator |         50
+## ------------------------------------------------
+## 
+## ------------------------------------------------------------------------
+##                        |            Delta-method
+##                        |   Contrast   Std. Err.     [95% Conf. Interval]
+## -----------------------+------------------------------------------------
+##                mbsmoke |
+## (smoker vs nonsmoker)  |  -389.3099   36.13675     -461.8927   -316.7271
+## ------------------------------------------------------------------------</code></pre>
+<p>We can see the teffects return the same ATE(Average Treatment Effect) as the margins command after a regression with treatment interacting with all other covariates.</p>
+<p>To estimate ATET (or ATT, Average Treatment effected on the Treated),</p>
+<pre class="stata"><code>clear
+webuse bweightex
+teffects ra (bweight prenatal1 mmarried mage fbaby) (mbsmoke), atet
+reg bweight i.mbsmoke##c.(prenatal1 mmarried mage fbaby)
+margins r.mbsmoke, subpop(mbsmoke)</code></pre>
+<pre><code>## 
+## . clear
+## 
+## . webuse bweightex
+## (Hypothetical birthweight data)
+## 
+## . teffects ra (bweight prenatal1 mmarried mage fbaby) (mbsmoke), atet
+## 
+## Iteration 0:   EE criterion =  2.792e-25  
+## Iteration 1:   EE criterion =  1.692e-26  
+## 
+## Treatment-effects estimation                    Number of obs     =         60
+## Estimator      : regression adjustment
+## Outcome model  : linear
+## Treatment model: none
+## ------------------------------------------------------------------------------
+##              |               Robust
+##      bweight |      Coef.   Std. Err.      z    P&gt;|z|     [95% Conf. Interval]
+## -------------+----------------------------------------------------------------
+## ATET         |
+##      mbsmoke |
+##     (smoker  |
+##          vs  |
+##  nonsmoker)  |  -437.4721   53.43513    -8.19   0.000     -542.203   -332.7412
+## -------------+----------------------------------------------------------------
+## POmean       |
+##      mbsmoke |
+##   nonsmoker  |   3693.639   53.80537    68.65   0.000     3588.182    3799.095
+## ------------------------------------------------------------------------------
+## 
+## . reg bweight i.mbsmoke##c.(prenatal1 mmarried mage fbaby)
+## 
+##       Source |       SS           df       MS      Number of obs   =        60
+## -------------+----------------------------------   F(9, 50)        =     18.11
+##        Model |  1376306.34         9  152922.927   Prob &gt; F        =    0.0000
+##     Residual |  422241.592        50  8444.83184   R-squared       =    0.7652
+## -------------+----------------------------------   Adj R-squared   =    0.7230
+##        Total |  1798547.93        59  30483.8633   Root MSE        =    91.896
+## 
+## ------------------------------------------------------------------------------
+##      bweight |      Coef.   Std. Err.      t    P&gt;|t|     [95% Conf. Interval]
+## -------------+----------------------------------------------------------------
+##      mbsmoke |
+##      smoker  |  -32.87702   193.2827    -0.17   0.866    -421.0967    355.3426
+##    prenatal1 |   -23.8431   38.31014    -0.62   0.537    -100.7913    53.10507
+##     mmarried |  -40.39753   50.21942    -0.80   0.425    -141.2662    60.47114
+##         mage |    27.9537   7.671423     3.64   0.001     12.54519    43.36221
+##        fbaby |  -2.030497   40.76029    -0.05   0.960    -83.89995    79.83896
+##              |
+##      mbsmoke#|
+##  c.prenatal1 |
+##      smoker  |   8.436558   56.38855     0.15   0.882    -104.8232    121.6963
+##              |
+##      mbsmoke#|
+##   c.mmarried |
+##      smoker  |   33.92362   61.34015     0.55   0.583     -89.2817    157.1289
+##              |
+##      mbsmoke#|
+##       c.mage |
+##      smoker  |  -15.98608   9.006494    -1.77   0.082    -34.07616    2.103995
+##              |
+##      mbsmoke#|
+##      c.fbaby |
+##      smoker  |   14.86782   57.58771     0.26   0.797    -100.8005    130.5362
+##              |
+##        _cons |   2976.807   151.0117    19.71   0.000     2673.491    3280.123
+## ------------------------------------------------------------------------------
+## 
+## . margins r.mbsmoke, subpop(mbsmoke)
+## 
+## Contrasts of predictive margins
+## Model VCE    : OLS
+## 
+## Expression   : Linear prediction, predict()
+## 
+## ------------------------------------------------
+##              |         df           F        P&gt;F
+## -------------+----------------------------------
+##      mbsmoke |          1       73.30     0.0000
+##              |
+##  Denominator |         50
+## ------------------------------------------------
+## 
+## ------------------------------------------------------------------------
+##                        |            Delta-method
+##                        |   Contrast   Std. Err.     [95% Conf. Interval]
+## -----------------------+------------------------------------------------
+##                mbsmoke |
+## (smoker vs nonsmoker)  |  -437.4721   51.09606     -540.1015   -334.8426
+## ------------------------------------------------------------------------</code></pre>
+<p>It is the comparison of treatment’s effect on the potential outcomes, for the treated. That’s why in margins, we have subpop(mbsmoke) option.</p>
+</div>
+</div>
+<div id="inverse-probability-weighting-ipw" class="section level2">
+<h2>Inverse Probability Weighting (IPW)</h2>
+<p>IPW estimators have two steps. The first step is to estimate the treatment model, that is, treatment as a function of some covariates. Usually a logit model is used. Then the probability of treatment is estimated. In the second stage, the inverse probability is used as weights to compute the outcome difference between treatment versus control units.</p>
+<p>These steps produce consistent estimates of the effect parameters because the treatment is assumed to be independent of the potential outcomes after conditioning on the covariates.</p>
+<p>We can manually conduct the two steps, but the nice thing about using Stata’s teffects is that it takes account of the noise of estimating probability in the first step when calculating standard errors in the second step.</p>
+<div id="example-1" class="section level3">
+<h3>example</h3>
+<pre class="stata"><code>clear
+webuse cattaneo2
+teffects ipw (bweight) (mbsmoke mmarried c.mage##c.mage fbaby medu, probit)
+probit mbsmoke mmarried c.mage##c.mage fbaby medu
+predict ps
+replace ps = 1/ps if mbsmoke==1
+replace ps = 1/(1-ps) if mbsmoke==0
+reg bweight mbsmoke [pweight=ps]</code></pre>
+<pre><code>## 
+## . clear
+## 
+## . webuse cattaneo2
+## (Excerpt from Cattaneo (2010) Journal of Econometrics 155: 138-154)
+## 
+## . teffects ipw (bweight) (mbsmoke mmarried c.mage##c.mage fbaby medu, probit)
+## 
+## Iteration 0:   EE criterion =  4.621e-21  
+## Iteration 1:   EE criterion =  9.606e-26  
+## 
+## Treatment-effects estimation                    Number of obs     =      4,642
+## Estimator      : inverse-probability weights
+## Outcome model  : weighted mean
+## Treatment model: probit
+## ------------------------------------------------------------------------------
+##              |               Robust
+##      bweight |      Coef.   Std. Err.      z    P&gt;|z|     [95% Conf. Interval]
+## -------------+----------------------------------------------------------------
+## ATE          |
+##      mbsmoke |
+##     (smoker  |
+##          vs  |
+##  nonsmoker)  |  -230.6886   25.81524    -8.94   0.000    -281.2856   -180.0917
+## -------------+----------------------------------------------------------------
+## POmean       |
+##      mbsmoke |
+##   nonsmoker  |   3403.463   9.571369   355.59   0.000     3384.703    3422.222
+## ------------------------------------------------------------------------------
+## 
+## . probit mbsmoke mmarried c.mage##c.mage fbaby medu
+## 
+## Iteration 0:   log likelihood = -2230.7484  
+## Iteration 1:   log likelihood = -2042.6734  
+## Iteration 2:   log likelihood = -2040.5088  
+## Iteration 3:   log likelihood = -2040.5061  
+## Iteration 4:   log likelihood = -2040.5061  
+## 
+## Probit regression                               Number of obs     =      4,642
+##                                                 LR chi2(5)        =     380.48
+##                                                 Prob &gt; chi2       =     0.0000
+## Log likelihood = -2040.5061                     Pseudo R2         =     0.0853
+## 
+## ------------------------------------------------------------------------------
+##      mbsmoke |      Coef.   Std. Err.      z    P&gt;|z|     [95% Conf. Interval]
+## -------------+----------------------------------------------------------------
+##     mmarried |  -.6484821   .0526991   -12.31   0.000    -.7517705   -.5451938
+##         mage |   .1744327   .0352437     4.95   0.000     .1053562    .2435092
+##              |
+##       c.mage#|
+##       c.mage |  -.0032559   .0006462    -5.04   0.000    -.0045224   -.0019894
+##              |
+##        fbaby |  -.2175962   .0491066    -4.43   0.000    -.3138433    -.121349
+##         medu |  -.0863631   .0098692    -8.75   0.000    -.1057064   -.0670198
+##        _cons |  -1.558255   .4511589    -3.45   0.001     -2.44251       -.674
+## ------------------------------------------------------------------------------
+## 
+## . predict ps
+## (option pr assumed; Pr(mbsmoke))
+## 
+## . replace ps = 1/ps if mbsmoke==1
+## (864 real changes made)
+## 
+## . replace ps = 1/(1-ps) if mbsmoke==0
+## (3,778 real changes made)
+## 
+## . reg bweight mbsmoke [pweight=ps]
+## (sum of wgt is 9,193.96990537643)
+## 
+## Linear regression                               Number of obs     =      4,642
+##                                                 F(1, 4640)        =      79.08
+##                                                 Prob &gt; F          =     0.0000
+##                                                 R-squared         =     0.0389
+##                                                 Root MSE          =     573.36
+## 
+## ------------------------------------------------------------------------------
+##              |               Robust
+##      bweight |      Coef.   Std. Err.      t    P&gt;|t|     [95% Conf. Interval]
+## -------------+----------------------------------------------------------------
+##      mbsmoke |  -230.6886   25.94182    -8.89   0.000    -281.5469   -179.8303
+##        _cons |   3403.463   9.616992   353.90   0.000     3384.609    3422.317
+## ------------------------------------------------------------------------------</code></pre>
+<p>In the above example, we run teffects ipw and then manually replicate the two steps. The only thing different is the standard error for the treatment effect.</p>
+</div>
+</div>
+<div id="doubly-robust-estimators" class="section level2">
+<h2>Doubly robust estimators</h2>
+<p>RA estimator estimates the outcome directly, IPW esitmates the treatment assignment. There is also a group of estimators called doubly-robust estimators. They estimate both stages, and only require one of these stages to be correctly specified.</p>
+<p>Stata implemented the augmented-IPW (AIPW) combination proposed by Robins and Rotnitzky (1995) and the IPW-regression-adjust ment (IPWRA) combination proposed by Wooldridge (2010).</p>
+<p>The AIPW estimator augments the IPW estimator with a correction term. The term removes the bias if the treatment model is wrong and the outcome model is correct, and the term goes to 0 if the treatment model is correct and the outcome model is wrong.</p>
+<p>The IPWRA estimator uses IPW probability weights when performing RA. The weights do not affect the accuracy of the RA estimator if the treatment model is wrong and the outcome model is correct. The weights correct the RA estimator if the treatment model is correct and the outcome model is wrong.</p>
+<p>I have not figured out how to do these two commands manually. So we’ll just run two examples of how they are used.</p>
+<pre class="stata"><code>clear
+webuse cattaneo2
+teffects ipwra (bweight mmarried mage prenatal1 fbaby)  (mbsmoke mmarried mage prenatal1 fbaby)
+teffects aipw (bweight mmarried mage prenatal1 fbaby) (mbsmoke mmarried mage prenatal1 fbaby)</code></pre>
+<pre><code>## 
+## . clear
+## 
+## . webuse cattaneo2
+## (Excerpt from Cattaneo (2010) Journal of Econometrics 155: 138-154)
+## 
+## . teffects ipwra (bweight mmarried mage prenatal1 fbaby)  (mbsmoke mmarried mag
+## &gt; e prenatal1 fbaby)
+## 
+## Iteration 0:   EE criterion =  1.034e-21  
+## Iteration 1:   EE criterion =  6.631e-26  
+## 
+## Treatment-effects estimation                    Number of obs     =      4,642
+## Estimator      : IPW regression adjustment
+## Outcome model  : linear
+## Treatment model: logit
+## ------------------------------------------------------------------------------
+##              |               Robust
+##      bweight |      Coef.   Std. Err.      z    P&gt;|z|     [95% Conf. Interval]
+## -------------+----------------------------------------------------------------
+## ATE          |
+##      mbsmoke |
+##     (smoker  |
+##          vs  |
+##  nonsmoker)  |  -238.7679   24.38353    -9.79   0.000    -286.5587    -190.977
+## -------------+----------------------------------------------------------------
+## POmean       |
+##      mbsmoke |
+##   nonsmoker  |   3402.851   9.538741   356.74   0.000     3384.155    3421.546
+## ------------------------------------------------------------------------------
+## 
+## . teffects aipw (bweight mmarried mage prenatal1 fbaby) (mbsmoke mmarried mage 
+## &gt; prenatal1 fbaby)
+## 
+## Iteration 0:   EE criterion =  1.917e-22  
+## Iteration 1:   EE criterion =  3.005e-27  
+## 
+## Treatment-effects estimation                    Number of obs     =      4,642
+## Estimator      : augmented IPW
+## Outcome model  : linear by ML
+## Treatment model: logit
+## ------------------------------------------------------------------------------
+##              |               Robust
+##      bweight |      Coef.   Std. Err.      z    P&gt;|z|     [95% Conf. Interval]
+## -------------+----------------------------------------------------------------
+## ATE          |
+##      mbsmoke |
+##     (smoker  |
+##          vs  |
+##  nonsmoker)  |  -239.0294    24.2524    -9.86   0.000    -286.5632   -191.4955
+## -------------+----------------------------------------------------------------
+## POmean       |
+##      mbsmoke |
+##   nonsmoker  |   3402.839   9.538926   356.73   0.000     3384.143    3421.535
+## ------------------------------------------------------------------------------</code></pre>
+</div>
+</div>
+<div id="matching" class="section level1">
+<h1>Matching</h1>
+<p>First let’s emphasize that matching usually does not deal with endogenous treatment problem. Some people have the wrong impression that matching resolves the endogeneity problem, but in fact it only helps for selection on observables. If you have selection on unobservables, or unobserved confounders, matching does not help.</p>
+<p>Matching aims to blance the distribution of covariates in the treatment and control groups. That’s all it does, to make comparisons between apples, not apples to oranges. In that sense, regression does that too. We use regression to adjust for differences between treatment and control. However, regression sometimes rely on extrapolation too much, when data do not overlap between treatment and control. It’s not that matching can do magic on non-overlapping data, but it can make it clear that how bad the non-overlapping problem is. Simply running regression blindly will not have the researchers realize the non-overlapping problem. Combining matching with regression is probably a better idea. That is, running regression on matched sample is recommended.</p>
+<p>Here we introduced a few popular matching matheds implemented in Stata, namely nnmatch, psmatch, and cem.</p>
+<div id="propensity-score-matching" class="section level2">
+<h2>Propensity score matching</h2>
+<p>The ideal situation of matching is exact matching; that is, treatment and control units can match to each other with exactly the same value of all covariates. This is often not possible, as the number of covariates increase and if they are not discrete. In high dimention (many covariates to match), it is very hard or even impossible to find exact matches. Therefore, how to reduce from high dimension to low dimenstion is key. Rosenbaum and Rubin 1983 proved that propensity score provides the one-dimension representation of high-dimension of covariates. Therefore, we only need to find matches based on propensity scores.</p>
+<p>In Stata, teffects psmatch can do estimation after matching on propensity scores. Stata’s psmatch2 command has been popular for propensity score matching too. The nice thing of these commands is that it does two steps in one command: first it estimate the logit or probit model for propensity score, then match the treatment and control groups, then estimate the outcome equation on matched sample. The standard errors are correct based on all these steps. If we do this manually, standard errors will not be correct.</p>
+<div id="example-2" class="section level3">
+<h3>example</h3>
+<pre class="stata"><code>clear
+webuse cattaneo2
+teffects psmatch (bweight) (mbsmoke mmarried c.mage##c.mage fbaby medu), atet
+psmatch2 mbsmoke mmarried c.mage##c.mage fbaby medu, logit ties
+reg bweight mbsmoke   [aweight=_weight]
+</code></pre>
+<pre><code>## 
+## . clear
+## 
+## . webuse cattaneo2
+## (Excerpt from Cattaneo (2010) Journal of Econometrics 155: 138-154)
+## 
+## . teffects psmatch (bweight) (mbsmoke mmarried c.mage##c.mage fbaby medu), atet
+## 
+## Treatment-effects estimation                   Number of obs      =      4,642
+## Estimator      : propensity-score matching     Matches: requested =          1
+## Outcome model  : matching                                     min =          1
+## Treatment model: logit                                        max =         74
+## ------------------------------------------------------------------------------
+##              |              AI Robust
+##      bweight |      Coef.   Std. Err.      z    P&gt;|z|     [95% Conf. Interval]
+## -------------+----------------------------------------------------------------
+## ATET         |
+##      mbsmoke |
+##     (smoker  |
+##          vs  |
+##  nonsmoker)  |  -236.7848   26.57789    -8.91   0.000    -288.8765    -184.693
+## ------------------------------------------------------------------------------
+## 
+## . psmatch2 mbsmoke mmarried c.mage##c.mage fbaby medu, logit ties
+## 
+## Logistic regression                             Number of obs     =      4,642
+##                                                 LR chi2(5)        =     375.00
+##                                                 Prob &gt; chi2       =     0.0000
+## Log likelihood = -2043.2504                     Pseudo R2         =     0.0841
+## 
+## ------------------------------------------------------------------------------
+##      mbsmoke |      Coef.   Std. Err.      z    P&gt;|z|     [95% Conf. Interval]
+## -------------+----------------------------------------------------------------
+##     mmarried |  -1.145706   .0918962   -12.47   0.000     -1.32582    -.965593
+##         mage |    .321518   .0638472     5.04   0.000     .1963798    .4466563
+##              |
+##       c.mage#|
+##       c.mage |  -.0060368   .0011849    -5.09   0.000    -.0083592   -.0037144
+##              |
+##        fbaby |  -.3864258   .0880445    -4.39   0.000    -.5589898   -.2138618
+##         medu |  -.1420833   .0173215    -8.20   0.000    -.1760328   -.1081338
+##        _cons |  -2.950915   .8102504    -3.64   0.000    -4.538976   -1.362853
+## ------------------------------------------------------------------------------
+## 
+## . reg bweight mbsmoke   [aweight=_weight]
+## (sum of wgt is 1,728)
+## 
+##       Source |       SS           df       MS      Number of obs   =     3,671
+## -------------+----------------------------------   F(1, 3669)      =    151.87
+##        Model |    51455506         1    51455506   Prob &gt; F        =    0.0000
+##     Residual |  1.2431e+09     3,669  338808.237   R-squared       =    0.0397
+## -------------+----------------------------------   Adj R-squared   =    0.0395
+##        Total |  1.2945e+09     3,670  352736.492   Root MSE        =    582.07
+## 
+## ------------------------------------------------------------------------------
+##      bweight |      Coef.   Std. Err.      t    P&gt;|t|     [95% Conf. Interval]
+## -------------+----------------------------------------------------------------
+##      mbsmoke |  -236.7848   19.21387   -12.32   0.000    -274.4557   -199.1138
+##        _cons |   3374.444   13.58626   248.37   0.000     3347.807    3401.082
+## ------------------------------------------------------------------------------
+## 
+## .</code></pre>
+<p>In the above example, suppose we are interesting in mbsmoke’s effect on bweight. If we match smoking mothers with non-smoking mothers, by age, first babe, and education, the the teffects psmatch gives us the treatment effect on the treated. We can do this in two steps. First, by psmatch2 we generate _weight, which is a number for how many times a control unit is used to match to a treatment unit. Notice that to match teffects result, we use logit, and ties option. By default, teffects psmatch includes all ties (control units that have the same propensity scores that are close enough), but psmatch2 by default only include one. Then in the second step, we run a regression with _weight as the weight. Notice the standard errors will differ. We should use the standard errors reported in teffects.</p>
+</div>
+</div>
+<div id="nearest-neighbor-matching" class="section level2">
+<h2>Nearest neighbor matching</h2>
+<p>Stata has the nnmatch option for teffects. nnmatch by default uses Mahalanobis distance, it can also specify to have exact matching. The advantage is this is nonparametric.</p>
+<pre class="stata"><code>clear
+webuse cattaneo2
+teffects nnmatch  (bweight mmarried mage fbaby medu) (mbsmoke) , atet
+teffects psmatch (bweight) (mbsmoke mmarried mage fbaby medu), atet
+</code></pre>
+<pre><code>## 
+## . clear
+## 
+## . webuse cattaneo2
+## (Excerpt from Cattaneo (2010) Journal of Econometrics 155: 138-154)
+## 
+## . teffects nnmatch  (bweight mmarried mage fbaby medu) (mbsmoke) , atet
+## 
+## Treatment-effects estimation                   Number of obs      =      4,642
+## Estimator      : nearest-neighbor matching     Matches: requested =          1
+## Outcome model  : matching                                     min =          1
+## Distance metric: Mahalanobis                                  max =         74
+## ------------------------------------------------------------------------------
+##              |              AI Robust
+##      bweight |      Coef.   Std. Err.      z    P&gt;|z|     [95% Conf. Interval]
+## -------------+----------------------------------------------------------------
+## ATET         |
+##      mbsmoke |
+##     (smoker  |
+##          vs  |
+##  nonsmoker)  |  -239.2433   25.68524    -9.31   0.000    -289.5854   -188.9011
+## ------------------------------------------------------------------------------
+## 
+## . teffects psmatch (bweight) (mbsmoke mmarried mage fbaby medu), atet
+## 
+## Treatment-effects estimation                   Number of obs      =      4,642
+## Estimator      : propensity-score matching     Matches: requested =          1
+## Outcome model  : matching                                     min =          1
+## Treatment model: logit                                        max =         74
+## ------------------------------------------------------------------------------
+##              |              AI Robust
+##      bweight |      Coef.   Std. Err.      z    P&gt;|z|     [95% Conf. Interval]
+## -------------+----------------------------------------------------------------
+## ATET         |
+##      mbsmoke |
+##     (smoker  |
+##          vs  |
+##  nonsmoker)  |   -245.711   26.38675    -9.31   0.000    -297.4281   -193.9939
+## ------------------------------------------------------------------------------
+## 
+## .</code></pre>
+<p>Notice the specification is different in these two models.</p>
+</div>
+<div id="coarsened-exact-matching-cem" class="section level2">
+<h2>Coarsened Exact Matching (CEM)</h2>
+<p>CEM is not part of teffects. But Stata does have cem package implemented.</p>
+<pre class="stata"><code>clear
+webuse cattaneo2
+cem  mmarried mage fbaby medu, treatment(mbsmoke)
+reg bweight mbsmoke   [aweight=cem_weights]
+</code></pre>
+<pre><code>## 
+## . clear
+## 
+## . webuse cattaneo2
+## (Excerpt from Cattaneo (2010) Journal of Econometrics 155: 138-154)
+## 
+## . cem  mmarried mage fbaby medu, treatment(mbsmoke)
+## 
+## Matching Summary:
+## -----------------
+## Number of strata: 274
+## Number of matched strata: 135
+## 
+##               0     1
+##       All  3778   864
+##   Matched  3421   827
+## Unmatched   357   Multivariate L1 distance: .25424705
+## 
+## Univariate imbalance:
+## 
+##                L1     mean      min      25%      50%      75%      max
+## mmarried  6.4e-15  8.4e-15        0        0        0        0        0
+##     mage   .04955  -.00887        1        0        1        0       -2
+##    fbaby  6.1e-15  6.1e-15        0        0        0        0        0
+##     medu   .03809  -.03316        0        0        0        0        0
+## 
+## . reg bweight mbsmoke   [aweight=cem_weights]
+## (sum of wgt is 4,248.00000000005)
+## 
+##       Source |       SS           df       MS      Number of obs   =     4,248
+## -------------+----------------------------------   F(1, 4246)      =    121.12
+##        Model |  40566772.9         1  40566772.9   Prob &gt; F        =    0.0000
+##     Residual |  1.4221e+09     4,246  334928.257   R-squared       =    0.0277
+## -------------+----------------------------------   Adj R-squared   =    0.0275
+##        Total |  1.4627e+09     4,247   344401.26   Root MSE        =    578.73
+## 
+## ------------------------------------------------------------------------------
+##      bweight |      Coef.   Std. Err.      t    P&gt;|t|     [95% Conf. Interval]
+## -------------+----------------------------------------------------------------
+##      mbsmoke |  -246.8017   22.42533   -11.01   0.000    -290.7671   -202.8364
+##        _cons |   3383.394   9.894625   341.94   0.000     3363.996    3402.793
+## ------------------------------------------------------------------------------
+## 
+## .</code></pre>
+<p>In the above example, we use CEM on the same covariates, then apply weights in the final regression. The disandvantage is that we have not accounted for the noise in calculating those weights.</p>
+</div>
+</div>
+
+    </div>
+  </article>
+
+  
+
+
+</main>
+
+      <footer class="footer">
+        <ul class="footer-links">
+          <li>
+            <a href="/index.xml" type="application/rss+xml" target="_blank">RSS feed</a>
+          </li>
+          <li>
+            <a href="https://gohugo.io/" class="footer-links-kudos">Made with <img src="/images/hugo-logo.png" width="22" height="22"></a>
+          </li>
+        </ul>
+      </footer>
+
+    </div>
+    
+
+
+
+<script src="//cdn.bootcss.com/highlight.js/9.11.0/highlight.min.js"></script>
+
+
+
+<script src="//cdn.bootcss.com/highlight.js/9.11.0/languages/r.min.js"></script>
+<script src="//cdn.bootcss.com/highlight.js/9.11.0/languages/yaml.min.js"></script>
+<script>hljs.configure({languages: []}); hljs.initHighlightingOnLoad();</script>
+
+
+
+    
+
+    
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+	(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+	m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+	})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+	ga('create', 'UA-106731399-1', 'auto');
+	
+	ga('send', 'pageview');
+}
+</script>
+
+  </body>
+</html>
+

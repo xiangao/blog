@@ -6,10 +6,19 @@
     <description>Recent content in Posts on A Hugo website</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Thu, 07 Dec 2017 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Thu, 10 Jan 2019 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/post/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Treatment effects and matching</title>
+      <link>/2019/01/10/treatment-effects-with-matching/</link>
+      <pubDate>Thu, 10 Jan 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/2019/01/10/treatment-effects-with-matching/</guid>
+      <description>Treatment effects in observational studies Despite the popularity of randomized experiements in economics nowadays, most situations we have observational data in economic studies. One reason is experiemnts are expensive; the other reason is that sometimes it is simply not feasible to have experiments. If we have observational data, and we’d like to draw causal conclusions, then we have a few different situations. The worse situation is that we have an endogenous treatement.</description>
+    </item>
     
     <item>
       <title>Interaction term in a non-linear model</title>
