@@ -19,10 +19,10 @@ Recently Manchester City beat Liverpool 2-1 on Jan 3.  I was pleased.  My favori
 Fortunately we have a data set built in to the R package "engsoccerdata".  Let's use it to find out.
 
 ```{r}
-library(tidyverse)
-library(engsoccerdata)
-library(lubridate)
-library(scales)
+library(tidyverse, quietly = TRUE)
+library(engsoccerdata, quietly = TRUE)
+library(lubridate, quietly = TRUE)
+library(scales, quietly = TRUE)
 ```
 
 First let's see what's in it?  
@@ -198,7 +198,7 @@ We see top 4 teams are all getting more dominating.  The bottom ones (lower than
 
 Now we turn to the question:  what's the points per match for the champions against top 4 (the other top 3, actually), vs against other teams?  Are there situations they actually win more often against their title contenders?  
 
-```{r fig1, fig.height = 6, fig.width = 12, fig.align = "center"}
+```{r fig1, fig.height = 7, fig.width = 14, fig.align = "center"}
 team_rank <- ranked %>%
   select(Season, team, rank)
 
@@ -254,7 +254,7 @@ champs_points %>%
 We see most cases points are higher if opponents are not top 4.  But there are exceptions.  Everton in 1919, Aston Villa in 1980 and Manchester United in 2008 have average points lower than 1, meaning on average they lose to the other top 3 opponents, but the winning percentage is much higher against other opponents.  
 
 Now we label those teams who have a higher winning percentage against other top 3 teams vs. lower ranked teams:
-```{r fig2, fig.height = 6, fig.width = 12, fig.align = "center"}
+```{r fig2, fig.height = 7, fig.width = 14, fig.align = "center"}
 
 champs_points %>%
   arrange(Season, team, oppo_top4) %>%
