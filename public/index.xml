@@ -6,10 +6,19 @@
     <description>Recent content on A Hugo website</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Thu, 10 Jan 2019 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Thu, 17 Jan 2019 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Premier League Soccer</title>
+      <link>/2019/01/17/soccer-epl/</link>
+      <pubDate>Thu, 17 Jan 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/2019/01/17/soccer-epl/</guid>
+      <description>Recently Manchester City beat Liverpool 2-1 on Jan 3. I was pleased. My favorite team is Arsenal in English Premier League (EPL), City is the second favorite. My friend, who is a Liverpool fan, argued that championship was never decided by the head-to-head matches between title contenders. I was like, “Really?”. If a team wins consistently over weaker teams, theoretically they could win the title, even if they lost most of their head-to-head games against other top contenders.</description>
+    </item>
     
     <item>
       <title>Treatment effects and matching</title>
@@ -121,6 +130,15 @@ I used R’s packages “Rwordseg” to get tokens from the original text.</desc
       
       <guid>/about/</guid>
       <description>This is a blog site for mostly statistical blogs. I am a statistician at HBS My linkedin page.</description>
+    </item>
+    
+    <item>
+      <title>Treatment effects and matching</title>
+      <link>/1/01/01/treatment-effects-with-matching/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/1/01/01/treatment-effects-with-matching/</guid>
+      <description>Treatment effects in observational studies Despite the popularity of randomized experiements in economics nowadays, most situations we have observational data in economic studies. One reason is experiemnts are expensive; the other reason is that sometimes it is simply not feasible to have experiments. If we have observational data, and we’d like to draw causal conclusions, then we have a few different situations. The worse situation is that we have an endogenous treatement.</description>
     </item>
     
   </channel>

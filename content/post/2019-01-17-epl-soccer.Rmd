@@ -1,0 +1,290 @@
+---
+title: Premier League Soccer
+subtitle: Do you have win head-to-head matches to win a championship?
+author: Xiang Ao
+date: '2019-01-17'
+slug: soccer-epl
+categories:
+  - R
+tags:
+  - R 
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Recently Manchester City beat Liverpool 2-1 on Jan 3.  I was pleased.  My favorite team is Arsenal in English Premier League (EPL), City is the second favorite.  My friend, who is a Liverpool fan, argued that championship was never decided by the head-to-head matches between title contenders.  I was like, "Really?".  If a team wins consistently over weaker teams, theoretically they could win the title, even if they lost most of their head-to-head games against other top contenders.  But has that happened before?  
+
+Fortunately we have a data set built in to the R package "engsoccerdata".  Let's use it to find out.
+
+```{r}
+library(tidyverse)
+library(engsoccerdata)
+library(lubridate)
+library(scales)
+```
+
+First let's see what's in it?  
+
+```{r}
+data(england)
+england %>%
+  str()
+
+england <- england %>%
+  mutate(decade=10*(Season %/% 10))
+
+tier1 <- england %>%
+  filter(tier==1)
+```
+
+It seems to have data back to 1880.  Let's keep data for tier=1, which is nowadays called Premier League.  
+
+```{r}
+england %>%
+  count(goaldif, sort=TRUE)
+
+tier1 <- england %>%
+  filter(tier==1)
+```
+
+In the data set, we have hgoal (home goal), vgoal (visitor goal), goaldif (difference between the two).  Let's take a look at how goal difference evolve over time, for EPL.
+
+```{r}
+## this is to group by Season and make it long format, getting goals over time
+by_season <- tier1 %>%
+  group_by(Season) %>%
+  summarize_at(vars(hgoal, vgoal, goaldif),mean) %>%
+  gather(goaltype, value, -Season) %>%
+  mutate(decade=10*(Season %/% 10)) 
+
+by_season %>%  
+  ggplot(aes(Season,value, color=goaltype))+
+  geom_line() +
+  expand_limits(y=0) +
+  scale_x_continuous(breaks=seq(1890,2010,10)) +
+      labs(x = "Season",
+       y = "Goal",
+       title = "Number of goals over time", 
+      color = "goal types")
+```
+The tier 1 league was suspended for four seasons for WWI and seven for WWII, that's why we see some straight lines during those years.
+
+It is interesting to see goal difference has a clear trend of going down.  Why does the home advantage decrease over the past 130 years?  Hmm...
+
+Which teams show up most in EPL?
+
+```{r}
+## this is to lump the home teams into top five teams by appearance
+topteams <- tier1 %>%  
+  group_by(home) %>%
+  mutate(num=n()) %>%
+  ungroup() %>%
+  mutate(topteams=fct_lump(home, 5)) %>%
+  group_by(topteams, Season) %>%
+  summarize(goaldif=mean(goaldif))
+
+topteams %>%
+  filter(topteams != "Other") %>%
+  ggplot(aes(Season,goaldif, color=topteams))+
+  geom_smooth() +
+  geom_point() +
+  expand_limits(y=0) +
+  scale_x_continuous(breaks=seq(1890,2010,10)) +
+      labs(x = "Season",
+       y = "Goal differentials",
+       title = "Goal differentials per match for the teams apprear most often")
+```
+
+Now the question:  does the team won most of top 4 head-to-head wins the league?
+
+```{r}
+
+tier1 %>%
+  head()
+
+# first calculate score for each season
+# this is to make a long format for tier 1 data
+tier1_gathered <- tier1 %>%
+  select(Date, Season, home, visitor, hgoal, vgoal, result) %>%
+  gather(key=homecourt, value=team, -Date, -Season, -hgoal, -vgoal, -result) 
+
+## calculate rank for each season
+ranked <- tier1_gathered %>%
+  mutate(goal=ifelse(homecourt=="home", hgoal, vgoal)) %>% 
+  mutate(ogoal=ifelse(homecourt=="home", vgoal, hgoal)) %>% 
+  select(-hgoal, -vgoal) %>% 
+  mutate(points=case_when(
+    goal>ogoal ~ 3,
+    goal<ogoal ~ 0,
+    goal==ogoal ~ 1
+    )) %>% 
+  arrange(Date) %>%
+  group_by(team, Season) %>%
+  arrange(Date) %>%
+  mutate(points_total=cumsum(points),  goaldiff=goal-ogoal, points_season=sum(points)) %>%  
+  group_by(Season, team) %>% 
+  summarise(points_season=sum(points), goal_season=sum(goal), ogoal_season=sum(ogoal), num_matches=n()) %>% 
+  mutate(goal_diff=goal_season-ogoal_season) %>%
+  group_by(Season) %>%
+  arrange(Season, -points_season, -goal_diff) %>%
+  mutate(rank=rank(desc(points_season),ties.method = 'first')) %>% 
+  ungroup() 
+```
+How does the champions' goal difference per game change over time, and points per game?
+
+```{r}
+
+champions <- ranked %>%
+  filter(rank==1) %>%
+  group_by(Season) %>%
+  mutate(points_match=points_season/num_matches, goal_diff_match=goal_diff/num_matches)
+
+champions %>%
+  ggplot(aes(Season,goal_diff_match)) +
+  geom_point() +
+  expand_limits(y=0)+
+  geom_smooth() +
+  scale_x_continuous(breaks=seq(1890,2010,10)) +
+      labs(x = "Season",
+       y = "Point differentials",
+       title = "Point differentials per match for the champions")
+
+champions %>%
+  ggplot(aes(Season,points_match)) +
+  geom_point() +
+  expand_limits(y=0)+
+  geom_smooth() +
+  scale_x_continuous(breaks=seq(1890,2010,10)) +
+      labs(x = "Season",
+       y = "Points per match",
+       title = "Points per match for the champions")
+```
+
+For the champions, we see the trend of points per game and goal difference per game is actually going up after 1920's, opposite to the trend for average numbers across all teams each season.  It seems the best teams are getting more dominating.  An obvious explanation is the wealth concentration on the largest clubs.
+
+How about other teams?  
+
+```{r}
+
+ranked %>%
+  filter(rank<5) %>%
+    ggplot(aes(Season,goal_diff, color=as.factor(rank)))+
+  geom_smooth() +
+  geom_point() +
+  expand_limits(y=0) +
+  scale_x_continuous(breaks=seq(1890,2010,10)) +
+       labs(x = "Season",
+       y = "Goal differentials per season",
+       title = "Goal differentials for the top teams", 
+       color = "ranking")
+
+ranked %>%
+  filter(rank>18) %>%
+  ggplot(aes(Season,goal_diff, color=as.factor(rank)))+
+  geom_smooth() +
+  geom_point() +
+  expand_limits(y=0) +
+  scale_x_continuous(breaks=seq(1890,2010,10)) +
+      labs(x = "Season",
+       y = "Goal differentials per season",
+       title = "Goal differentials for the worst teams", 
+       color = "ranking")
+```
+
+We see top 4 teams are all getting more dominating.  The bottom ones (lower than 18) are getting worse.  The number of teams have changed over the years, from 1992, the number of team is 20 in the EPL.
+
+
+Now we turn to the question:  what's the points per match for the champions against top 4 (the other top 3, actually), vs against other teams?  Are there situations they actually win more often against their title contenders?  
+
+```{r}
+team_rank <- ranked %>%
+  select(Season, team, rank)
+
+tier1_merge <- tier1 %>%
+  left_join(team_rank, by=c("Season"="Season", "home"="team")) %>%
+  mutate(home_rank=rank) %>%
+  select(-rank) %>%
+  left_join(team_rank, by=c("Season"="Season", "visitor"="team")) %>%
+  mutate(visitor_rank=rank) %>%
+  select(-rank) %>%
+  tbl_df()
+
+tier1_gathered2 <- tier1_merge %>%
+  select(Date, Season, home, visitor, hgoal, vgoal, result, home_rank, visitor_rank) %>%
+  gather(key=homecourt, value=team, -Date, -Season, -hgoal, -vgoal, -result, -home_rank, -visitor_rank) 
+
+## a data set with Season, team, match level, with opponents status.
+ranked2 <- tier1_gathered2 %>%
+  mutate(goal=ifelse(homecourt=="home", hgoal, vgoal)) %>% 
+  mutate(ogoal=ifelse(homecourt=="home", vgoal, hgoal)) %>% 
+  mutate(team_rank=ifelse(homecourt=="home", home_rank, visitor_rank)) %>% 
+  mutate(oppo_rank=ifelse(homecourt=="home", visitor_rank, home_rank)) %>% 
+  select(-hgoal, -vgoal, -home_rank, -visitor_rank) %>% 
+  mutate(points=case_when(
+    goal>ogoal ~ 3,
+    goal<ogoal ~ 0,
+    goal==ogoal ~ 1
+    )) %>% 
+  arrange(Date) %>%
+  mutate(team_top4=team_rank<5, oppo_top4=oppo_rank<5, champ=team_rank==1) %>%
+  group_by(Season, team, oppo_top4) %>%
+  mutate(points_top4=sum(points)) %>%
+  arrange(Season, team, oppo_top4)
+
+champs_points <- ranked2 %>%
+  filter(team_rank==1) %>%
+  group_by(Season, team, oppo_top4) %>% 
+  summarise(points_season=sum(points), goal_season=sum(goal), ogoal_season=sum(ogoal), num_matches=n(), points_top4_season=mean(points_top4)) %>% 
+  mutate(points_top4_match=points_top4_season/num_matches) 
+
+champs_points %>%
+  ggplot(aes(Season,points_top4_match, color=as.factor(oppo_top4)))+
+  geom_smooth() +
+  geom_point() +
+  expand_limits(y=0) +
+  scale_x_continuous(breaks=seq(1890,2010,10)) +
+  geom_text(aes(label = team), vjust = 1, hjust = 1, check_overlap = TRUE) +
+      labs(x = "Season",
+       y = "Points per match",
+       title = "Average points per game for the champions", 
+       color = "Against top contenders")
+```
+
+We see most cases points are higher if opponents are not top 4.  But there are exceptions.  Everton in 1919, Aston Villa in 1980 and Manchester United in 2008 have average points lower than 1, meaning on average they lose to the other top 3 opponents, but the winning percentage is much higher against other opponents.  
+
+Now we label those teams who have a higher winning percentage against other top 3 teams vs. lower ranked teams:
+```{r}
+
+champs_points %>%
+  arrange(Season, team, oppo_top4) %>%
+  group_by(Season, team) %>%
+  mutate(flag=points_top4_match>lag(points_top4_match)) %>%
+  mutate(flag2=sum(flag, na.rm=TRUE)) %>%
+  ggplot(aes(Season,points_top4_match, color=as.factor(flag2)))+
+  geom_point() +
+  expand_limits(y=0) +
+  scale_x_continuous(breaks=seq(1890,2010,10)) +
+  geom_text(aes(label = team), vjust = 1, hjust = 1, check_overlap = TRUE) +
+    labs(x = "Season",
+       y = "Points per match",
+       title = "Average points per game for the champions", 
+       color = "Score more against top contenders")
+```
+
+There are not so many champions won more points from top contenders than other teams on average, but there are a few.  Sunderland had won all games against top 4 contenders in 1892.  
+
+Overall, a team wins championship by winning bother situations.  When they play against top contenders, at least they have 50% chance of winning.  The expected score will be 4/3 if we consider equal chance of winning, losing, or tieing.  Any champion below 4/3 against top contenders is under-performing.  But acationally they won championships after losing to top contenders.  Such as Mancheseter City in 2008.
+
+Now let's see how the toughness of a match impact the probability of winning.
+
+```{r}
+library(lfe)
+m1 <- felm(points ~ oppo_rank + oppo_top4 + homecourt | team | 0 | team, data=ranked2)
+summary(m1)
+```
+
+This is a fixed effect model on teams, with clustered standard error on teams.  It shows opponent's rank has a negative effect.  If you are playing a team who is ranked 22, you are getting .4 point higher than if you play against a no.12 team.  Home court advantage is big:  if you are playing at home, on average you are scoring .8 more points.  If you are playing against top4, on average you score .13 less points.
+
+

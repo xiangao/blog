@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Hugo 0.49" />
+
+
+<title>Premier League Soccer - Do you have win head-to-head matches to win a championship?  - A Hugo website</title>
+<meta property="og:title" content="Premier League Soccer - A Hugo website">
+
+
+
+  
+
+
+
+
+
+
+
+
+<link href='//cdn.bootcss.com/highlight.js/9.11.0/styles/github.min.css' rel='stylesheet' type='text/css' />
+
+
+
+<link rel="stylesheet" href="/css/fonts.css" media="all">
+<link rel="stylesheet" href="/css/main.css" media="all">
+
+
+
+  </head>
+  <body>
+    <div class="wrapper">
+      <header class="header">
+        <nav class="nav">
+  <a href="/" class="nav-logo">
+    <img src="/images/logo.png"
+         width="50"
+         height="50"
+         alt="Logo">
+  </a>
+
+  <ul class="nav-links">
+    
+    <li><a href="/about/">About me</a></li>
+    
+  </ul>
+</nav>
+
+      </header>
+
+
+<main class="content" role="main">
+
+  <article class="article">
+    
+    <span class="article-duration">10 min read</span>
+    
+
+    <h1 class="article-title">Premier League Soccer</h1>
+
+    
+    <span class="article-date">2019/01/17</span>
+    
+
+    <div class="article-content">
+      <p>Recently Manchester City beat Liverpool 2-1 on Jan 3. I was pleased. My favorite team is Arsenal in English Premier League (EPL), City is the second favorite. My friend, who is a Liverpool fan, argued that championship was never decided by the head-to-head matches between title contenders. I was like, “Really?”. If a team wins consistently over weaker teams, theoretically they could win the title, even if they lost most of their head-to-head games against other top contenders. But has that happened before?</p>
+<p>Fortunately we have a data set built in to the R package “engsoccerdata”. Let’s use it to find out.</p>
+<pre class="r"><code>library(tidyverse)</code></pre>
+<pre><code>## ── Attaching packages ───────────────────────────────────────────────────────────────────────────────────────────────────────────── tidyverse 1.2.1 ──</code></pre>
+<pre><code>## ✔ ggplot2 3.1.0     ✔ purrr   0.2.5
+## ✔ tibble  2.0.0     ✔ dplyr   0.7.8
+## ✔ tidyr   0.8.2     ✔ stringr 1.3.1
+## ✔ readr   1.3.0     ✔ forcats 0.3.0</code></pre>
+<pre><code>## ── Conflicts ──────────────────────────────────────────────────────────────────────────────────────────────────────────────── tidyverse_conflicts() ──
+## ✖ dplyr::filter() masks stats::filter()
+## ✖ dplyr::lag()    masks stats::lag()</code></pre>
+<pre class="r"><code>library(engsoccerdata)
+library(lubridate)</code></pre>
+<pre><code>## 
+## Attaching package: &#39;lubridate&#39;</code></pre>
+<pre><code>## The following object is masked from &#39;package:base&#39;:
+## 
+##     date</code></pre>
+<pre class="r"><code>library(scales)</code></pre>
+<pre><code>## 
+## Attaching package: &#39;scales&#39;</code></pre>
+<pre><code>## The following object is masked from &#39;package:purrr&#39;:
+## 
+##     discard</code></pre>
+<pre><code>## The following object is masked from &#39;package:readr&#39;:
+## 
+##     col_factor</code></pre>
+<p>First let’s see what’s in it?</p>
+<pre class="r"><code>data(england)
+england %&gt;%
+  str()</code></pre>
+<pre><code>## &#39;data.frame&#39;:    194040 obs. of  12 variables:
+##  $ Date    : Date, format: &quot;1888-12-15&quot; &quot;1889-01-19&quot; ...
+##  $ Season  : num  1888 1888 1888 1888 1888 ...
+##  $ home    : chr  &quot;Accrington F.C.&quot; &quot;Accrington F.C.&quot; &quot;Accrington F.C.&quot; &quot;Accrington F.C.&quot; ...
+##  $ visitor : chr  &quot;Aston Villa&quot; &quot;Blackburn Rovers&quot; &quot;Bolton Wanderers&quot; &quot;Burnley&quot; ...
+##  $ FT      : chr  &quot;1-1&quot; &quot;0-2&quot; &quot;2-3&quot; &quot;5-1&quot; ...
+##  $ hgoal   : int  1 0 2 5 6 3 1 0 2 2 ...
+##  $ vgoal   : int  1 2 3 1 2 1 2 0 0 1 ...
+##  $ division: chr  &quot;1&quot; &quot;1&quot; &quot;1&quot; &quot;1&quot; ...
+##  $ tier    : num  1 1 1 1 1 1 1 1 1 1 ...
+##  $ totgoal : int  2 2 5 6 8 4 3 0 2 3 ...
+##  $ goaldif : int  0 -2 -1 4 4 2 -1 0 2 1 ...
+##  $ result  : chr  &quot;D&quot; &quot;A&quot; &quot;A&quot; &quot;H&quot; ...</code></pre>
+<pre class="r"><code>england &lt;- england %&gt;%
+  mutate(decade=10*(Season %/% 10))
+
+tier1 &lt;- england %&gt;%
+  filter(tier==1)</code></pre>
+<p>It seems to have data back to 1880. Let’s keep data for tier=1, which is nowadays called Premier League.</p>
+<pre class="r"><code>england %&gt;%
+  count(goaldif, sort=TRUE)</code></pre>
+<pre><code>## # A tibble: 24 x 2
+##    goaldif     n
+##      &lt;int&gt; &lt;int&gt;
+##  1       0 48980
+##  2       1 42902
+##  3       2 28777
+##  4      -1 27398
+##  5       3 15544
+##  6      -2 12492
+##  7       4  6938
+##  8      -3  4525
+##  9       5  2957
+## 10      -4  1370
+## # … with 14 more rows</code></pre>
+<pre class="r"><code>tier1 &lt;- england %&gt;%
+  filter(tier==1)</code></pre>
+<p>In the data set, we have hgoal (home goal), vgoal (visitor goal), goaldif (difference between the two). Let’s take a look at how goal difference evolve over time, for EPL.</p>
+<pre class="r"><code>## this is to group by Season and make it long format, getting goals over time
+by_season &lt;- tier1 %&gt;%
+  group_by(Season) %&gt;%
+  summarize_at(vars(hgoal, vgoal, goaldif),mean) %&gt;%
+  gather(goaltype, value, -Season) %&gt;%
+  mutate(decade=10*(Season %/% 10)) 
+
+by_season %&gt;%  
+  ggplot(aes(Season,value, color=goaltype))+
+  geom_line() +
+  expand_limits(y=0) +
+  scale_x_continuous(breaks=seq(1890,2010,10)) +
+      labs(x = &quot;Season&quot;,
+       y = &quot;Goal&quot;,
+       title = &quot;Number of goals over time&quot;, 
+      color = &quot;goal types&quot;)</code></pre>
+<p><img src="/post/2019-01-17-epl-soccer_files/figure-html/unnamed-chunk-4-1.png" width="672" /> The tier 1 league was suspended for four seasons for WWI and seven for WWII, that’s why we see some straight lines during those years.</p>
+<p>It is interesting to see goal difference has a clear trend of going down. Why does the home advantage decrease over the past 130 years? Hmm…</p>
+<p>Which teams show up most in EPL?</p>
+<pre class="r"><code>## this is to lump the home teams into top five teams by appearance
+topteams &lt;- tier1 %&gt;%  
+  group_by(home) %&gt;%
+  mutate(num=n()) %&gt;%
+  ungroup() %&gt;%
+  mutate(topteams=fct_lump(home, 5)) %&gt;%
+  group_by(topteams, Season) %&gt;%
+  summarize(goaldif=mean(goaldif))
+
+topteams %&gt;%
+  filter(topteams != &quot;Other&quot;) %&gt;%
+  ggplot(aes(Season,goaldif, color=topteams))+
+  geom_smooth() +
+  geom_point() +
+  expand_limits(y=0) +
+  scale_x_continuous(breaks=seq(1890,2010,10)) +
+      labs(x = &quot;Season&quot;,
+       y = &quot;Goal differentials&quot;,
+       title = &quot;Goal differentials per match for the teams apprear most often&quot;)</code></pre>
+<pre><code>## `geom_smooth()` using method = &#39;loess&#39; and formula &#39;y ~ x&#39;</code></pre>
+<p><img src="/post/2019-01-17-epl-soccer_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<p>Now the question: does the team won most of top 4 head-to-head wins the league?</p>
+<pre class="r"><code>tier1 %&gt;%
+  head()</code></pre>
+<pre><code>##         Date Season            home          visitor  FT hgoal vgoal
+## 1 1888-12-15   1888 Accrington F.C.      Aston Villa 1-1     1     1
+## 2 1889-01-19   1888 Accrington F.C. Blackburn Rovers 0-2     0     2
+## 3 1889-03-23   1888 Accrington F.C. Bolton Wanderers 2-3     2     3
+## 4 1888-12-01   1888 Accrington F.C.          Burnley 5-1     5     1
+## 5 1888-10-13   1888 Accrington F.C.     Derby County 6-2     6     2
+## 6 1888-12-29   1888 Accrington F.C.          Everton 3-1     3     1
+##   division tier totgoal goaldif result decade
+## 1        1    1       2       0      D   1880
+## 2        1    1       2      -2      A   1880
+## 3        1    1       5      -1      A   1880
+## 4        1    1       6       4      H   1880
+## 5        1    1       8       4      H   1880
+## 6        1    1       4       2      H   1880</code></pre>
+<pre class="r"><code># first calculate score for each season
+# this is to make a long format for tier 1 data
+tier1_gathered &lt;- tier1 %&gt;%
+  select(Date, Season, home, visitor, hgoal, vgoal, result) %&gt;%
+  gather(key=homecourt, value=team, -Date, -Season, -hgoal, -vgoal, -result) 
+
+## calculate rank for each season
+ranked &lt;- tier1_gathered %&gt;%
+  mutate(goal=ifelse(homecourt==&quot;home&quot;, hgoal, vgoal)) %&gt;% 
+  mutate(ogoal=ifelse(homecourt==&quot;home&quot;, vgoal, hgoal)) %&gt;% 
+  select(-hgoal, -vgoal) %&gt;% 
+  mutate(points=case_when(
+    goal&gt;ogoal ~ 3,
+    goal&lt;ogoal ~ 0,
+    goal==ogoal ~ 1
+    )) %&gt;% 
+  arrange(Date) %&gt;%
+  group_by(team, Season) %&gt;%
+  arrange(Date) %&gt;%
+  mutate(points_total=cumsum(points),  goaldiff=goal-ogoal, points_season=sum(points)) %&gt;%  
+  group_by(Season, team) %&gt;% 
+  summarise(points_season=sum(points), goal_season=sum(goal), ogoal_season=sum(ogoal), num_matches=n()) %&gt;% 
+  mutate(goal_diff=goal_season-ogoal_season) %&gt;%
+  group_by(Season) %&gt;%
+  arrange(Season, -points_season, -goal_diff) %&gt;%
+  mutate(rank=rank(desc(points_season),ties.method = &#39;first&#39;)) %&gt;% 
+  ungroup() </code></pre>
+<p>How does the champions’ goal difference per game change over time, and points per game?</p>
+<pre class="r"><code>champions &lt;- ranked %&gt;%
+  filter(rank==1) %&gt;%
+  group_by(Season) %&gt;%
+  mutate(points_match=points_season/num_matches, goal_diff_match=goal_diff/num_matches)
+
+champions %&gt;%
+  ggplot(aes(Season,goal_diff_match)) +
+  geom_point() +
+  expand_limits(y=0)+
+  geom_smooth() +
+  scale_x_continuous(breaks=seq(1890,2010,10)) +
+      labs(x = &quot;Season&quot;,
+       y = &quot;Point differentials&quot;,
+       title = &quot;Point differentials per match for the champions&quot;)</code></pre>
+<pre><code>## `geom_smooth()` using method = &#39;loess&#39; and formula &#39;y ~ x&#39;</code></pre>
+<p><img src="/post/2019-01-17-epl-soccer_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<pre class="r"><code>champions %&gt;%
+  ggplot(aes(Season,points_match)) +
+  geom_point() +
+  expand_limits(y=0)+
+  geom_smooth() +
+  scale_x_continuous(breaks=seq(1890,2010,10)) +
+      labs(x = &quot;Season&quot;,
+       y = &quot;Points per match&quot;,
+       title = &quot;Points per match for the champions&quot;)</code></pre>
+<pre><code>## `geom_smooth()` using method = &#39;loess&#39; and formula &#39;y ~ x&#39;</code></pre>
+<p><img src="/post/2019-01-17-epl-soccer_files/figure-html/unnamed-chunk-7-2.png" width="672" /></p>
+<p>For the champions, we see the trend of points per game and goal difference per game is actually going up after 1920’s, opposite to the trend for average numbers across all teams each season. It seems the best teams are getting more dominating. An obvious explanation is the wealth concentration on the largest clubs.</p>
+<p>How about other teams?</p>
+<pre class="r"><code>ranked %&gt;%
+  filter(rank&lt;5) %&gt;%
+    ggplot(aes(Season,goal_diff, color=as.factor(rank)))+
+  geom_smooth() +
+  geom_point() +
+  expand_limits(y=0) +
+  scale_x_continuous(breaks=seq(1890,2010,10)) +
+       labs(x = &quot;Season&quot;,
+       y = &quot;Goal differentials per season&quot;,
+       title = &quot;Goal differentials for the top teams&quot;, 
+       color = &quot;ranking&quot;)</code></pre>
+<pre><code>## `geom_smooth()` using method = &#39;loess&#39; and formula &#39;y ~ x&#39;</code></pre>
+<p><img src="/post/2019-01-17-epl-soccer_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
+<pre class="r"><code>ranked %&gt;%
+  filter(rank&gt;18) %&gt;%
+  ggplot(aes(Season,goal_diff, color=as.factor(rank)))+
+  geom_smooth() +
+  geom_point() +
+  expand_limits(y=0) +
+  scale_x_continuous(breaks=seq(1890,2010,10)) +
+      labs(x = &quot;Season&quot;,
+       y = &quot;Goal differentials per season&quot;,
+       title = &quot;Goal differentials for the worst teams&quot;, 
+       color = &quot;ranking&quot;)</code></pre>
+<pre><code>## `geom_smooth()` using method = &#39;loess&#39; and formula &#39;y ~ x&#39;</code></pre>
+<p><img src="/post/2019-01-17-epl-soccer_files/figure-html/unnamed-chunk-8-2.png" width="672" /></p>
+<p>We see top 4 teams are all getting more dominating. The bottom ones (lower than 18) are getting worse. The number of teams have changed over the years, from 1992, the number of team is 20 in the EPL.</p>
+<p>Now we turn to the question: what’s the points per match for the champions against top 4 (the other top 3, actually), vs against other teams? Are there situations they actually win more often against their title contenders?</p>
+<pre class="r"><code>team_rank &lt;- ranked %&gt;%
+  select(Season, team, rank)
+
+tier1_merge &lt;- tier1 %&gt;%
+  left_join(team_rank, by=c(&quot;Season&quot;=&quot;Season&quot;, &quot;home&quot;=&quot;team&quot;)) %&gt;%
+  mutate(home_rank=rank) %&gt;%
+  select(-rank) %&gt;%
+  left_join(team_rank, by=c(&quot;Season&quot;=&quot;Season&quot;, &quot;visitor&quot;=&quot;team&quot;)) %&gt;%
+  mutate(visitor_rank=rank) %&gt;%
+  select(-rank) %&gt;%
+  tbl_df()
+
+tier1_gathered2 &lt;- tier1_merge %&gt;%
+  select(Date, Season, home, visitor, hgoal, vgoal, result, home_rank, visitor_rank) %&gt;%
+  gather(key=homecourt, value=team, -Date, -Season, -hgoal, -vgoal, -result, -home_rank, -visitor_rank) 
+
+## a data set with Season, team, match level, with opponents status.
+ranked2 &lt;- tier1_gathered2 %&gt;%
+  mutate(goal=ifelse(homecourt==&quot;home&quot;, hgoal, vgoal)) %&gt;% 
+  mutate(ogoal=ifelse(homecourt==&quot;home&quot;, vgoal, hgoal)) %&gt;% 
+  mutate(team_rank=ifelse(homecourt==&quot;home&quot;, home_rank, visitor_rank)) %&gt;% 
+  mutate(oppo_rank=ifelse(homecourt==&quot;home&quot;, visitor_rank, home_rank)) %&gt;% 
+  select(-hgoal, -vgoal, -home_rank, -visitor_rank) %&gt;% 
+  mutate(points=case_when(
+    goal&gt;ogoal ~ 3,
+    goal&lt;ogoal ~ 0,
+    goal==ogoal ~ 1
+    )) %&gt;% 
+  arrange(Date) %&gt;%
+  mutate(team_top4=team_rank&lt;5, oppo_top4=oppo_rank&lt;5, champ=team_rank==1) %&gt;%
+  group_by(Season, team, oppo_top4) %&gt;%
+  mutate(points_top4=sum(points)) %&gt;%
+  arrange(Season, team, oppo_top4)
+
+champs_points &lt;- ranked2 %&gt;%
+  filter(team_rank==1) %&gt;%
+  group_by(Season, team, oppo_top4) %&gt;% 
+  summarise(points_season=sum(points), goal_season=sum(goal), ogoal_season=sum(ogoal), num_matches=n(), points_top4_season=mean(points_top4)) %&gt;% 
+  mutate(points_top4_match=points_top4_season/num_matches) 
+
+champs_points %&gt;%
+  ggplot(aes(Season,points_top4_match, color=as.factor(oppo_top4)))+
+  geom_smooth() +
+  geom_point() +
+  expand_limits(y=0) +
+  scale_x_continuous(breaks=seq(1890,2010,10)) +
+  geom_text(aes(label = team), vjust = 1, hjust = 1, check_overlap = TRUE) +
+      labs(x = &quot;Season&quot;,
+       y = &quot;Points per match&quot;,
+       title = &quot;Average points per game for the champions&quot;, 
+       color = &quot;Against top contenders&quot;)</code></pre>
+<pre><code>## `geom_smooth()` using method = &#39;loess&#39; and formula &#39;y ~ x&#39;</code></pre>
+<p><img src="/post/2019-01-17-epl-soccer_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
+<p>We see most cases points are higher if opponents are not top 4. But there are exceptions. Everton in 1919, Aston Villa in 1980 and Manchester United in 2008 have average points lower than 1, meaning on average they lose to the other top 3 opponents, but the winning percentage is much higher against other opponents.</p>
+<p>Now we label those teams who have a higher winning percentage against other top 3 teams vs. lower ranked teams:</p>
+<pre class="r"><code>champs_points %&gt;%
+  arrange(Season, team, oppo_top4) %&gt;%
+  group_by(Season, team) %&gt;%
+  mutate(flag=points_top4_match&gt;lag(points_top4_match)) %&gt;%
+  mutate(flag2=sum(flag, na.rm=TRUE)) %&gt;%
+  ggplot(aes(Season,points_top4_match, color=as.factor(flag2)))+
+  geom_point() +
+  expand_limits(y=0) +
+  scale_x_continuous(breaks=seq(1890,2010,10)) +
+  geom_text(aes(label = team), vjust = 1, hjust = 1, check_overlap = TRUE) +
+    labs(x = &quot;Season&quot;,
+       y = &quot;Points per match&quot;,
+       title = &quot;Average points per game for the champions&quot;, 
+       color = &quot;Score more against top contenders&quot;)</code></pre>
+<p><img src="/post/2019-01-17-epl-soccer_files/figure-html/unnamed-chunk-10-1.png" width="672" /></p>
+<p>There are not so many champions won more points from top contenders than other teams on average, but there are a few. Sunderland had won all games against top 4 contenders in 1892.</p>
+<p>Overall, a team wins championship by winning bother situations. When they play against top contenders, at least they have 50% chance of winning. The expected score will be 4/3 if we consider equal chance of winning, losing, or tieing. Any champion below 4/3 against top contenders is under-performing. But acationally they won championships after losing to top contenders. Such as Mancheseter City in 2008.</p>
+<p>Now let’s see how the toughness of a match impact the probability of winning.</p>
+<pre class="r"><code>library(lfe)</code></pre>
+<pre><code>## Loading required package: Matrix</code></pre>
+<pre><code>## 
+## Attaching package: &#39;Matrix&#39;</code></pre>
+<pre><code>## The following object is masked from &#39;package:tidyr&#39;:
+## 
+##     expand</code></pre>
+<pre class="r"><code>m1 &lt;- felm(points ~ oppo_rank + oppo_top4 + homecourt | team | 0 | team, data=ranked2)
+summary(m1)</code></pre>
+<pre><code>## 
+## Call:
+##    felm(formula = points ~ oppo_rank + oppo_top4 + homecourt | team |      0 | team, data = ranked2) 
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -2.5332 -1.0030 -0.3324  1.1201  2.8685 
+## 
+## Coefficients:
+##                   Estimate Cluster s.e. t value Pr(&gt;|t|)    
+## oppo_rank         0.040291     0.001037  38.844   &lt;2e-16 ***
+## oppo_top4TRUE    -0.130398     0.013466  -9.683   &lt;2e-16 ***
+## homecourtvisitor -0.804884     0.014822 -54.305   &lt;2e-16 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 1.217 on 95752 degrees of freedom
+## Multiple R-squared(full model): 0.1506   Adjusted R-squared:  0.15 
+## Multiple R-squared(proj model): 0.1408   Adjusted R-squared: 0.1402 
+## F-statistic(full model, *iid*):253.3 on 67 and 95752 DF, p-value: &lt; 2.2e-16 
+## F-statistic(proj model):  3473 on 3 and 64 DF, p-value: &lt; 2.2e-16</code></pre>
+<p>This is a fixed effect model on teams, with clustered standard error on teams. It shows opponent’s rank has a negative effect. If you are playing a team who is ranked 22, you are getting .4 point higher than if you play against a no.12 team. Home court advantage is big: if you are playing at home, on average you are scoring .8 more points. If you are playing against top4, on average you score .13 less points.</p>
+
+    </div>
+  </article>
+
+  
+
+
+</main>
+
+      <footer class="footer">
+        <ul class="footer-links">
+          <li>
+            <a href="/index.xml" type="application/rss+xml" target="_blank">RSS feed</a>
+          </li>
+          <li>
+            <a href="https://gohugo.io/" class="footer-links-kudos">Made with <img src="/images/hugo-logo.png" width="22" height="22"></a>
+          </li>
+        </ul>
+      </footer>
+
+    </div>
+    
+
+
+
+<script src="//cdn.bootcss.com/highlight.js/9.11.0/highlight.min.js"></script>
+
+
+
+<script src="//cdn.bootcss.com/highlight.js/9.11.0/languages/r.min.js"></script>
+<script src="//cdn.bootcss.com/highlight.js/9.11.0/languages/yaml.min.js"></script>
+<script>hljs.configure({languages: []}); hljs.initHighlightingOnLoad();</script>
+
+
+
+    
+<script src="/js/math-code.js"></script>
+<script async src="//cdn.bootcss.com/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+
+
+    
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+	(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+	m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+	})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+	ga('create', 'UA-106731399-1', 'auto');
+	
+	ga('send', 'pageview');
+}
+</script>
+
+  </body>
+</html>
+
