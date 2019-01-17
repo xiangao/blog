@@ -19,10 +19,10 @@ Recently Manchester City beat Liverpool 2-1 on Jan 3.  I was pleased.  My favori
 Fortunately we have a data set built in to the R package "engsoccerdata".  Let's use it to find out.
 
 ```{r}
-library(tidyverse, quietly = TRUE)
-library(engsoccerdata, quietly = TRUE)
-library(lubridate, quietly = TRUE)
-library(scales, quietly = TRUE)
+suppressMessages(library(tidyverse))
+suppressMessages(library(engsoccerdata))
+suppressMessages(library(lubridate))
+suppressMessages(library(scales))
 ```
 
 First let's see what's in it?  
