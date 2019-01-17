@@ -245,13 +245,12 @@ champs_points %>%
   geom_point() +
   expand_limits(y=0) +
   scale_x_continuous(breaks=seq(1890,2010,10)) +
-  geom_text(aes(label = team), vjust = 1, hjust = 1, check_overlap = TRUE) +
+  geom_text(aes(label = team), vjust = 1, hjust = 1, check_overlap = TRUE, size=3) +
       labs(x = "Season",
        y = "Points per match",
        title = "Average points per game for the champions", 
        color = "Against top contenders")
 ```
-
 We see most cases points are higher if opponents are not top 4.  But there are exceptions.  Everton in 1919, Aston Villa in 1980 and Manchester United in 2008 have average points lower than 1, meaning on average they lose to the other top 3 opponents, but the winning percentage is much higher against other opponents.  
 
 Now we label those teams who have a higher winning percentage against other top 3 teams vs. lower ranked teams:
@@ -266,11 +265,12 @@ champs_points %>%
   geom_point() +
   expand_limits(y=0) +
   scale_x_continuous(breaks=seq(1890,2010,10)) +
-  geom_text(aes(label = team), vjust = 1, hjust = 1, check_overlap = TRUE) +
+  geom_text(aes(label = team), vjust = 1, hjust = 1, check_overlap = TRUE, size=3) +
     labs(x = "Season",
        y = "Points per match",
        title = "Average points per game for the champions", 
-       color = "Score more against top contenders")
+       color = "Score more against top contenders") 
+
 ```
 
 There are not so many champions won more points from top contenders than other teams on average, but there are a few.  Sunderland had won all games against top 4 contenders in 1892.  

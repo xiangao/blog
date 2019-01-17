@@ -269,14 +269,13 @@ champs_points %&gt;%
   geom_point() +
   expand_limits(y=0) +
   scale_x_continuous(breaks=seq(1890,2010,10)) +
-  geom_text(aes(label = team), vjust = 1, hjust = 1, check_overlap = TRUE) +
+  geom_text(aes(label = team), vjust = 1, hjust = 1, check_overlap = TRUE, size=3) +
       labs(x = &quot;Season&quot;,
        y = &quot;Points per match&quot;,
        title = &quot;Average points per game for the champions&quot;, 
        color = &quot;Against top contenders&quot;)</code></pre>
 <pre><code>## `geom_smooth()` using method = &#39;loess&#39; and formula &#39;y ~ x&#39;</code></pre>
-<p><img src="/post/2019-01-17-epl-soccer_files/figure-html/fig1-1.png" width="1152" style="display: block; margin: auto;" /></p>
-<p>We see most cases points are higher if opponents are not top 4. But there are exceptions. Everton in 1919, Aston Villa in 1980 and Manchester United in 2008 have average points lower than 1, meaning on average they lose to the other top 3 opponents, but the winning percentage is much higher against other opponents.</p>
+<p><img src="/post/2019-01-17-epl-soccer_files/figure-html/fig1-1.png" width="1152" style="display: block; margin: auto;" /> We see most cases points are higher if opponents are not top 4. But there are exceptions. Everton in 1919, Aston Villa in 1980 and Manchester United in 2008 have average points lower than 1, meaning on average they lose to the other top 3 opponents, but the winning percentage is much higher against other opponents.</p>
 <p>Now we label those teams who have a higher winning percentage against other top 3 teams vs. lower ranked teams:</p>
 <pre class="r"><code>champs_points %&gt;%
   arrange(Season, team, oppo_top4) %&gt;%
@@ -287,11 +286,11 @@ champs_points %&gt;%
   geom_point() +
   expand_limits(y=0) +
   scale_x_continuous(breaks=seq(1890,2010,10)) +
-  geom_text(aes(label = team), vjust = 1, hjust = 1, check_overlap = TRUE) +
+  geom_text(aes(label = team), vjust = 1, hjust = 1, check_overlap = TRUE, size=3) +
     labs(x = &quot;Season&quot;,
        y = &quot;Points per match&quot;,
        title = &quot;Average points per game for the champions&quot;, 
-       color = &quot;Score more against top contenders&quot;)</code></pre>
+       color = &quot;Score more against top contenders&quot;) </code></pre>
 <p><img src="/post/2019-01-17-epl-soccer_files/figure-html/fig2-1.png" width="1152" style="display: block; margin: auto;" /></p>
 <p>There are not so many champions won more points from top contenders than other teams on average, but there are a few. Sunderland had won all games against top 4 contenders in 1892.</p>
 <p>Overall, a team wins championship by winning bother situations. When they play against top contenders, at least they have 50% chance of winning. The expected score will be 4/3 if we consider equal chance of winning, losing, or tieing. Any champion below 4/3 against top contenders is under-performing. But acationally they won championships after losing to top contenders. Such as Mancheseter City in 2008.</p>
