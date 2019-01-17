@@ -255,7 +255,7 @@ champs_points %>%
 We see most cases points are higher if opponents are not top 4.  But there are exceptions.  Everton in 1919, Aston Villa in 1980 and Manchester United in 2008 have average points lower than 1, meaning on average they lose to the other top 3 opponents, but the winning percentage is much higher against other opponents.  
 
 Now we label those teams who have a higher winning percentage against other top 3 teams vs. lower ranked teams:
-```{r}
+```{r fig2, fig.height = 5, fig.width = 6, fig.align = "center"}
 
 champs_points %>%
   arrange(Season, team, oppo_top4) %>%
