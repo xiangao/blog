@@ -13,6 +13,7 @@ tags:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+#  Do you have win head-to-head matches to win a championship?
 
 Recently Manchester City beat Liverpool 2-1 on Jan 3.  I was pleased.  My favorite team is Arsenal in English Premier League (EPL), City is the second favorite.  My friend, who is a Liverpool fan, argued that championship was never decided by the head-to-head matches between title contenders.  I was like, "Really?".  If a team wins consistently over weaker teams, theoretically they could win the title, even if they lost most of their head-to-head games against other top contenders.  But has that happened before?  
 
@@ -97,7 +98,7 @@ topteams %>%
        title = "Goal differentials per match for the teams apprear most often")
 ```
 
-Now the question:  does the team won most of top 4 head-to-head wins the league?
+Now the question:  do the championship teams win most of top 4 head-to-head?  Does it happen that you lose to top contenders and still win the league?
 
 ```{r}
 
@@ -285,6 +286,8 @@ m1 <- felm(points ~ oppo_rank + oppo_top4 + homecourt | team | 0 | team, data=ra
 summary(m1)
 ```
 
-This is a fixed effect model on teams, with clustered standard error on teams.  It shows opponent's rank has a negative effect.  If you are playing a team who is ranked 22, you are getting .4 point higher than if you play against a no.12 team.  Home court advantage is big:  if you are playing at home, on average you are scoring .8 more points.  If you are playing against top4, on average you score .13 less points.
+This is a fixed effect model on teams, with clustered standard error on teams.  It shows opponent's rank has a negative effect.  If you are playing a team who is ranked 22, you are getting .4 point higher than if you play against a no. 12 team.  Home court advantage is big:  if you are playing at home, on average you are scoring .8 more points.  If you are playing against top4, on average you score .13 less points.
+
+I may think about how to see the champions progress:  how many of them come from behind?  How many getting better over time?  
 
 
