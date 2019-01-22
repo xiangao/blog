@@ -78,6 +78,33 @@ same model as a logit model with dummies, since there is the
 "incidental paramater" problem.  Again, we should just focus on the
 coefficient estimates as the effect on the logged odds.
 
+In other words, for fixed effect (conditional) logit model, the
+situation is worse: you cannot do logit with dummies, unless you have
+a deep panel.  That is, when you have, say, more than 20 observations
+per group, the "incidental parameter" bias becomes negligible.  If you
+stay with conditional logit model, the fixed effects are not
+estimated.  Unfortunately the predicted probability depends on the
+fixed effects.  Stata's margins command after clogit (or xtlogit, fe)
+comes with a few options, but none is reasonable for the fixed
+effects.  For example, the pu0 option is to assume all fixed effects
+being 0.
+
+In a fixed effect logit model,
+
+$$ log(P(y=1)/(1-P(y=1))) = \alpha_i +  \beta_1 x_1 + \beta_2 x_2 + \beta_{12} x_1*x_2 $$
+
+Here $\alpha_i$ is fixed effect for each firm.  Therefore, 
+
+$$ P(y=1) = F(\alpha_i +  \beta_1 x_1 + \beta_2 x_2 + \beta_{12} x_1*x_2) $$
+
+$F$ can be a normal CDF or a logit function.  Therefore, without estimating $\alpha_i$, there is no way to predict $P$ in a reasonable way (assuming $\alpha=0$ is not reasonable to me).  
+
+However, if we stick with logged odds ($LO=log(P(y=1)/(1-P(y=1)))$),
+then $LO$ is a linear function of $\alpha_i$ and other covariates.  In
+that case, the marginal effects of $x_1$ or $x_2$ on $Y$ has nothing
+to do with $\alpha_i$.
+
+We can still use margins command for predicting logged odds,   as shown in [Maarten Buis 2010](http://www.stata-journal.com/sjpdf.html?articlenum=st0194).
 
 
 

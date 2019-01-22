@@ -6,7 +6,7 @@
 <meta name="generator" content="Hugo 0.49" />
 
 
-<title>Premier League Soccer - Do you have win head-to-head matches to win a championship?  - A Hugo website</title>
+<title>Premier League Soccer - Do you have to win head-to-head matches to win a championship?  - A Hugo website</title>
 <meta property="og:title" content="Premier League Soccer - A Hugo website">
 
 
@@ -65,33 +65,14 @@
     
 
     <div class="article-content">
-      <p>Recently Manchester City beat Liverpool 2-1 on Jan 3. I was pleased. My favorite team is Arsenal in English Premier League (EPL), City is the second favorite. My friend, who is a Liverpool fan, argued that championship was never decided by the head-to-head matches between title contenders. I was like, “Really?”. If a team wins consistently over weaker teams, theoretically they could win the title, even if they lost most of their head-to-head games against other top contenders. But has that happened before?</p>
+      <div id="do-you-have-to-win-head-to-head-matches-against-top-contenders-to-win-a-championship" class="section level1">
+<h1>Do you have to win head-to-head matches against top contenders to win a championship?</h1>
+<p>Recently Manchester City beat Liverpool 2-1 on Jan 3. I was pleased. My favorite team is Arsenal in English Premier League (EPL), City is the second favorite. My friend, who is a Liverpool fan, argued that championship was never decided by the head-to-head matches between title contenders. I was like, “Really?”. If a team wins consistently over weaker teams, theoretically they could win the title, even if they lost most of their head-to-head games against other top contenders. But has that happened before?</p>
 <p>Fortunately we have a data set built in to the R package “engsoccerdata”. Let’s use it to find out.</p>
-<pre class="r"><code>library(tidyverse, quietly = TRUE)</code></pre>
-<pre><code>## ── Attaching packages ───────────────────────────────────────────────────────────────────────────────────────────────────────────── tidyverse 1.2.1 ──</code></pre>
-<pre><code>## ✔ ggplot2 3.1.0     ✔ purrr   0.2.5
-## ✔ tibble  2.0.0     ✔ dplyr   0.7.8
-## ✔ tidyr   0.8.2     ✔ stringr 1.3.1
-## ✔ readr   1.3.0     ✔ forcats 0.3.0</code></pre>
-<pre><code>## ── Conflicts ──────────────────────────────────────────────────────────────────────────────────────────────────────────────── tidyverse_conflicts() ──
-## ✖ dplyr::filter() masks stats::filter()
-## ✖ dplyr::lag()    masks stats::lag()</code></pre>
-<pre class="r"><code>library(engsoccerdata, quietly = TRUE)
-library(lubridate, quietly = TRUE)</code></pre>
-<pre><code>## 
-## Attaching package: &#39;lubridate&#39;</code></pre>
-<pre><code>## The following object is masked from &#39;package:base&#39;:
-## 
-##     date</code></pre>
-<pre class="r"><code>library(scales, quietly = TRUE)</code></pre>
-<pre><code>## 
-## Attaching package: &#39;scales&#39;</code></pre>
-<pre><code>## The following object is masked from &#39;package:purrr&#39;:
-## 
-##     discard</code></pre>
-<pre><code>## The following object is masked from &#39;package:readr&#39;:
-## 
-##     col_factor</code></pre>
+<pre class="r"><code>suppressMessages(library(tidyverse))
+suppressMessages(library(engsoccerdata))
+suppressMessages(library(lubridate))
+suppressMessages(library(scales))</code></pre>
 <p>First let’s see what’s in it?</p>
 <pre class="r"><code>data(england)
 england %&gt;%
@@ -174,7 +155,7 @@ topteams %&gt;%
        title = &quot;Goal differentials per match for the teams apprear most often&quot;)</code></pre>
 <pre><code>## `geom_smooth()` using method = &#39;loess&#39; and formula &#39;y ~ x&#39;</code></pre>
 <p><img src="/post/2019-01-17-epl-soccer_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
-<p>Now the question: does the team won most of top 4 head-to-head wins the league?</p>
+<p>Now the question: do the championship teams win most of top 4 head-to-head? Does it happen that you lose to top contenders and still win the league?</p>
 <pre class="r"><code>tier1 %&gt;%
   head()</code></pre>
 <pre><code>##         Date Season            home          visitor  FT hgoal vgoal
@@ -378,7 +359,9 @@ summary(m1)</code></pre>
 ## Multiple R-squared(proj model): 0.1408   Adjusted R-squared: 0.1402 
 ## F-statistic(full model, *iid*):253.3 on 67 and 95752 DF, p-value: &lt; 2.2e-16 
 ## F-statistic(proj model):  3473 on 3 and 64 DF, p-value: &lt; 2.2e-16</code></pre>
-<p>This is a fixed effect model on teams, with clustered standard error on teams. It shows opponent’s rank has a negative effect. If you are playing a team who is ranked 22, you are getting .4 point higher than if you play against a no.12 team. Home court advantage is big: if you are playing at home, on average you are scoring .8 more points. If you are playing against top4, on average you score .13 less points.</p>
+<p>This is a fixed effect model on teams, with clustered standard error on teams. It shows opponent’s rank has a negative effect. If you are playing a team who is ranked 22, you are getting .4 point higher than if you play against a no. 12 team. Home court advantage is big: if you are playing at home, on average you are scoring .8 more points. If you are playing against top4, on average you score .13 less points.</p>
+<p>I may think about how to see the champions progress: how many of them come from behind? How many getting better over time?</p>
+</div>
 
     </div>
   </article>
