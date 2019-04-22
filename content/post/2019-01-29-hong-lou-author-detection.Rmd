@@ -4,7 +4,7 @@
 title: Dream of the Red Chamber
 subtitle: Detection of Authorship
 author: Xiang Ao
-date: '2017-09-15'
+date: '2019-01-29'
 slug: hong-lou-author-detection
 categories:
   - R
@@ -166,11 +166,10 @@ chapters <- chapters %>%
     mutate(y=as.numeric(author=="cao"))
 
 chapters.train <- chapters %>% filter(training==1)
-tf <-mat.honglou@tf
-model <- cv.glmnet(mat.honglou$tf[chapters$training,], chapters.train$y,
+model <- cv.glmnet(mat.honglou[chapters$training,], chapters.train$y,
                    family = "binomial", alpha=.9)
 
-chapters$pred <- predict(model, newx=mat.honglou$tf, type='response', s=model$lambda.1se)
+chapters$pred <- predict(model, newx=mat.honglou, type='response', s=model$lambda.1se)
 
 ## ggplot(chapters, aes(chapter, pred)) +
 ##   geom_boxplot(aes(fill = author))
@@ -216,23 +215,18 @@ set.seed(1)
 chapters.matrix <- matrix(NA,120,100)
 training.matrix <- matrix(NA, 120, 100)
 for (i in (1:100)){
-
 chapters2 <- honglou2 %>%
     group_by(id) %>%
     summarise(chapter=mean(id)) %>%
     mutate(author=ifelse(chapter<81, "cao", ifelse(rbinom(40,1,.2),"cao","unknown"))) %>%
     mutate(training = as.logical(rbinom(length(chapter), 1, .5))) %>%
     mutate(y=as.numeric(author=="cao"))
-
 chapters2.train <- chapters2 %>% filter(training==1)
-model2 <- cv.glmnet(mat.honglou$tf[chapters2$training,], chapters2.train$y,
+model2 <- cv.glmnet(mat.honglou[chapters2$training,], chapters2.train$y,
                    family = "binomial", alpha=.9)
-
-chapters2$pred <- predict(model2, newx=mat.honglou$tf, type='response', s=model2$lambda.1se)
-
+chapters2$pred <- predict(model2, newx=mat.honglou, type='response', s=model2$lambda.1se)
 chapters.matrix[, i] <- chapters2$pred
 training.matrix[,i] <- chapters2$training
-
 }
 ## ggplot(chapters, aes(chapter, pred)) +
 ##   geom_boxplot(aes(fill = author))
@@ -278,10 +272,10 @@ each chapter belongs to each author.
 set.seed(1)
 
 mat.honglou2 <- honglou2 %>%
-    get_tfidf(type = "tf", tf_weight = "raw", token_var="word",
+    cnlp_utils_tfidf(type = "tf", tf_weight = "raw", token_var="word",
     min_df=.05, max_df=.95)
 
-lda2 <- LDA(mat.honglou2$tf, k = 2, method="Gibbs", control = list(seed = 1, burnin = 1000, thin = 100, iter = 1000))
+lda2 <- LDA(mat.honglou2, k = 2, method="Gibbs", control = list(seed = 1, burnin = 1000, thin = 100, iter = 1000))
 
 plot(topics(lda2))
 lda_topics <- as.data.frame(posterior(lda2)$topics)

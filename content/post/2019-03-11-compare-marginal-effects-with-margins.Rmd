@@ -1,0 +1,54 @@
+---
+title: "Comparing Marginal effects with margins command"
+author: "Xiang Ao"
+date: '2019-03-11'
+slug: marginal-effects-in-margins
+tags: R Stata
+categories:
+- R
+- Stata
+---
+
+# Comparing Marginal effects 
+
+
+Stata's margins command has been a powerful tool for many economists.  It can calculate predicted means as well as predicted marginal effects.  In this post, I'd like to introduce a way to compare effects.
+
+For example:
+
+
+```{r stata-chunk, engine='stata', engine.path='/usr/local/bin/stata', cache=TRUE}
+webuse nhanes2f, clear
+logit diabetes i.female##c.age, nolog
+margins female,  at(age=(20 30 40 50 60 70)) 
+marginsplot
+margins r.female,  at(age=(20 30 40 50 60 70)) 
+marginsplot
+
+```
+
+Here we run a logit model of diabetes and have female indicator and continous age variable and their interaction as predictors.
+
+See my other post about interpreting marginal effects in non-linear model.  In general we recommend against going after marginal effects in a non-linear model, instead we should focus on original coeffcients.  However, in case you still want to do that (many people do), here is an example.  Suppose you are interested in comparing the effect of female on probability, at different ages, ranging from 20 to 70.  The first margins command above tells you the predicted probability for each gender, the second tells the difference between the two genders.  
+
+People tend to draw conclusions based on the confidence intervals overlapping or not.  That is, if the confidence intervals of two effects are overlapped, then there is no statistically significant difference between the two effects.  This actually can be wrong.  The reason is that the confidence intervals are based on indidual variable's distribution, that is, how big the variance of that estimate.  The difference between two effects, however, depends on the joint distribution of the two effects.  That is, the variances of the two effects, and the covariance between the two effects.  We should expect two effects are correlated, since they are derived from estimates from the same model, and often the same data.  Therefore, two effects with overlapping confidence intervals do not necessarily mean the difference between the two is not statistically different from zero.  But the reverse is true, that is, if the difference is significant, the two effects should have non-overlapping confidence intervals.
+
+For example, we see in the second margins output, the effect of female on probability is .006 at piont 1 (age 20), .0087 at point 2 (age 30), their confidence intervals overlap.  However, if we do a statistical test of the difference, we see the difference is significant.
+
+```{r stata-chunk2, engine='stata', engine.path='/usr/local/bin/stata', cache=TRUE}
+webuse nhanes2f, clear
+logit diabetes i.female##c.age, nolog
+margins r.female,  at(age=(20 30 40 50 60 70)) post
+mlincom 2 -1, stat(est se p)
+```
+
+This "mlincom" is a user-written command to test the difference between point 2 and 1.
+
+Fortunately, margins has an option to show this difference, by contrast(atcontrast(r)).  This is to say comparing all other points to the reference category.
+
+```{r stata-chunk3, engine='stata', engine.path='/usr/local/bin/stata', cache=TRUE}
+webuse nhanes2f, clear
+logit diabetes i.female##c.age, nolog
+margins r.female,  at(age=(20 30 40 50 60 70)) contrast(atcontrast(r))
+marginsplot
+```
