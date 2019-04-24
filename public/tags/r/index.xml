@@ -81,16 +81,5 @@ Here we are following a zero-inflated model’s thinking: model the data with tw
 library(MASS) library(ggplot2) library(dplyr) ## ## Attaching package: &amp;#39;dplyr&amp;#39; ## The following object is masked from &amp;#39;package:MASS&amp;#39;: ## ## select ## The following objects are masked from &amp;#39;package:stats&amp;#39;: ## ## filter, lag ## The following objects are masked from &amp;#39;package:base&amp;#39;: ## ## intersect, setdiff, setequal, union library(tmle) ## Loading required package: SuperLearner ## Loading required package: nnls ## Super Learner ## Version: 2.</description>
     </item>
     
-    <item>
-      <title>Dream of the Red Chamber</title>
-      <link>/2017/09/15/hong-lou-author-detection/</link>
-      <pubDate>Fri, 15 Sep 2017 00:00:00 +0000</pubDate>
-      
-      <guid>/2017/09/15/hong-lou-author-detection/</guid>
-      <description>Introduction In this post, I am trying to study the authorship of Dream of the Red Chamber (https://en.wikipedia.org/wiki/Dream_of_the_Red_Chamber). It has been controvertial who the author of the last 40 chapters of this most-well-known book in China. Many people believed that the first 80 chapters were written by Cao Xueqin, but the last 40 were additions by someone else.
-The original text was downloaded here: http://www.shuyaya.cc/book/2034/#download
-I used R’s packages “Rwordseg” to get tokens from the original text.</description>
-    </item>
-    
   </channel>
 </rss>
