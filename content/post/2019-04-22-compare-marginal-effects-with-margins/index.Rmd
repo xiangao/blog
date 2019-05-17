@@ -11,7 +11,7 @@ categories:
 
 # Comparing Marginal effects
 
-Stata's margins command has been a powerful tool for many economists.  It can calculate predicted means as well as predicted marginal effects.  Sometimes we'd like to compare those marginal effects.  People use margins and marginsplot to generate marginal effects; then draw conclusions based on whether there is a difference between marginal effects, based on whether the confidence intervals overlap or not. However, that can actually be wrong. In this post, I'd like to introduce a way to compare effects.
+Stata's margins command has been a powerful tool for many economists.  It can calculate predicted means as well as predicted marginal effects.  Sometimes we'd like to compare those marginal effects.  People use margins and marginsplot to generate marginal effects; then draw conclusions on whether there is a difference between marginal effects, based on whether the confidence intervals overlap or not. However, that can actually be wrong. In this post, I'd like to introduce a way to compare effects.
 
 
 For example:
