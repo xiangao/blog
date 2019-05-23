@@ -55,7 +55,7 @@
 
   <article class="article">
     
-    <span class="article-duration">8 min read</span>
+    <span class="article-duration">9 min read</span>
     
 
     <h1 class="article-title">Fixed or Random Effect, or Both?</h1>
@@ -94,6 +94,11 @@
 <div id="bw-model-in-r" class="section level1">
 <h1>BW model in R</h1>
 <p>R has a package “panelr”(<a href="https://panelr.jacob-long.com/articles/wbm.html" class="uri">https://panelr.jacob-long.com/articles/wbm.html</a>) that implements various kinds of BW models. Let’s see an example.</p>
+<pre class="r"><code>library(panelr)
+data(&quot;WageData&quot;)
+wages &lt;- panel_data(WageData, id = id, wave = t)
+model1 &lt;- wbm(lwage ~ wks + union + ms + occ | blk + fem, data = wages)
+summary(model1)</code></pre>
 <pre><code>## MODEL INFO:
 ## Entities: 595
 ## Time periods: 1-7
@@ -268,6 +273,10 @@ corr(u_i, X)   = 0 (assumed)                    Prob &gt; chi2       =     0.000
          rho |  .59231394   (fraction of variance due to u_i)
 ------------------------------------------------------------------------------</code></pre>
 <p>In this BW model, we have the fixed effect model coefficient on age, which is .0181. The coeffcient on mage (.0044) is the “contextual effect” of between effect of age, that is, the addtional effect of between effect on logged wage. The between effect should be .0044+.0181=.0225. And we have the effect of time-invariant covariate race estimated. The advantage of using xtreg is that we have clustered standard errors implemented.</p>
+</div>
+<div id="bw-model-in-non-linear-models" class="section level1">
+<h1>BW model in non-linear models</h1>
+<p>Paul Allison in his blog(<a href="https://statisticalhorizons.com/between-within-contextual-effects" class="uri">https://statisticalhorizons.com/between-within-contextual-effects</a>) mentioned using BW model for a binary outcome. I have not dig into the literature to see how large the bias can be using the BW , comparing to, say a conditional logit model. But if OLS is a good linear approximation of a logit model, BW model could be a good approximation with a binary outcome with panel data.</p>
 </div>
 
     </div>
