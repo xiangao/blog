@@ -44,6 +44,7 @@ fit <- sem(model, data = Data)
 summary(fit)
 
 ```
+Now let's do it in stata.  
 
 ```{r, echo=FALSE, message=FALSE}
 library(Statamarkdown)
@@ -120,7 +121,7 @@ summary(med.out)
 
 "mediation" package has more functionalities, such as multilevel, interaction of treatment and mediator, etc.  
 
-
+Stata's sem and gsem commands can model different situations, but the direct effect and indirect effects are not easy to compute, especially when you have binary outcome, or other non-continuous outcome situations.  They are not designed for causal mediation analysis.
 
 
 

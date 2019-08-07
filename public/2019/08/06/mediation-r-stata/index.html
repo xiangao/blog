@@ -126,6 +126,7 @@ summary(fit)</code></pre>
 ##                    Estimate  Std.Err  z-value  P(&gt;|z|)
 ##     bc                0.357    0.009   40.849    0.000
 ##     total             0.643    0.012   51.956    0.000</code></pre>
+<p>Now let’s do it in stata.</p>
 <pre class="stata"><code>set obs 10000
 gen x= rnormal()
 gen m= .5*x + rnormal()
@@ -330,6 +331,7 @@ Sample Size Used: 265
 
 Simulations: 100 </code></pre>
 <p>“mediation” package has more functionalities, such as multilevel, interaction of treatment and mediator, etc.</p>
+<p>Stata’s sem and gsem commands can model different situations, but the direct effect and indirect effects are not easy to compute, especially when you have binary outcome, or other non-continuous outcome situations. They are not designed for causal mediation analysis.</p>
 </div>
 
     </div>
