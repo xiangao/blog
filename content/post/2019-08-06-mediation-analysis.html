@@ -167,7 +167,7 @@ Structural   |
 <h1>Causal Mediation analysis</h1>
 <p>The traditional mediation analysis has been criticized for the lack of causal interpretation. Without manipulation of the mediator, it is hard to interpret the effects causally, because even if the treatment is from random experiments, the mediator is often not. Therefore there could be an unmeasured confounder that is causing both <span class="math inline">\(M\)</span> and <span class="math inline">\(Y\)</span>.</p>
 <p>R’s “mediation” package is for causal mediation analysis. It uses simulation to estimate the causal effects of treatment, under assumptions of sequential ignorability. It estimates the following quantities:</p>
-<p><span class="math display">\[\tao_i = Y_i(1, M_i(1)) - Y_i(0, Mi(0))\]</span></p>
+<p><span class="math display">\[\tau_i = Y_i(1, M_i(1)) - Y_i(0, Mi(0))\]</span></p>
 <p>This is the total treatment effefct, which is to say, what’s the change in <span class="math inline">\(Y\)</span> if we change each unit from control to treated, hypothetically?</p>
 <p>Then this can be decomposed into the causal mediation effects:</p>
 <p><span class="math display">\[\delta_i(t) = Y_i(t, M_i(1)) - Y_i(t, M_i(0))\]</span></p>

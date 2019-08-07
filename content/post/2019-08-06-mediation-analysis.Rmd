@@ -67,7 +67,7 @@ The traditional mediation analysis has been criticized for the lack of causal in
 
 R's "mediation" package is for causal mediation analysis.  It uses simulation to estimate the causal effects of treatment, under assumptions of sequential ignorability.  It estimates the following quantities:
 
-$$\tao_i = Y_i(1, M_i(1)) - Y_i(0, Mi(0))$$
+$$\tau_i = Y_i(1, M_i(1)) - Y_i(0, Mi(0))$$
 
 This is the total treatment effefct, which is to say, what's the change in $Y$ if we change each unit from control to treated, hypothetically?
 
