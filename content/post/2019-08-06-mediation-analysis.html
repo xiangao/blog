@@ -1,0 +1,279 @@
+---
+title: "Mediation analysis in R and Stata"
+author: "Xiang Ao"
+date: '2019-08-06'
+slug: mediation-R-stata
+tags: R Stata
+categories:
+- R
+- Stata
+---
+
+
+
+<div id="mediation-analysis" class="section level1">
+<h1>Mediation analysis</h1>
+<p>Traditionally mediation model can be represented in the following equestions:</p>
+<p><span class="math display">\[ Y = a X + b M + \epsilon_1 \]</span>
+<span class="math display">\[ M = c X + \epsilon_2 \]</span></p>
+<p>That is, we’d like to study the effect of <span class="math inline">\(X\)</span> on <span class="math inline">\(Y\)</span>, and we see the effect can be a direct effect, and an indirect effect, through <span class="math inline">\(M\)</span>.</p>
+<p>Baron and Kenny’s (<a href="http://davidakenny.net/cm/mediate.htm" class="uri">http://davidakenny.net/cm/mediate.htm</a>) method is done in four steps. Modern approach tends to use SEM (structural equation modeling) to model these two equations directly.</p>
+<p>R’s lavaan and Stata’s sem commands are powerful tools.</p>
+<p>A simple example:</p>
+<pre class="r"><code>library(lavaan)
+set.seed(1234)
+n &lt;- 10000
+X &lt;- rnorm(n)
+M &lt;- 0.5*X + rnorm(n)
+Y &lt;- 0.7*M + 0.3*X + rnorm(n)
+Data &lt;- data.frame(X = X, Y = Y, M = M)
+model &lt;- &#39;   Y ~ a*X + b*M
+             M ~ c*X
+           # direct effect (a)
+           # indirect effect (b*c)
+             bc := b*c
+           # total effect
+             total := a + (b*c)
+         &#39;
+fit &lt;- sem(model, data = Data)
+summary(fit)</code></pre>
+<pre><code>## lavaan 0.6-4 ended normally after 13 iterations
+## 
+##   Optimization method                           NLMINB
+##   Number of free parameters                          5
+## 
+##   Number of observations                         10000
+## 
+##   Estimator                                         ML
+##   Model Fit Test Statistic                       0.000
+##   Degrees of freedom                                 0
+##   Minimum Function Value               0.0000000000000
+## 
+## Parameter Estimates:
+## 
+##   Information                                 Expected
+##   Information saturated (h1) model          Structured
+##   Standard Errors                             Standard
+## 
+## Regressions:
+##                    Estimate  Std.Err  z-value  P(&gt;|z|)
+##   Y ~                                                 
+##     X          (a)    0.286    0.011   25.233    0.000
+##     M          (b)    0.699    0.010   70.384    0.000
+##   M ~                                                 
+##     X          (c)    0.511    0.010   50.161    0.000
+## 
+## Variances:
+##                    Estimate  Std.Err  z-value  P(&gt;|z|)
+##    .Y                 0.998    0.014   70.711    0.000
+##    .M                 1.012    0.014   70.711    0.000
+## 
+## Defined Parameters:
+##                    Estimate  Std.Err  z-value  P(&gt;|z|)
+##     bc                0.357    0.009   40.849    0.000
+##     total             0.643    0.012   51.956    0.000</code></pre>
+<pre class="stata"><code>set obs 10000
+gen x= rnormal()
+gen m= .5*x + rnormal()
+gen y= .7*m + .3*x + .4*m*x +rnormal()
+sem (y &lt;- x m) (m &lt;- x)
+estat teffects
+</code></pre>
+<pre><code>Endogenous variables
+
+Observed:  y m
+
+Exogenous variables
+
+Observed:  x
+
+Fitting target model:
+
+Iteration 0:   log likelihood =  -43667.84  
+Iteration 1:   log likelihood =  -43667.84  
+
+Structural equation model                       Number of obs     =     10,000
+Estimation method  = ml
+Log likelihood     =  -43667.84
+
+------------------------------------------------------------------------------
+             |                 OIM
+             |      Coef.   Std. Err.      z    P&gt;|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+Structural   |
+  y          |
+           m |   .7186314   .0113407    63.37   0.000     .6964041    .7408587
+           x |   .3054332   .0127003    24.05   0.000     .2805411    .3303253
+       _cons |    .199257   .0112834    17.66   0.000     .1771418    .2213721
+  -----------+----------------------------------------------------------------
+  m          |
+           x |   .5038605   .0100014    50.38   0.000     .4842581    .5234628
+       _cons |   .0187204   .0099478     1.88   0.060    -.0007769    .0382177
+-------------+----------------------------------------------------------------
+     var(e.y)|   1.272711   .0179989                      1.237919    1.308482
+     var(e.m)|   .9895863   .0139949                      .9625336    1.017399
+------------------------------------------------------------------------------
+LR test of model vs. saturated: chi2(0)   =      0.00, Prob &gt; chi2 =      .
+
+
+
+Direct effects
+------------------------------------------------------------------------------
+             |                 OIM
+             |      Coef.   Std. Err.      z    P&gt;|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+Structural   |
+  y          |
+           m |   .7186314   .0113407    63.37   0.000     .6964041    .7408587
+           x |   .3054332   .0127003    24.05   0.000     .2805411    .3303253
+  -----------+----------------------------------------------------------------
+  m          |
+           x |   .5038605   .0100014    50.38   0.000     .4842581    .5234628
+------------------------------------------------------------------------------
+
+
+Indirect effects
+------------------------------------------------------------------------------
+             |                 OIM
+             |      Coef.   Std. Err.      z    P&gt;|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+Structural   |
+  y          |
+           m |          0  (no path)
+           x |     .36209    .009182    39.43   0.000     .3440937    .3800863
+  -----------+----------------------------------------------------------------
+  m          |
+           x |          0  (no path)
+------------------------------------------------------------------------------
+
+
+Total effects
+------------------------------------------------------------------------------
+             |                 OIM
+             |      Coef.   Std. Err.      z    P&gt;|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+Structural   |
+  y          |
+           m |   .7186314   .0113407    63.37   0.000     .6964041    .7408587
+           x |   .6675231   .0134277    49.71   0.000     .6412053     .693841
+  -----------+----------------------------------------------------------------
+  m          |
+           x |   .5038605   .0100014    50.38   0.000     .4842581    .5234628
+------------------------------------------------------------------------------</code></pre>
+<p>The above examples should have direct effect of .3 and indirect effect of .35, and total effect of .65.</p>
+</div>
+<div id="causal-mediation-analysis" class="section level1">
+<h1>Causal Mediation analysis</h1>
+<p>The traditional mediation analysis has been criticized for the lack of causal interpretation. Without manipulation of the mediator, it is hard to interpret the effects causally, because even if the treatment is from random experiments, the mediator is often not. Therefore there could be an unmeasured confounder that is causing both <span class="math inline">\(M\)</span> and <span class="math inline">\(Y\)</span>.</p>
+<p>R’s “mediation” package is for causal mediation analysis. It uses simulation to estimate the causal effects of treatment, under assumptions of sequential ignorability. It estimates the following quantities:</p>
+<p><span class="math display">\[\tao_i = Y_i(1, M_i(1)) - Y_i(0, Mi(0))\]</span></p>
+<p>This is the total treatment effefct, which is to say, what’s the change in <span class="math inline">\(Y\)</span> if we change each unit from control to treated, hypothetically?</p>
+<p>Then this can be decomposed into the causal mediation effects:</p>
+<p><span class="math display">\[\delta_i(t) = Y_i(t, M_i(1)) - Y_i(t, M_i(0))\]</span></p>
+<p>for treatment status <span class="math inline">\(t=0,1\)</span>. This is to say, given treatment status, what’s the mediation effect?</p>
+<p><span class="math display">\[\eta_i(t) = Y_i(1, M_i(t)) - Y_i(0, M_i(t)) \]</span></p>
+<p>for treatment status <span class="math inline">\(t=0,1\)</span>. This is to say, given mediator stauts for each treatment status, what’s the direct effect?</p>
+<p>Therefore there are four quantities estimated, direct and mediation effect for treated and control.</p>
+<p>R’s “mediation” needs users to feed two models, outcome model and mediation model.</p>
+<p>If we study the same data, we would expect it returns the same estimates as the tranditional methods. However, the causal mediation models can be much more flexible in outcome and mediation models.</p>
+<pre class="r"><code>library(mediation)
+med.fit &lt;- lm(M ~ X, data=Data)
+summary(med.fit)</code></pre>
+<pre><code>
+Call:
+lm(formula = M ~ X, data = Data)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-4.1134 -0.6972  0.0086  0.6837  3.7309 
+
+Coefficients:
+             Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept) -0.007814   0.010060  -0.777    0.437    
+X            0.510954   0.010187  50.156   &lt;2e-16 ***
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+
+Residual standard error: 1.006 on 9998 degrees of freedom
+Multiple R-squared:  0.201, Adjusted R-squared:  0.2009 
+F-statistic:  2516 on 1 and 9998 DF,  p-value: &lt; 2.2e-16</code></pre>
+<pre class="r"><code>out.fit &lt;- lm(Y ~ X + M,data=Data)
+summary(out.fit)</code></pre>
+<pre><code>
+Call:
+lm(formula = Y ~ X + M, data = Data)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-4.0680 -0.6771 -0.0081  0.6643  3.8304 
+
+Coefficients:
+            Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept) 0.004170   0.009992   0.417    0.676    
+X           0.285582   0.011319  25.229   &lt;2e-16 ***
+M           0.699006   0.009933  70.373   &lt;2e-16 ***
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+
+Residual standard error: 0.9991 on 9997 degrees of freedom
+Multiple R-squared:  0.4734,    Adjusted R-squared:  0.4733 
+F-statistic:  4494 on 2 and 9997 DF,  p-value: &lt; 2.2e-16</code></pre>
+<pre class="r"><code>set.seed(123)
+med.out &lt;- mediate(med.fit, out.fit, treat = &quot;X&quot;, mediator = &quot;M&quot;, sims = 100)
+summary(med.out)</code></pre>
+<pre><code>
+Causal Mediation Analysis 
+
+Quasi-Bayesian Confidence Intervals
+
+               Estimate 95% CI Lower 95% CI Upper p-value    
+ACME              0.357        0.342         0.38  &lt;2e-16 ***
+ADE               0.285        0.265         0.31  &lt;2e-16 ***
+Total Effect      0.642        0.621         0.67  &lt;2e-16 ***
+Prop. Mediated    0.555        0.536         0.58  &lt;2e-16 ***
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+
+Sample Size Used: 10000 
+
+
+Simulations: 100 </code></pre>
+</div>
+<div id="binary-outcome" class="section level1">
+<h1>Binary outcome</h1>
+<p>For example, in the case of binary outcome, the traditional approach will have difficulties. We can estimate the outcome model and mediator model jointly, but the total effects are not easy to decompose into direct and indirect effect (see Imai et al, page 320 <a href="https://imai.fas.harvard.edu/research/files/BaronKenny.pdf" class="uri">https://imai.fas.harvard.edu/research/files/BaronKenny.pdf</a>).</p>
+<p>The causal mediation analysis framework is much more general.</p>
+<pre class="r"><code>library(mediation)
+data(framing)
+med.fit &lt;- lm(emo ~ treat + age + educ + gender + income, data = framing)
+out.fit &lt;- glm(cong_mesg ~ emo + treat + age + educ + gender + income,
+               data = framing, family = binomial(&quot;probit&quot;))
+set.seed(123)
+med.out &lt;- mediate(med.fit, out.fit, treat = &quot;treat&quot;, mediator = &quot;emo&quot;,
+                     robustSE = TRUE, sims = 100)
+summary(med.out)</code></pre>
+<pre><code>
+Causal Mediation Analysis 
+
+Quasi-Bayesian Confidence Intervals
+
+                         Estimate 95% CI Lower 95% CI Upper p-value    
+ACME (control)             0.0813       0.0377         0.12  &lt;2e-16 ***
+ACME (treated)             0.0824       0.0366         0.13  &lt;2e-16 ***
+ADE (control)              0.0183      -0.1059         0.16    0.72    
+ADE (treated)              0.0194      -0.1153         0.17    0.72    
+Total Effect               0.1007      -0.0280         0.26    0.24    
+Prop. Mediated (control)   0.6326     -13.7057         4.31    0.24    
+Prop. Mediated (treated)   0.6618     -12.4223         4.04    0.24    
+ACME (average)             0.0819       0.0371         0.12  &lt;2e-16 ***
+ADE (average)              0.0188      -0.1106         0.17    0.72    
+Prop. Mediated (average)   0.6472     -13.0640         4.17    0.24    
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+
+Sample Size Used: 265 
+
+
+Simulations: 100 </code></pre>
+<p>“mediation” package has more functionalities, such as multilevel, interaction of treatment and mediator, etc.</p>
+</div>
