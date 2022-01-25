@@ -11,13 +11,9 @@ tags:
   - R
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
+In this post, I'll use simulated data to see how a few recently developed causal inference packages work.
 
-In this post, I'll use a simulated data set to see how a few recently developed causal inference packages work.
-
-In other posts, I have discussed some methods involving machine learning, such as TMLE, or causal forest.
+In other posts, I have discussed some methods involving machine learning, such as TMLE, or causal forest.  This time we'll talk about nonparametric methods and double machine learning.
 
 # Identification
  
@@ -36,11 +32,11 @@ After idenfication, we then need to find a way to construct a good estimator $\h
 
 Suppose we have a sample $Z$, which can be ${A,W,Y}$ (treatment, covariates, and outcome) in causal inference situation.
 
-We can use a parametric model, assuming we know what kind of distribution $P$ is.  We assume $P=P_\theta$.   Then we can use MLE to get $\psi(P_\theta)$.  This is what we do in parametric modeling. But this can be too restrictive, we usually have no way of knowing how good $P_\theta$ is; in other words, the model can be misspecified.
+We can use a parametric model, assuming we know what kind of distribution $P$ is.  We assume $P=P_\theta$.   Then we can use MLE to get $\psi(P_\theta)$.  This is what we do in parametric modeling. But this can be too restrictive, we usually have no way of knowing how good $P_\theta$ is; in other words, the model can be misspecified thus the target parameter is estimated with bias.
 
-If we don't make any assumptions, then we are in nonparametric world.  The natural way to approximate $P$ is to use the empirical distribution $\hat P$.  Then $\psi^*(\hat P)$ is the "plug-in" estimator.  For example we can use sample mean to estimate the population mean, etc. But "plug-in" estimator is not the best choice, in general, because they are not "$\sqrt n$" consistent.  There is usually a "plug-in bias" when using "plug-in" estimator.  
+If we don't make any assumptions about the distribution, then we are in nonparametric world.  The natural way to approximate $P$ is to use the empirical distribution $\hat P$.  Then $\psi^*(\hat P)$ is the "plug-in" estimator.  For example we can use sample mean to estimate the population mean, etc. But "plug-in" estimator is not the best choice, in general, because they are not $\sqrt n$ consistent.  There is usually a "plug-in bias" when using "plug-in" estimator.  
 
-Another choice is nonparametric estimator based on influence function.  The nice thing about this type of estimators based on efficient influence function is that they are often "$\sqrt n$ consistent, meaning they converge to the truth as fast as $\sqrt n$ rate.  This means $\hat \psi - \psi$ not only goes to 0, but also as fast as $1/ \sqrt n$ goes to 0.  Why does this matter?  Because we have limited sample size, when we are based on asymptotics, the faster the bias goes to 0 the smaller sample size we need.
+Another choice is nonparametric estimator based on influence function.  The nice thing about this type of estimators based on efficient influence function is that they are often $\sqrt n$ consistent, meaning they converge to the truth as fast as $\sqrt n$ rate.  This means $\hat \psi - \psi$ not only goes to 0 with $n$ goes to infinity, but also as fast as $1/ \sqrt n$ goes to 0.  Why does this matter?  Because we have limited sample size, when we are based on asymptotics, the faster the bias goes to 0 the smaller sample size we need.
 
 If we have an estimator such that 
 $$ \sqrt n (\hat \psi - \psi) = \sqrt n P_n(\phi) + o_P(1) \rightarrow N(0, var(\phi))$$
@@ -52,355 +48,288 @@ $$\phi (Z; P) = \frac{A}{\pi (X)} \{ Y - \mu (X) \} + \mu(X) - \psi$$
 where $\pi (X) = P(A=1 | X)$ the propensity score model, $\mu (X) = E(Y |X, A=1)$, the outcome model.
 
 
-The other advantage is that based on sample splitting, we can get confidence interval for these estimators.
-
-The idea is to use so called "one-step correction" to estimate the "plug-in" bias.  The bias is approximated by first deriving the influence function; then based on the influence function, the bias can be estimated by using the influence function as a slope to the path from "plug-in" estimate" to true parameter.  Obviously this path can be non-linear; therefore this one-step correction may not be perfect, but it should be closer to the truth than the original estimate.
+The idea is to use so called "one-step correction" to estimate the "plug-in" bias.  The bias is approximated by first deriving the influence function; then based on the influence function, the bias can be estimated by using the influence function as a slope to the path from "plug-in" estimate" to true parameter.  This path can be non-linear; therefore this one-step correction may not be perfect, but it should be closer to the truth than the original estimate.
 
 For example, an IF-based bias-corrected estimator
 $$\hat \psi = P_n [ \frac{A}{\hat \pi (X)} \{ Y - \hat \mu (X) \} + \hat \mu(X) ]$$
-where $P_n$ means sample mean.
+where $P_n$ means sample mean.  This is the familiar AIPW estimator.  It is known to be doubly robust.  Since we know the influence function, we can calculate its variance, and thus the variance of the estimator, regardless of how the nuisance parameters are estimated.
 
-In this estimator, both $\hat mu$ and $\hat pi$ can be done using any estimator, such as machine learning.  
+In this estimator, both $\hat \mu$ and $\hat \pi$ can be done using any estimator, such as machine learning.  
 
-The IF based estimator only works if either $\phi(P)$ is not too complex (empirical processes theory involved, a lot of difficult situations won't apply), or we separate $\hat P$ and $P_n$ to prevent overfitting.  The latter is by sample splitting.  Sample splitting is usually preferred.  The idea is to split the sample, do estimation of nuisance parameters (such as $\mu$ and $\pi$) in one sample, and construct estimator in the other.  This way it is shown the EIF based estimator is $\sqrt n$ consistent and asympotically normal; the variance is the variance of the influence function.
+The IF based estimator only works if either $\phi(P)$ is not too complex (empirical processes theory involved, a lot of difficult situations won't apply), or we separate $\hat P$ and $P_n$ to prevent overfitting.  The latter is by sample splitting.  Sample splitting is usually preferred because it needs less assumption than empirical processes.  The idea is to split the sample, do estimation of nuisance parameters (such as $\mu$ and $\pi$) in one sample, and construct estimator in the other.  This way it is shown the EIF based estimator is $\sqrt n$ consistent and asympotically normal; the variance is the variance of the influence function.
 
+Unfortunately influence function is hard to derive for different situations.  Ed Kennedy has done a lot of work on using IF on causal inference http://www.ehkennedy.com/.  Here we use his "npcausal" package.
 
+# simulation 1
 
+The simulated data is from  https://migariane.github.io/TMLE.nb.html
 
-
-
-
-We will focus on the average treatment effect (ATE)
-ATE = E(Y1)-E(Y0)
- 
-
-
-We do this using the Super Learner in R (for the data adaptive models).
-
-We begin by loading the necessary libraries. 
-
-```{r, include = TRUE, echo = TRUE}
-#' Install packages and load them  ##########
-#install.packages("SuperLearner")
-#install.packages("xgboost")
-#install.packages("tmle")
-#install.packages("devtools")
-#library(devtools)
-#install_github("ehkennedy/npcausal")
+```{r}
 library(npcausal)
 library(boot)
 library(MASS) 
 library(SuperLearner)
-library(survey)
-library(npcausal)
 library(tmle)
-```
+library(tidyverse)
+library(ranger)
 
-The aim of this short tutorial is to demonstrate how  
-to implement causal machine learning estimators in practice.
-
-We will focus on the average treatment effect (ATE)
-ATE = E(Y1)-E(Y0)
- 
-We will see the naive plug-in estimator (i.e. plug-in G-computation with data-adaptive  estimates), the AIPW (corresponding to one-step and estimating equations) estimator and targeted maximum likelihood estimation (TMLE) 
-
-We do this using the Super Learner in R (for the data adaptive models).
-
- We will use simulated data: where the Binary outcome is Y
- and treatment A, 
- sample size n=1000 
- dim W =4 as variables we adjust to control for confounding.
- The following code generates the data
- 
- ```{r, include = TRUE, echo = TRUE}
-
- set.seed(129)
- n=1000
+set.seed(123)
+n=1000  
 w1 <- rbinom(n, size=1, prob=0.5)
 w2 <- rbinom(n, size=1, prob=0.65)
 w3 <- round(runif(n, min=0, max=4), digits=3)
 w4 <- round(runif(n, min=0, max=5), digits=3)
-A <- rbinom(n, size=1,
-            prob= plogis(-0.4 + 0.2*w2 + 0.15*w3 + 0.2*w4 + 0.15*w2*w4))
-Y <- rbinom(n, size=1,
-            prob= plogis(-1 + A -0.1*w1 + 0.3*w2 + 0.25*w3 + 0.2*w4 + 0.15*w2*w4))
-Y.1 <-  plogis( -0.1*w1 + 0.3*w2 + 0.25*w3 + 0.2*w4 + 0.15*w2*w4)
-Y.0 <-  plogis(-1  -0.1*w1 + 0.3*w2 + 0.25*w3 + 0.2*w4 + 0.15*w2*w4)
-trueATE<-mean(Y.1)-mean(Y.0)
-trueATE
-#Create data frame with baseline covariates
+A  <- rbinom(n, size=1, prob= plogis(-0.4 + 0.2*w2 + 0.15*w3 + 0.2*w4 + 0.15*w2*w4))
+Y.1 <- rbinom(n, size=1, prob= plogis(-1 + 1 -0.1*w1 + 0.3*w2 + 0.25*w3 + 0.2*w4 + 0.15*w2*w4))
+Y.0 <- rbinom(n, size=1, prob= plogis(-1 + 0 -0.1*w1 + 0.3*w2 + 0.25*w3 + 0.2*w4 + 0.15*w2*w4))
+Y <- Y.1*A + Y.0*(1 - A)
 W<-data.frame(cbind(w1,w2,w3,w4))
-data<-data.frame(cbind(W,A,Y))
-```
-
-## Super Learner 
-First, check which learners have been integrated into the SuperLearner package.  We can use any of these when we run the SuperLearner:
-
-```{r, include = TRUE, echo = TRUE}
-library(SuperLearner)
-listWrappers(what = "SL")
+data <-  data.frame(w1, w2, w3, w4, A, Y, Y.1, Y.0)
+True_Psi <- mean(data$Y.1-data$Y.0);
+cat(" True_Psi:", True_Psi)
 
 ```
 
+We first include a few learners.  "npcausal" has a set of default learners.
 
-Here we will use the following learners (as specified in the lecture)
 ```{r, include = TRUE, echo = TRUE}
-SL.library<- c("SL.glm", "SL.glm.interaction", "SL.xgboost", "SL.glmnet", "SL.ranger")
+SL.library <- c("SL.earth","SL.gam","SL.glm","SL.glmnet","SL.glm.interaction", "SL.mean","SL.ranger", "SL.xgboost")
 
 ```
 
-These should ideally be tested with multiple hyperparameter settings for each algorithm which can be tuned using CV.
-
-
-In the interest of time, now we only use the defaults. Make sure you check which parameters are this for each learner, by typing its name and checking the default options pre-programmed in the SL wrapper, for example, for random forests using the ranger implementation
+## plug-in estimator from outcome regression
 
 ```{r, include = TRUE, echo = TRUE}
-SL.ranger
-
-```
-
-We see that the number of trees is 500 and the number of variables to consider for each tree is the sqrt of the number of total independent variables (sqrt (dimW)) rounded down to the next lower interger.  
-
-## SL for the outcome regression (naive plug-in g-computation)
-
-```{r, include = TRUE, echo = TRUE}
-SL.outcome<- SuperLearner(Y=data$Y, X=subset(data, select=-Y),
+SL.outcome<- SuperLearner(Y=data$Y, X=data %>% select(w1,w2,w3,w4,A),
                                      SL.library=SL.library, family="binomial")
-```
-
-#' You can look at the Super learner object, to see how the alogorithms are weighted 
-```{r, include = TRUE, echo = TRUE}
-SL.outcome
-```
-
-Now we get the prediction for the actual exposure level received and the two potential outcomes for everyone, based on the trained SL
-```{r, include = TRUE, echo = TRUE}
-SL.outcome.obs<- predict(SL.outcome, newdata=subset(data, select=-Y))$pred
+SL.outcome.obs<- predict(SL.outcome, X=data %>% select(w1,w2,w3,w4,A))$pred
 # predict the PO Y^1
-SL.outcome.exp<- predict(SL.outcome, newdata=data.frame(cbind(W,A=rep(1,length(A)))))$pred
+SL.outcome.1<- predict(SL.outcome, newdata=data %>% select(w1,w2,w3,w4,A) %>% mutate(A=1))$pred
 # predict the PO Y^0
-SL.outcome.unexp<- predict(SL.outcome, newdata=data.frame(cbind(W,A=rep(0,length(A)))))$pred
-```
+SL.outcome.0<- predict(SL.outcome, newdata=data %>% select(w1,w2,w3,w4,A) %>% mutate(A=0))$pred
 
-## SL g-computation
-We can now use these two predictions to get the plug-in g-somputation 
+```
+This is to do machine learning on the outcome equation; then get prediction on treated vs control, to get $\hat Y^1$ and $\hat Y^0$.  The sample average of the difference is our plug-in estimator.
 
 ```{r, include = TRUE, echo = TRUE}
-SL.plugin.gcomp<-mean(SL.outcome.exp-SL.outcome.unexp)
-SL.plugin.gcomp
+SL.plugin<-mean(SL.outcome.1-SL.outcome.0)
+SL.plugin
 ```
 
-Warning:  no way of doing inference, bootstrap not valid when using ML
+It's not too far from the truth in this case.
 
 
-
- We collate the SL fits, because we're going to use them later
 
 ```{r, include = TRUE, echo = TRUE}
-Q=cbind(SL.outcome.obs, SL.outcome.unexp,SL.outcome.exp)
-colnames(Q)<-c("QAW","Q0W","Q1W")
+Q=data.frame(QAW=SL.outcome.obs, Q0W=SL.outcome.0,Q1W=SL.outcome.1)
+
 ```
 
-##   plug-in AIPW 
+##   AIPW with machine learning
 
-Now, we will use the outcome predictions and the propensity score predictions to estimate an AIPW with SL plog-ins.
+We can use "npcausal" to do AIPW, or we can manually calculate it.
 
-First the SL for the prop score 
+First we get propensity score.  Then, based on both $\hat \mu$ and $\hat \pi$, we can get the AIPW estimator.
 
 ```{r, include = TRUE, echo = TRUE}
-SL.g<- SuperLearner(Y=data$A, X=subset(data, select=-c(A,Y)),
+set.seed(123)
+SL.g<- SuperLearner(Y=data$A, X=data %>% select(w1,w2,w3,w4),
                     SL.library=SL.library, family="binomial")
-```
-#' You can look at the Super learner object, to see how the alogorithms are weighted
-
-```{r, include = TRUE, echo = TRUE}
-SL.g
-```
-
-We see that here all the learners have non-zero coefficients for the SL. 
-
-Now, get the probability of getting the exposure
-
-```{r, include = TRUE, echo = TRUE}
 g1W <- SL.g$SL.predict
-summary(g1W)
-# Look at the histogram of PS
-hist(g1W)
-# Look at the histogram of the weights. 
-hist(1/g1W)
-```
-
-For any real analysis, you must satisfy yourself that the positivity assumption holds, so that the weights are not "too" large. 
-
-Now the probability of being unexposed
-```{r, include = TRUE, echo = TRUE}
 g0W<- 1- g1W
-```
-
-We can now use these quantities to estimate the mean of the potential outcomes, and thus, the ATE, based on the IF shown in the lecture.  
-The IF  for the AIPW of the Y^1 and the Y^0 can be written 
-```{r, include = TRUE, echo = TRUE}
-IF.1<-((data$A/g1W)*(data$Y-Q[,"Q1W"])+Q[,"Q1W"])
-IF.0<-(((1-data$A)/g0W)*(data$Y-Q[,"Q0W"])+Q[,"Q0W"])
-#The IF of the ATE is then
+IF.1<-((data$A/g1W)*(data$Y-Q$Q1W)+Q$Q1W)
+IF.0<-(((1-data$A)/g0W)*(data$Y-Q$Q0W)+Q$Q0W)
 IF<-IF.1-IF.0
-```
-
-
-We saw that the estimating eq. estimator of ATE=mean(IF) 
-```{r, include = TRUE, message=F, warning=FALSE, echo = TRUE}
-
 aipw.1<-mean(IF.1);aipw.0<-mean(IF.0)
 aipw.manual<-aipw.1-aipw.0
-```
-We now now that this estimator is asymp Normally distributed 
-and its variance is var(IF)/n
-```{r, include = TRUE, echo = TRUE}
 ci.lb<-mean(IF)-qnorm(.975)*sd(IF)/sqrt(length(IF))
 ci.ub<-mean(IF)+qnorm(.975)*sd(IF)/sqrt(length(IF))
- res.manual.aipw<-c(aipw.manual,ci.lb, ci.ub)
+res.manual.aipw<-c(aipw.manual,ci.lb, ci.ub)
 res.manual.aipw
 ```
+Now we use "npcausal".
 
-### AIPW using the package npcausal
-Now that you see how the concept works, you can use the npcausal package, which has pre-programed this, and other estimands.
-
-For now,  we specify no sample splitting 
 ```{r, include = TRUE, echo = TRUE}
 library(npcausal)
-aipw<- ate(y=Y, a=A, x=W, nsplits=1, sl.lib=c("SL.glm", "SL.glm.interaction", "SL.glmnet", "SL.ranger"))
-```
-
-```{r, include = TRUE, echo = TRUE}
+aipw<- ate(y=Y, a=A, x=W, nsplits=1, sl.lib=SL.library)
 aipw$res
 ```
 
+The results from "npcausal" are almost the same as the manual results.  Note here we did not do sample splitting; therefore this is not "bias-corrected" estimator.  Sample splitting is to help prevent overfitting, thus reducing bias.  "npcausal" does this for you, if you specify "nsplits" option.
 
+```{r, include = T, echo = TRUE}
+aipw2<- ate(y=Y, a=A, x=W, nsplits=10)
+```
 
 ## TMLE 
 
-We now move on to the TMLE for the ATE. 
-Using the following code you can implement a tmle by hand, based on the clever covariate approach you saw on the first session
+We can use TMLE for ATE.
 
-```{r, include = TRUE, echo = TRUE}
-# First E(Y1)
-#' Constructing the clever covariate
-H<-as.numeric(data$A/g1W)
-```
-We now fit a parametric model, with the clever covariate the only explanatory variable, and using the initial outcome predictions as an offset    
-```{r, include = TRUE, echo = TRUE}
-model<-glm(data$Y~-1+H+offset(qlogis(Q[,"QAW"])),family=binomial)
-summary(model)
-```
-
-We update the initial predictions using the coefficient of the clever covariate
-```{r, include = TRUE, echo = TRUE}
-Q1W.1<-plogis(qlogis(Q[,"Q1W"])+coef(model)[1]/g1W)
-```
-
-And use this to get the TMLE estimate of the mean of Y^1
-```{r, include = TRUE, echo = TRUE}
-# Estimating E(Y1)
-mean(Q1W.1)
-```
-
-We now repeat for Y^0
-```{r, include = TRUE, echo = TRUE}
-# E(Y0)
-# Constructing the clever covariate
-H<-as.numeric((1-data$A)/g0W)
-# Fitting a parametric extension model
-model<-glm(data$Y~-1+H+offset(qlogis(Q[,"QAW"])),family=binomial)
-summary(model)
-# Updating the predictions
-Q0W.1<-plogis(qlogis(Q[,"Q0W"])+coef(model)[1]/g0W)
-# Estimating E(Y0)
-mean(Q0W.1)
-```
-
-And put together to get the TMLE for the ATE
-```{r, include = TRUE, echo = TRUE}
-# ATE = E(Y1)-E(Y0)
-TMLE.1 =mean(Q1W.1)-mean(Q0W.1)
-```
-
-You can do all of this automatically using the tmle package, which also has coded other estimands. Other TMLE packages exists for other common estimands, such as mediation, IV regression or longitudinal settings
-
-### TMLE using the R package
 ```{r, include = TRUE, echo = TRUE}
 library(tmle)
-TMLE<- tmle(Y=data$Y,A=data$A,W=subset(data, select=-c(A,Y)), family="binomial", Q.SL.library=SL.library, g.SL.library=SL.library)
+TMLE<- tmle(Y=data$Y,A=data$A,W=W, family="binomial", Q.SL.library=SL.library, g.SL.library=SL.library)
 
 TMLE$estimates$ATE
 ```
 
-## Cross-fitting 
+## DoubleML
 
-It turns out that to remove further bias, while avoiding extra assumptions,  we should use sample splitting. Even better, we should use cross-fitting.
-This can be done relatively easily in the npcausal package
-```{r, include = T, echo = TRUE}
-aipw.2<- ate(y=Y, a=A, x=W, nsplits=10, sl.lib=c("SL.glm", "SL.glm.interaction", "SL.glmnet", "SL.ranger"))
+The R package DoubleML implements the double/debiased machine learning framework of Chernozhukov et al. (2018). It provides functionalities to estimate parameters in causal models based on machine learning methods. The double machine learning framework consist of three key ingredients: Neyman orthogonality, High-quality machine learning estimation and Sample splitting.
+
+They consider a partially linear model:
+
+$$ y_i = \theta d_i + g_0(x_i) + \eta_i $$
+
+$$ d_i = m_0(x_i) + v_i $$
+
+This model is quite general, except it does not allow interaction of $d$ and $x$; therefore no hetergeneous treatment effect across $x$.  But "DoubleML" implements more than partially linear model, it actually allows for heterogeneous treatment effects, in models such as interactive regression model.  
+
+The basic idea of doubleML is to use any machine learning algorithm to estimate outcome equation ($l_0(X) = E(Y | X)$) and treatment equation ($m_0(X) = E(D | X)$).  Then get the residuals, namely $\hat W=Y-\hat l_0(X)$ and $\hat V = D - \hat m_0(X)$.  
+
+Then regress $\hat W$ on $\hat V$.  Based on FWL theorem, you get $\hat \theta$.
+
+An important component here is to specify a Neyman-orthogonal score function.  In the case of PLR, it can be the product of the two residuals:
+
+$$\psi (W; \theta, \eta) = (Y-D\theta -g(X))(D-m(X)) $$
+
+The estimators $\hat \theta$ is to solve the equation that the sample mean of this score function being 0.
+
+And the variance of this score function is used as the variance of the doubleML estimator's variance.
+
+
+
+```{r, include = TRUE, echo = TRUE}
+library(DoubleML)
+dml_data = DoubleMLData$new(data,
+                             y_col = "Y",
+                             d_cols = "A",
+                             x_cols = c("w1","w2","w3","w4"))
+print(dml_data)
+
 ```
 
 ```{r, include = TRUE, echo = TRUE}
-aipw.2$res
+library(mlr3)
+library(mlr3learners)
+# surpress messages from mlr3 package during fitting
+lgr::get_logger("mlr3")$set_threshold("warn")
+
+learner = lrn("regr.ranger", num.trees=500,  max.depth=5, min.node.size=2)
+ml_g = learner$clone()
+ml_m = learner$clone()
+
+learner = lrn("regr.glmnet")
+ml_g_sim = learner$clone()
+ml_m_sim = learner$clone()
+
+set.seed(3141)
+obj_dml_plr = DoubleMLPLR$new(dml_data, ml_g=ml_g, ml_m=ml_m)
+obj_dml_plr$fit()
+print(obj_dml_plr)
 ```
 
-You should also check tmle3, the newest implmentation of TMLE, where the default option is to fit a CV-TMLE 
-https://tlverse.org/tlverse-handbook/tmle3.html
+# simulation 2
 
-Remember when doing your own analyses, to tune your learners. 
-To learn how to do this using the SL, visit https://cran.r-project.org/web/packages/SuperLearner/vignettes/Guide-to-SuperLearner.html
+This simulation is based on a package "AIPW", which has a simulation data "eager_sim_rct".  $A$ denotes the binary treatment assignment, $Y$ is the binary outcome, and $W_g$ represents the covariate that affects the treatment assignment, which in our case was deemed to be the eligibility stratum indicator, sampled with replacement from the EAGeR Trial. Similarly, $W_Q$ is a set of baseline prognostic covariates, which were also sampled with replacement from the EAGeR Trial, and includes the number of prior pregnancy losses, age, number of months of trying to conceive prior to randomization, body mass index (weight (kg)/height (m)2), and mean arterial blood pressure (denoted W1...5 , respectively). 
 
+Data and the true risk difference:
+```{r, include = TRUE, echo = TRUE}
+library(AIPW)
+data("eager_sim_rct")
+glimpse(eager_sim_rct)
 
-# Further reading
+attributes(eager_sim_rct)$true_rd
 
+data <- eager_sim_rct %>%
+  rename(Y=sim_Y, A=sim_Tx) %>%
+  tibble()
 
-## Causal machine learning 
-For more general reading on debiased machine learning and tmle, see
+W <- data %>%
+  select(-Y,-A)
+```
 
-* van der Laan, M. J. and Rose, S. (2011). Targeted Learning. Springer Series in Statistics. Springer New York,
-New York, NY
+## plug-in estimator from outcome regression
 
-* Chernozhukov, V., Chetverikov, D., Demirer, M., Dufflo, E., Hansen, C., Newey, W., and Robins, J. (2018). 
-Double/debiased machine learning for treatment and structural parameters. The Econometrics Journal, 21(1):C1{
-C68.
+```{r, include = TRUE, echo = TRUE}
+SL.outcome<- SuperLearner(Y=data$Y, X=data %>% select(-Y),
+                                     SL.library=SL.library, family="binomial")
+SL.outcome.obs<- predict(SL.outcome, X=data %>% select(-Y))$pred
+# predict the PO Y^1
+SL.outcome.1<- predict(SL.outcome, newdata=data %>% select(-Y) %>% mutate(A=1))$pred
+# predict the PO Y^0
+SL.outcome.0<- predict(SL.outcome, newdata=data %>% select(-Y) %>% mutate(A=0))$pred
 
+```
+This is to do machine learning on the outcome equation; then get prediction on treated vs control, to get $\hat Y^1$ and $\hat Y^0$.  The sample average of the difference is our plug-in estimator.
 
-## Influence functions
+```{r, include = TRUE, echo = TRUE}
+SL.plugin<-mean(SL.outcome.1-SL.outcome.0)
+SL.plugin
+Q=data.frame(QAW=SL.outcome.obs, Q0W=SL.outcome.0,Q1W=SL.outcome.1)
 
-* Fisher, A., & Kennedy, E. H. (2020). Visually communicating and
-teaching intuition for influence functions. The American Statistician,
-1-11.
-
-* Levy, J. (2019). 
-Tutorial: Deriving The Efficient Influence Curve for Large Models.
-https://arxiv.org/abs/1903.01706
-
-* Ichimura, H. and Newey, W. K. (2015). 
-The influence function of semiparametric estimators. arXiv preprint
-arXiv:1508.01378
-
-
-## R Software packages  
-
-* Kennedy, Edward. Package npcausal https://github.com/ehkennedy/npcausal
-
-* Polley, E. C. and van der Laan, M. J. (2010) Super learner in prediction.
-U.C. Berkeley Division of Biostatistics Working Paper Series Working
-Paper 266. URL http://biostats.bepress.com/ucbbiostat/paper266.
-
-* Naimi A and Balzer L. Stacked generalization: an introduction to super
-learning. European Journal of Epidemiology (2018) 33:459–464
+```
 
 
-* Gruber S, van der Laan MJ (2012). tmle: An R Package for Targeted
-Maximum Likelihood Estimation.” Journal of Statistical Software, 51(13),
-1–35. doi:10.18637/jss.v051.i13, http://www.jstatsoft.org/v51/i13/.
+##   AIPW with machine learning
 
-* Targeted learning software tlverse tutorials “The Hitchhiker’s Guide to the
-tlverse: A Targeted Learning Practitioner’s Handbook.”
-tmle3 newest implementation of TMLE, default version is to fit a CV-TMLE
-https://tlverse.org/tlverse-handbook/tmle3.html
+```{r, include = TRUE, echo = TRUE}
+set.seed(123)
+SL.g<- SuperLearner(Y=data$A, X=data %>% select(-Y, -A),
+                    SL.library=SL.library, family="binomial")
+g1W <- SL.g$SL.predict
+g0W<- 1- g1W
+IF.1<-((data$A/g1W)*(data$Y-Q$Q1W)+Q$Q1W)
+IF.0<-(((1-data$A)/g0W)*(data$Y-Q$Q0W)+Q$Q0W)
+IF<-IF.1-IF.0
+aipw.1<-mean(IF.1);aipw.0<-mean(IF.0)
+aipw.manual<-aipw.1-aipw.0
+ci.lb<-mean(IF)-qnorm(.975)*sd(IF)/sqrt(length(IF))
+ci.ub<-mean(IF)+qnorm(.975)*sd(IF)/sqrt(length(IF))
+res.manual.aipw<-c(aipw.manual,ci.lb, ci.ub)
+res.manual.aipw
+```
+Now we use "npcausal".
 
-* new superlearner sl3  https://tlverse.org/tlverse-handbook/sl3.html
+```{r, include = TRUE, echo = TRUE}
+library(npcausal)
+aipw<- ate(y=data$Y, a=data$A, x=W, nsplits=1, sl.lib=SL.library)
+```
+
+The results from "npcausal" are almost the same as the manual results.  Note here we did not do sample splitting; therefore this is not "bias-corrected" estimator.  Sample splitting is to help prevent overfitting, thus reducing bias.  "npcausal" does this for you, if you specify "nsplits" option.
+
+```{r, include = T, echo = TRUE}
+aipw2<- ate(y=data$Y, a=data$A, x=W, nsplits=10)
+```
+
+
+## DoubleML
+
+```{r, include = TRUE, echo = TRUE}
+library(DoubleML)
+dml_data = DoubleMLData$new(as.data.frame(data),
+                             y_col = "Y",
+                             d_cols = "A",
+                             x_cols = c("eligibility" , "loss_num","age", "time_try_pregnant","BMI","meanAP"))
+print(dml_data)
+
+```
+
+```{r, include = TRUE, echo = TRUE}
+library(mlr3)
+library(mlr3learners)
+# surpress messages from mlr3 package during fitting
+lgr::get_logger("mlr3")$set_threshold("warn")
+
+learner = lrn("regr.ranger", num.trees=500,  max.depth=5, min.node.size=2)
+ml_g = learner$clone()
+ml_m = learner$clone()
+
+learner = lrn("regr.glmnet")
+ml_g_sim = learner$clone()
+ml_m_sim = learner$clone()
+
+set.seed(3141)
+obj_dml_plr = DoubleMLPLR$new(dml_data, ml_g=ml_g, ml_m=ml_m)
+obj_dml_plr$fit()
+print(obj_dml_plr)
+```

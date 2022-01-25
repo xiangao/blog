@@ -14,8 +14,8 @@ tags:
 <script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
 
 
-<p>In this post, I’ll use a simulated data set to see how a few recently developed causal inference packages work.</p>
-<p>In other posts, I have discussed some methods involving machine learning, such as TMLE, or causal forest.</p>
+<p>In this post, I’ll use simulated data to see how a few recently developed causal inference packages work.</p>
+<p>In other posts, I have discussed some methods involving machine learning, such as TMLE, or causal forest. This time we’ll talk about nonparametric methods and double machine learning.</p>
 <div id="identification" class="section level1">
 <h1>Identification</h1>
 <p>First suppose we have a “target” parameter in mind, which is some function of the some unknown distribution <span class="math inline">\(P^*\)</span>, called a functional, say <span class="math inline">\(\psi^*(P^*)\)</span>. For example ATE, <span class="math inline">\(E(Y^1- Y^0)\)</span>.</p>
@@ -27,34 +27,27 @@ tags:
 <h1>Nonparametric estimation in a nutshell</h1>
 <p>After idenfication, we then need to find a way to construct a good estimator <span class="math inline">\(\hat \psi\)</span> for <span class="math inline">\(\psi (P)\)</span>.</p>
 <p>Suppose we have a sample <span class="math inline">\(Z\)</span>, which can be <span class="math inline">\({A,W,Y}\)</span> (treatment, covariates, and outcome) in causal inference situation.</p>
-<p>We can use a parametric model, assuming we know what kind of distribution <span class="math inline">\(P\)</span> is. We assume <span class="math inline">\(P=P_\theta\)</span>. Then we can use MLE to get <span class="math inline">\(\psi(P_\theta)\)</span>. This is what we do in parametric modeling. But this can be too restrictive, we usually have no way of knowing how good <span class="math inline">\(P_\theta\)</span> is; in other words, the model can be misspecified.</p>
-<p>If we don’t make any assumptions, then we are in nonparametric world. The natural way to approximate <span class="math inline">\(P\)</span> is to use the empirical distribution <span class="math inline">\(\hat P\)</span>. Then <span class="math inline">\(\psi^*(\hat P)\)</span> is the “plug-in” estimator. For example we can use sample mean to estimate the population mean, etc. But “plug-in” estimator is not the best choice, in general, because they are not “<span class="math inline">\(\sqrt n\)</span>” consistent. There is usually a “plug-in bias” when using “plug-in” estimator.</p>
-<p>Another choice is nonparametric estimator based on influence function. The nice thing about this type of estimators based on efficient influence function is that they are often “<span class="math inline">\(\sqrt n\)</span> consistent, meaning they converge to the truth as fast as <span class="math inline">\(\sqrt n\)</span> rate. This means <span class="math inline">\(\hat \psi - \psi\)</span> not only goes to 0, but also as fast as <span class="math inline">\(1/ \sqrt n\)</span> goes to 0. Why does this matter? Because we have limited sample size, when we are based on asymptotics, the faster the bias goes to 0 the smaller sample size we need.</p>
+<p>We can use a parametric model, assuming we know what kind of distribution <span class="math inline">\(P\)</span> is. We assume <span class="math inline">\(P=P_\theta\)</span>. Then we can use MLE to get <span class="math inline">\(\psi(P_\theta)\)</span>. This is what we do in parametric modeling. But this can be too restrictive, we usually have no way of knowing how good <span class="math inline">\(P_\theta\)</span> is; in other words, the model can be misspecified thus the target parameter is estimated with bias.</p>
+<p>If we don’t make any assumptions about the distribution, then we are in nonparametric world. The natural way to approximate <span class="math inline">\(P\)</span> is to use the empirical distribution <span class="math inline">\(\hat P\)</span>. Then <span class="math inline">\(\psi^*(\hat P)\)</span> is the “plug-in” estimator. For example we can use sample mean to estimate the population mean, etc. But “plug-in” estimator is not the best choice, in general, because they are not <span class="math inline">\(\sqrt n\)</span> consistent. There is usually a “plug-in bias” when using “plug-in” estimator.</p>
+<p>Another choice is nonparametric estimator based on influence function. The nice thing about this type of estimators based on efficient influence function is that they are often <span class="math inline">\(\sqrt n\)</span> consistent, meaning they converge to the truth as fast as <span class="math inline">\(\sqrt n\)</span> rate. This means <span class="math inline">\(\hat \psi - \psi\)</span> not only goes to 0 with <span class="math inline">\(n\)</span> goes to infinity, but also as fast as <span class="math inline">\(1/ \sqrt n\)</span> goes to 0. Why does this matter? Because we have limited sample size, when we are based on asymptotics, the faster the bias goes to 0 the smaller sample size we need.</p>
 <p>If we have an estimator such that
 <span class="math display">\[ \sqrt n (\hat \psi - \psi) = \sqrt n P_n(\phi) + o_P(1) \rightarrow N(0, var(\phi))\]</span></p>
 <p>Then this estimator is <span class="math inline">\(\sqrt n\)</span> consistent and asympotically normal; and <span class="math inline">\(\phi\)</span> is the influence function. The efficient influence function is the one with variance at the lower bound (similar to parametric case for Cramer-Rao lower bound).</p>
 <p>For ATE, $= E { E(Y | X, A=1)} $, the efficient influence function is
 <span class="math display">\[\phi (Z; P) = \frac{A}{\pi (X)} \{ Y - \mu (X) \} + \mu(X) - \psi\]</span>
 where <span class="math inline">\(\pi (X) = P(A=1 | X)\)</span> the propensity score model, <span class="math inline">\(\mu (X) = E(Y |X, A=1)\)</span>, the outcome model.</p>
-<p>The other advantage is that based on sample splitting, we can get confidence interval for these estimators.</p>
-<p>The idea is to use so called “one-step correction” to estimate the “plug-in” bias. The bias is approximated by first deriving the influence function; then based on the influence function, the bias can be estimated by using the influence function as a slope to the path from “plug-in” estimate” to true parameter. Obviously this path can be non-linear; therefore this one-step correction may not be perfect, but it should be closer to the truth than the original estimate.</p>
+<p>The idea is to use so called “one-step correction” to estimate the “plug-in” bias. The bias is approximated by first deriving the influence function; then based on the influence function, the bias can be estimated by using the influence function as a slope to the path from “plug-in” estimate” to true parameter. This path can be non-linear; therefore this one-step correction may not be perfect, but it should be closer to the truth than the original estimate.</p>
 <p>For example, an IF-based bias-corrected estimator
 <span class="math display">\[\hat \psi = P_n [ \frac{A}{\hat \pi (X)} \{ Y - \hat \mu (X) \} + \hat \mu(X) ]\]</span>
-where <span class="math inline">\(P_n\)</span> means sample mean.</p>
-<p>In this estimator, both <span class="math inline">\(\hat mu\)</span> and <span class="math inline">\(\hat pi\)</span> can be done using any estimator, such as machine learning.</p>
-<p>The IF based estimator only works if either <span class="math inline">\(\phi(P)\)</span> is not too complex (empirical processes theory involved, a lot of difficult situations won’t apply), or we separate <span class="math inline">\(\hat P\)</span> and <span class="math inline">\(P_n\)</span> to prevent overfitting. The latter is by sample splitting. Sample splitting is usually preferred. The idea is to split the sample, do estimation of nuisance parameters (such as <span class="math inline">\(\mu\)</span> and <span class="math inline">\(\pi\)</span>) in one sample, and construct estimator in the other. This way it is shown the EIF based estimator is <span class="math inline">\(\sqrt n\)</span> consistent and asympotically normal; the variance is the variance of the influence function.</p>
-<p>We will focus on the average treatment effect (ATE)
-ATE = E(Y1)-E(Y0)</p>
-<p>We do this using the Super Learner in R (for the data adaptive models).</p>
-<p>We begin by loading the necessary libraries.</p>
-<pre class="r"><code>#&#39; Install packages and load them  ##########
-#install.packages(&quot;SuperLearner&quot;)
-#install.packages(&quot;xgboost&quot;)
-#install.packages(&quot;tmle&quot;)
-#install.packages(&quot;devtools&quot;)
-#library(devtools)
-#install_github(&quot;ehkennedy/npcausal&quot;)
-library(npcausal)
+where <span class="math inline">\(P_n\)</span> means sample mean. This is the familiar AIPW estimator. It is known to be doubly robust. Since we know the influence function, we can calculate its variance, and thus the variance of the estimator, regardless of how the nuisance parameters are estimated.</p>
+<p>In this estimator, both <span class="math inline">\(\hat \mu\)</span> and <span class="math inline">\(\hat \pi\)</span> can be done using any estimator, such as machine learning.</p>
+<p>The IF based estimator only works if either <span class="math inline">\(\phi(P)\)</span> is not too complex (empirical processes theory involved, a lot of difficult situations won’t apply), or we separate <span class="math inline">\(\hat P\)</span> and <span class="math inline">\(P_n\)</span> to prevent overfitting. The latter is by sample splitting. Sample splitting is usually preferred because it needs less assumption than empirical processes. The idea is to split the sample, do estimation of nuisance parameters (such as <span class="math inline">\(\mu\)</span> and <span class="math inline">\(\pi\)</span>) in one sample, and construct estimator in the other. This way it is shown the EIF based estimator is <span class="math inline">\(\sqrt n\)</span> consistent and asympotically normal; the variance is the variance of the influence function.</p>
+<p>Unfortunately influence function is hard to derive for different situations. Ed Kennedy has done a lot of work on using IF on causal inference <a href="http://www.ehkennedy.com/" class="uri">http://www.ehkennedy.com/</a>. Here we use his “npcausal” package.</p>
+</div>
+<div id="simulation-1" class="section level1">
+<h1>simulation 1</h1>
+<p>The simulated data is from <a href="https://migariane.github.io/TMLE.nb.html" class="uri">https://migariane.github.io/TMLE.nb.html</a></p>
+<pre class="r"><code>library(npcausal)
 library(boot)
 library(MASS) 
 library(SuperLearner)</code></pre>
@@ -71,219 +64,92 @@ library(SuperLearner)</code></pre>
 <pre><code>## The following object is masked from &#39;package:npcausal&#39;:
 ## 
 ##     SL.ranger</code></pre>
-<pre class="r"><code>library(survey)</code></pre>
-<pre><code>## Loading required package: grid</code></pre>
-<pre><code>## Loading required package: Matrix</code></pre>
-<pre><code>## Loading required package: survival</code></pre>
-<pre><code>## 
-## Attaching package: &#39;survival&#39;</code></pre>
-<pre><code>## The following object is masked from &#39;package:boot&#39;:
-## 
-##     aml</code></pre>
-<pre><code>## 
-## Attaching package: &#39;survey&#39;</code></pre>
-<pre><code>## The following object is masked from &#39;package:graphics&#39;:
-## 
-##     dotchart</code></pre>
-<pre class="r"><code>library(npcausal)
-library(tmle)</code></pre>
+<pre class="r"><code>library(tmle)</code></pre>
 <pre><code>## Loading required package: glmnet</code></pre>
+<pre><code>## Loading required package: Matrix</code></pre>
 <pre><code>## Loaded glmnet 4.1-3</code></pre>
 <pre><code>## Welcome to the tmle package, version 1.5.0-1.1
 ## 
 ## Major changes since v1.3.x. Use tmleNews() to see details on changes and bug fixes</code></pre>
-<p>The aim of this short tutorial is to demonstrate how<br />
-to implement causal machine learning estimators in practice.</p>
-<p>We will focus on the average treatment effect (ATE)
-ATE = E(Y1)-E(Y0)</p>
-<p>We will see the naive plug-in estimator (i.e. plug-in G-computation with data-adaptive estimates), the AIPW (corresponding to one-step and estimating equations) estimator and targeted maximum likelihood estimation (TMLE)</p>
-<p>We do this using the Super Learner in R (for the data adaptive models).</p>
-<p>We will use simulated data: where the Binary outcome is Y
-and treatment A,
-sample size n=1000
-dim W =4 as variables we adjust to control for confounding.
-The following code generates the data</p>
-<pre class="r"><code>set.seed(129)
-n=1000
+<pre class="r"><code>library(tidyverse)</code></pre>
+<pre><code>## ── Attaching packages ─────────────────────────────────────── tidyverse 1.3.1 ──</code></pre>
+<pre><code>## ✓ ggplot2 3.3.5     ✓ purrr   0.3.4
+## ✓ tibble  3.1.6     ✓ dplyr   1.0.7
+## ✓ tidyr   1.1.4     ✓ stringr 1.4.0
+## ✓ readr   2.1.1     ✓ forcats 0.5.1</code></pre>
+<pre><code>## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+## x purrr::accumulate() masks foreach::accumulate()
+## x tidyr::expand()     masks Matrix::expand()
+## x dplyr::filter()     masks stats::filter()
+## x dplyr::lag()        masks stats::lag()
+## x tidyr::pack()       masks Matrix::pack()
+## x dplyr::select()     masks MASS::select()
+## x tidyr::unpack()     masks Matrix::unpack()
+## x purrr::when()       masks foreach::when()</code></pre>
+<pre class="r"><code>library(ranger)
+
+set.seed(123)
+n=1000  
 w1 &lt;- rbinom(n, size=1, prob=0.5)
 w2 &lt;- rbinom(n, size=1, prob=0.65)
 w3 &lt;- round(runif(n, min=0, max=4), digits=3)
 w4 &lt;- round(runif(n, min=0, max=5), digits=3)
-A &lt;- rbinom(n, size=1,
-           prob= plogis(-0.4 + 0.2*w2 + 0.15*w3 + 0.2*w4 + 0.15*w2*w4))
-Y &lt;- rbinom(n, size=1,
-           prob= plogis(-1 + A -0.1*w1 + 0.3*w2 + 0.25*w3 + 0.2*w4 + 0.15*w2*w4))
-Y.1 &lt;-  plogis( -0.1*w1 + 0.3*w2 + 0.25*w3 + 0.2*w4 + 0.15*w2*w4)
-Y.0 &lt;-  plogis(-1  -0.1*w1 + 0.3*w2 + 0.25*w3 + 0.2*w4 + 0.15*w2*w4)
-trueATE&lt;-mean(Y.1)-mean(Y.0)
-trueATE</code></pre>
-<pre><code>## [1] 0.1959683</code></pre>
-<pre class="r"><code>#Create data frame with baseline covariates
+A  &lt;- rbinom(n, size=1, prob= plogis(-0.4 + 0.2*w2 + 0.15*w3 + 0.2*w4 + 0.15*w2*w4))
+Y.1 &lt;- rbinom(n, size=1, prob= plogis(-1 + 1 -0.1*w1 + 0.3*w2 + 0.25*w3 + 0.2*w4 + 0.15*w2*w4))
+Y.0 &lt;- rbinom(n, size=1, prob= plogis(-1 + 0 -0.1*w1 + 0.3*w2 + 0.25*w3 + 0.2*w4 + 0.15*w2*w4))
+Y &lt;- Y.1*A + Y.0*(1 - A)
 W&lt;-data.frame(cbind(w1,w2,w3,w4))
-data&lt;-data.frame(cbind(W,A,Y))</code></pre>
-<div id="super-learner" class="section level2">
-<h2>Super Learner</h2>
-<p>First, check which learners have been integrated into the SuperLearner package. We can use any of these when we run the SuperLearner:</p>
-<pre class="r"><code>library(SuperLearner)
-listWrappers(what = &quot;SL&quot;)</code></pre>
-<pre><code>## All prediction algorithm wrappers in SuperLearner:</code></pre>
-<pre><code>##  [1] &quot;SL.bartMachine&quot;      &quot;SL.bayesglm&quot;         &quot;SL.biglasso&quot;        
-##  [4] &quot;SL.caret&quot;            &quot;SL.caret.rpart&quot;      &quot;SL.cforest&quot;         
-##  [7] &quot;SL.earth&quot;            &quot;SL.extraTrees&quot;       &quot;SL.gam&quot;             
-## [10] &quot;SL.gbm&quot;              &quot;SL.glm&quot;              &quot;SL.glm.interaction&quot; 
-## [13] &quot;SL.glmnet&quot;           &quot;SL.ipredbagg&quot;        &quot;SL.kernelKnn&quot;       
-## [16] &quot;SL.knn&quot;              &quot;SL.ksvm&quot;             &quot;SL.lda&quot;             
-## [19] &quot;SL.leekasso&quot;         &quot;SL.lm&quot;               &quot;SL.loess&quot;           
-## [22] &quot;SL.logreg&quot;           &quot;SL.mean&quot;             &quot;SL.nnet&quot;            
-## [25] &quot;SL.nnls&quot;             &quot;SL.polymars&quot;         &quot;SL.qda&quot;             
-## [28] &quot;SL.randomForest&quot;     &quot;SL.ranger&quot;           &quot;SL.ridge&quot;           
-## [31] &quot;SL.rpart&quot;            &quot;SL.rpartPrune&quot;       &quot;SL.speedglm&quot;        
-## [34] &quot;SL.speedlm&quot;          &quot;SL.step&quot;             &quot;SL.step.forward&quot;    
-## [37] &quot;SL.step.interaction&quot; &quot;SL.stepAIC&quot;          &quot;SL.svm&quot;             
-## [40] &quot;SL.template&quot;         &quot;SL.xgboost&quot;</code></pre>
-<p>Here we will use the following learners (as specified in the lecture)</p>
-<pre class="r"><code>SL.library&lt;- c(&quot;SL.glm&quot;, &quot;SL.glm.interaction&quot;, &quot;SL.xgboost&quot;, &quot;SL.glmnet&quot;, &quot;SL.ranger&quot;)</code></pre>
-<p>These should ideally be tested with multiple hyperparameter settings for each algorithm which can be tuned using CV.</p>
-<p>In the interest of time, now we only use the defaults. Make sure you check which parameters are this for each learner, by typing its name and checking the default options pre-programmed in the SL wrapper, for example, for random forests using the ranger implementation</p>
-<pre class="r"><code>SL.ranger</code></pre>
-<pre><code>## function (Y, X, newX, family, obsWeights, num.trees = 500, mtry = floor(sqrt(ncol(X))), 
-##     write.forest = TRUE, probability = family$family == &quot;binomial&quot;, 
-##     min.node.size = ifelse(family$family == &quot;gaussian&quot;, 5, 1), 
-##     replace = TRUE, sample.fraction = ifelse(replace, 1, 0.632), 
-##     num.threads = 1, verbose = T, ...) 
-## {
-##     .SL.require(&quot;ranger&quot;)
-##     if (family$family == &quot;binomial&quot;) {
-##         Y = as.factor(Y)
-##     }
-##     if (is.matrix(X)) {
-##         X = data.frame(X)
-##     }
-##     fit &lt;- ranger::ranger(`_Y` ~ ., data = cbind(`_Y` = Y, X), 
-##         num.trees = num.trees, mtry = mtry, min.node.size = min.node.size, 
-##         replace = replace, sample.fraction = sample.fraction, 
-##         case.weights = obsWeights, write.forest = write.forest, 
-##         probability = probability, num.threads = num.threads, 
-##         verbose = verbose)
-##     pred &lt;- predict(fit, data = newX)$predictions
-##     if (family$family == &quot;binomial&quot;) {
-##         pred = pred[, &quot;1&quot;]
-##     }
-##     fit &lt;- list(object = fit, verbose = verbose)
-##     class(fit) &lt;- c(&quot;SL.ranger&quot;)
-##     out &lt;- list(pred = pred, fit = fit)
-##     return(out)
-## }
-## &lt;bytecode: 0x56386f208a78&gt;
-## &lt;environment: namespace:SuperLearner&gt;</code></pre>
-<p>We see that the number of trees is 500 and the number of variables to consider for each tree is the sqrt of the number of total independent variables (sqrt (dimW)) rounded down to the next lower interger.</p>
-</div>
-<div id="sl-for-the-outcome-regression-naive-plug-in-g-computation" class="section level2">
-<h2>SL for the outcome regression (naive plug-in g-computation)</h2>
-<pre class="r"><code>SL.outcome&lt;- SuperLearner(Y=data$Y, X=subset(data, select=-Y),
+data &lt;-  data.frame(w1, w2, w3, w4, A, Y, Y.1, Y.0)
+True_Psi &lt;- mean(data$Y.1-data$Y.0);
+cat(&quot; True_Psi:&quot;, True_Psi)</code></pre>
+<pre><code>##  True_Psi: 0.203</code></pre>
+<p>We first include a few learners. “npcausal” has a set of default learners.</p>
+<pre class="r"><code>SL.library &lt;- c(&quot;SL.earth&quot;,&quot;SL.gam&quot;,&quot;SL.glm&quot;,&quot;SL.glmnet&quot;,&quot;SL.glm.interaction&quot;, &quot;SL.mean&quot;,&quot;SL.ranger&quot;, &quot;SL.xgboost&quot;)</code></pre>
+<div id="plug-in-estimator-from-outcome-regression" class="section level2">
+<h2>plug-in estimator from outcome regression</h2>
+<pre class="r"><code>SL.outcome&lt;- SuperLearner(Y=data$Y, X=data %&gt;% select(w1,w2,w3,w4,A),
                                      SL.library=SL.library, family=&quot;binomial&quot;)</code></pre>
+<pre><code>## Loading required namespace: earth</code></pre>
 <pre><code>## Loading required namespace: xgboost</code></pre>
-<pre><code>## Loading required namespace: ranger</code></pre>
-<p>#’ You can look at the Super learner object, to see how the alogorithms are weighted</p>
-<pre class="r"><code>SL.outcome</code></pre>
-<pre><code>## 
-## Call:  
-## SuperLearner(Y = data$Y, X = subset(data, select = -Y), family = &quot;binomial&quot;,  
-##     SL.library = SL.library) 
-## 
-## 
-##                             Risk       Coef
-## SL.glm_All             0.1713686 0.90571079
-## SL.glm.interaction_All 0.1735955 0.09428921
-## SL.xgboost_All         0.2070017 0.00000000
-## SL.glmnet_All          0.1714559 0.00000000
-## SL.ranger_All          0.1817601 0.00000000</code></pre>
-<p>Now we get the prediction for the actual exposure level received and the two potential outcomes for everyone, based on the trained SL</p>
-<pre class="r"><code>SL.outcome.obs&lt;- predict(SL.outcome, newdata=subset(data, select=-Y))$pred
+<pre class="r"><code>SL.outcome.obs&lt;- predict(SL.outcome, X=data %&gt;% select(w1,w2,w3,w4,A))$pred
 # predict the PO Y^1
-SL.outcome.exp&lt;- predict(SL.outcome, newdata=data.frame(cbind(W,A=rep(1,length(A)))))$pred
+SL.outcome.1&lt;- predict(SL.outcome, newdata=data %&gt;% select(w1,w2,w3,w4,A) %&gt;% mutate(A=1))$pred
 # predict the PO Y^0
-SL.outcome.unexp&lt;- predict(SL.outcome, newdata=data.frame(cbind(W,A=rep(0,length(A)))))$pred</code></pre>
+SL.outcome.0&lt;- predict(SL.outcome, newdata=data %&gt;% select(w1,w2,w3,w4,A) %&gt;% mutate(A=0))$pred</code></pre>
+<p>This is to do machine learning on the outcome equation; then get prediction on treated vs control, to get <span class="math inline">\(\hat Y^1\)</span> and <span class="math inline">\(\hat Y^0\)</span>. The sample average of the difference is our plug-in estimator.</p>
+<pre class="r"><code>SL.plugin&lt;-mean(SL.outcome.1-SL.outcome.0)
+SL.plugin</code></pre>
+<pre><code>## [1] 0.2072614</code></pre>
+<p>It’s not too far from the truth in this case.</p>
+<pre class="r"><code>Q=data.frame(QAW=SL.outcome.obs, Q0W=SL.outcome.0,Q1W=SL.outcome.1)</code></pre>
 </div>
-<div id="sl-g-computation" class="section level2">
-<h2>SL g-computation</h2>
-<p>We can now use these two predictions to get the plug-in g-somputation</p>
-<pre class="r"><code>SL.plugin.gcomp&lt;-mean(SL.outcome.exp-SL.outcome.unexp)
-SL.plugin.gcomp</code></pre>
-<pre><code>## [1] 0.1999569</code></pre>
-<p>Warning: no way of doing inference, bootstrap not valid when using ML</p>
-<p>We collate the SL fits, because we’re going to use them later</p>
-<pre class="r"><code>Q=cbind(SL.outcome.obs, SL.outcome.unexp,SL.outcome.exp)
-colnames(Q)&lt;-c(&quot;QAW&quot;,&quot;Q0W&quot;,&quot;Q1W&quot;)</code></pre>
-</div>
-<div id="plug-in-aipw" class="section level2">
-<h2>plug-in AIPW</h2>
-<p>Now, we will use the outcome predictions and the propensity score predictions to estimate an AIPW with SL plog-ins.</p>
-<p>First the SL for the prop score</p>
-<pre class="r"><code>SL.g&lt;- SuperLearner(Y=data$A, X=subset(data, select=-c(A,Y)),
-                    SL.library=SL.library, family=&quot;binomial&quot;)</code></pre>
-<p>#’ You can look at the Super learner object, to see how the alogorithms are weighted</p>
-<pre class="r"><code>SL.g</code></pre>
-<pre><code>## 
-## Call:  
-## SuperLearner(Y = data$A, X = subset(data, select = -c(A, Y)), family = &quot;binomial&quot;,  
-##     SL.library = SL.library) 
-## 
-## 
-##                             Risk       Coef
-## SL.glm_All             0.1997010 0.41159353
-## SL.glm.interaction_All 0.2015690 0.00000000
-## SL.xgboost_All         0.2377393 0.00000000
-## SL.glmnet_All          0.1996967 0.53013648
-## SL.ranger_All          0.2149464 0.05826999</code></pre>
-<p>We see that here all the learners have non-zero coefficients for the SL.</p>
-<p>Now, get the probability of getting the exposure</p>
-<pre class="r"><code>g1W &lt;- SL.g$SL.predict
-summary(g1W)</code></pre>
-<pre><code>##        V1        
-##  Min.   :0.3950  
-##  1st Qu.:0.6437  
-##  Median :0.7131  
-##  Mean   :0.7050  
-##  3rd Qu.:0.7820  
-##  Max.   :0.8919</code></pre>
-<pre class="r"><code># Look at the histogram of PS
-hist(g1W)</code></pre>
-<p><img src="/post/2022-01-20-npcausal_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
-<pre class="r"><code># Look at the histogram of the weights. 
-hist(1/g1W)</code></pre>
-<p><img src="/post/2022-01-20-npcausal_files/figure-html/unnamed-chunk-13-2.png" width="672" /></p>
-<p>For any real analysis, you must satisfy yourself that the positivity assumption holds, so that the weights are not “too” large.</p>
-<p>Now the probability of being unexposed</p>
-<pre class="r"><code>g0W&lt;- 1- g1W</code></pre>
-<p>We can now use these quantities to estimate the mean of the potential outcomes, and thus, the ATE, based on the IF shown in the lecture.<br />
-The IF for the AIPW of the Y^1 and the Y^0 can be written</p>
-<pre class="r"><code>IF.1&lt;-((data$A/g1W)*(data$Y-Q[,&quot;Q1W&quot;])+Q[,&quot;Q1W&quot;])
-IF.0&lt;-(((1-data$A)/g0W)*(data$Y-Q[,&quot;Q0W&quot;])+Q[,&quot;Q0W&quot;])
-#The IF of the ATE is then
-IF&lt;-IF.1-IF.0</code></pre>
-<p>We saw that the estimating eq. estimator of ATE=mean(IF)</p>
-<pre class="r"><code>aipw.1&lt;-mean(IF.1);aipw.0&lt;-mean(IF.0)
-aipw.manual&lt;-aipw.1-aipw.0</code></pre>
-<p>We now now that this estimator is asymp Normally distributed
-and its variance is var(IF)/n</p>
-<pre class="r"><code>ci.lb&lt;-mean(IF)-qnorm(.975)*sd(IF)/sqrt(length(IF))
+<div id="aipw-with-machine-learning" class="section level2">
+<h2>AIPW with machine learning</h2>
+<p>We can use “npcausal” to do AIPW, or we can manually calculate it.</p>
+<p>First we get propensity score. Then, based on both <span class="math inline">\(\hat \mu\)</span> and <span class="math inline">\(\hat \pi\)</span>, we can get the AIPW estimator.</p>
+<pre class="r"><code>set.seed(123)
+SL.g&lt;- SuperLearner(Y=data$A, X=data %&gt;% select(w1,w2,w3,w4),
+                    SL.library=SL.library, family=&quot;binomial&quot;)
+g1W &lt;- SL.g$SL.predict
+g0W&lt;- 1- g1W
+IF.1&lt;-((data$A/g1W)*(data$Y-Q$Q1W)+Q$Q1W)
+IF.0&lt;-(((1-data$A)/g0W)*(data$Y-Q$Q0W)+Q$Q0W)
+IF&lt;-IF.1-IF.0
+aipw.1&lt;-mean(IF.1);aipw.0&lt;-mean(IF.0)
+aipw.manual&lt;-aipw.1-aipw.0
+ci.lb&lt;-mean(IF)-qnorm(.975)*sd(IF)/sqrt(length(IF))
 ci.ub&lt;-mean(IF)+qnorm(.975)*sd(IF)/sqrt(length(IF))
- res.manual.aipw&lt;-c(aipw.manual,ci.lb, ci.ub)
+res.manual.aipw&lt;-c(aipw.manual,ci.lb, ci.ub)
 res.manual.aipw</code></pre>
-<pre><code>## [1] 0.1991385 0.1407379 0.2575391</code></pre>
-<div id="aipw-using-the-package-npcausal" class="section level3">
-<h3>AIPW using the package npcausal</h3>
-<p>Now that you see how the concept works, you can use the npcausal package, which has pre-programed this, and other estimands.</p>
-<p>For now, we specify no sample splitting</p>
+<pre><code>## [1] 0.2121542 0.1514396 0.2728689</code></pre>
+<p>Now we use “npcausal”.</p>
 <pre class="r"><code>library(npcausal)
-aipw&lt;- ate(y=Y, a=A, x=W, nsplits=1, sl.lib=c(&quot;SL.glm&quot;, &quot;SL.glm.interaction&quot;, &quot;SL.glmnet&quot;, &quot;SL.ranger&quot;))</code></pre>
+aipw&lt;- ate(y=Y, a=A, x=W, nsplits=1, sl.lib=SL.library)</code></pre>
 <pre><code>## Loading required package: earth</code></pre>
 <pre><code>## Loading required package: Formula</code></pre>
 <pre><code>## Loading required package: plotmo</code></pre>
 <pre><code>## Loading required package: plotrix</code></pre>
 <pre><code>## Loading required package: TeachingDemos</code></pre>
-<pre><code>## Loading required package: ranger</code></pre>
 <pre><code>## Loading required package: rpart</code></pre>
 <pre><code>## 
   |                                                                            
@@ -297,110 +163,16 @@ aipw&lt;- ate(y=Y, a=A, x=W, nsplits=1, sl.lib=c(&quot;SL.glm&quot;, &quot;SL.gl
   |                                                                            
   |======================================================================| 100%
 ##      parameter       est         se     ci.ll     ci.ul pval
-## 1      E{Y(0)} 0.5940285 0.02486758 0.5452880 0.6427689    0
-## 2      E{Y(1)} 0.7933962 0.01564994 0.7627223 0.8240701    0
-## 3 E{Y(1)-Y(0)} 0.1993677 0.02883593 0.1428493 0.2558862    0</code></pre>
+## 1      E{Y(0)} 0.5740347 0.02704671 0.5210231 0.6270462    0
+## 2      E{Y(1)} 0.7860537 0.01599838 0.7546969 0.8174106    0
+## 3 E{Y(1)-Y(0)} 0.2120191 0.03109855 0.1510659 0.2729722    0</code></pre>
 <pre class="r"><code>aipw$res</code></pre>
 <pre><code>##      parameter       est         se     ci.ll     ci.ul pval
-## 1      E{Y(0)} 0.5940285 0.02486758 0.5452880 0.6427689    0
-## 2      E{Y(1)} 0.7933962 0.01564994 0.7627223 0.8240701    0
-## 3 E{Y(1)-Y(0)} 0.1993677 0.02883593 0.1428493 0.2558862    0</code></pre>
-</div>
-</div>
-<div id="tmle" class="section level2">
-<h2>TMLE</h2>
-<p>We now move on to the TMLE for the ATE.
-Using the following code you can implement a tmle by hand, based on the clever covariate approach you saw on the first session</p>
-<pre class="r"><code># First E(Y1)
-#&#39; Constructing the clever covariate
-H&lt;-as.numeric(data$A/g1W)</code></pre>
-<p>We now fit a parametric model, with the clever covariate the only explanatory variable, and using the initial outcome predictions as an offset</p>
-<pre class="r"><code>model&lt;-glm(data$Y~-1+H+offset(qlogis(Q[,&quot;QAW&quot;])),family=binomial)
-summary(model)</code></pre>
-<pre><code>## 
-## Call:
-## glm(formula = data$Y ~ -1 + H + offset(qlogis(Q[, &quot;QAW&quot;])), family = binomial)
-## 
-## Deviance Residuals: 
-##     Min       1Q   Median       3Q      Max  
-## -2.5239  -0.8974   0.5220   0.7605   1.6624  
-## 
-## Coefficients:
-##     Estimate Std. Error z value Pr(&gt;|z|)
-## H -0.0006563  0.0665564   -0.01    0.992
-## 
-## (Dispersion parameter for binomial family taken to be 1)
-## 
-##     Null deviance: 1016.8  on 1000  degrees of freedom
-## Residual deviance: 1016.8  on  999  degrees of freedom
-## AIC: 1018.8
-## 
-## Number of Fisher Scoring iterations: 4</code></pre>
-<p>We update the initial predictions using the coefficient of the clever covariate</p>
-<pre class="r"><code>Q1W.1&lt;-plogis(qlogis(Q[,&quot;Q1W&quot;])+coef(model)[1]/g1W)</code></pre>
-<p>And use this to get the TMLE estimate of the mean of Y^1</p>
-<pre class="r"><code># Estimating E(Y1)
-mean(Q1W.1)</code></pre>
-<pre><code>## [1] 0.7933612</code></pre>
-<p>We now repeat for Y^0</p>
-<pre class="r"><code># E(Y0)
-# Constructing the clever covariate
-H&lt;-as.numeric((1-data$A)/g0W)
-# Fitting a parametric extension model
-model&lt;-glm(data$Y~-1+H+offset(qlogis(Q[,&quot;QAW&quot;])),family=binomial)
-summary(model)</code></pre>
-<pre><code>## 
-## Call:
-## glm(formula = data$Y ~ -1 + H + offset(qlogis(Q[, &quot;QAW&quot;])), family = binomial)
-## 
-## Deviance Residuals: 
-##     Min       1Q   Median       3Q      Max  
-## -2.5242  -0.8982   0.5218   0.7601   1.6615  
-## 
-## Coefficients:
-##    Estimate Std. Error z value Pr(&gt;|z|)
-## H 0.0009763  0.0381730   0.026     0.98
-## 
-## (Dispersion parameter for binomial family taken to be 1)
-## 
-##     Null deviance: 1016.8  on 1000  degrees of freedom
-## Residual deviance: 1016.8  on  999  degrees of freedom
-## AIC: 1018.8
-## 
-## Number of Fisher Scoring iterations: 3</code></pre>
-<pre class="r"><code># Updating the predictions
-Q0W.1&lt;-plogis(qlogis(Q[,&quot;Q0W&quot;])+coef(model)[1]/g0W)
-# Estimating E(Y0)
-mean(Q0W.1)</code></pre>
-<pre><code>## [1] 0.5943281</code></pre>
-<p>And put together to get the TMLE for the ATE</p>
-<pre class="r"><code># ATE = E(Y1)-E(Y0)
-TMLE.1 =mean(Q1W.1)-mean(Q0W.1)</code></pre>
-<p>You can do all of this automatically using the tmle package, which also has coded other estimands. Other TMLE packages exists for other common estimands, such as mediation, IV regression or longitudinal settings</p>
-<div id="tmle-using-the-r-package" class="section level3">
-<h3>TMLE using the R package</h3>
-<pre class="r"><code>library(tmle)
-TMLE&lt;- tmle(Y=data$Y,A=data$A,W=subset(data, select=-c(A,Y)), family=&quot;binomial&quot;, Q.SL.library=SL.library, g.SL.library=SL.library)
-
-TMLE$estimates$ATE</code></pre>
-<pre><code>## $psi
-## [1] 0.196299
-## 
-## $var.psi
-## [1] 0.0009300406
-## 
-## $CI
-## [1] 0.1365258 0.2560723
-## 
-## $pvalue
-## [1] 1.22052e-10</code></pre>
-</div>
-</div>
-<div id="cross-fitting" class="section level2">
-<h2>Cross-fitting</h2>
-<p>It turns out that to remove further bias, while avoiding extra assumptions, we should use sample splitting. Even better, we should use cross-fitting.
-This can be done relatively easily in the npcausal package</p>
-<pre class="r"><code>aipw.2&lt;- ate(y=Y, a=A, x=W, nsplits=10, sl.lib=c(&quot;SL.glm&quot;, &quot;SL.glm.interaction&quot;, &quot;SL.glmnet&quot;, &quot;SL.ranger&quot;))</code></pre>
+## 1      E{Y(0)} 0.5740347 0.02704671 0.5210231 0.6270462    0
+## 2      E{Y(1)} 0.7860537 0.01599838 0.7546969 0.8174106    0
+## 3 E{Y(1)-Y(0)} 0.2120191 0.03109855 0.1510659 0.2729722    0</code></pre>
+<p>The results from “npcausal” are almost the same as the manual results. Note here we did not do sample splitting; therefore this is not “bias-corrected” estimator. Sample splitting is to help prevent overfitting, thus reducing bias. “npcausal” does this for you, if you specify “nsplits” option.</p>
+<pre class="r"><code>aipw2&lt;- ate(y=Y, a=A, x=W, nsplits=10)</code></pre>
 <pre><code>## 
   |                                                                            
   |                                                                      |   0%
@@ -485,64 +257,1489 @@ This can be done relatively easily in the npcausal package</p>
   |                                                                            
   |======================================================================| 100%
 ##      parameter       est         se     ci.ll     ci.ul pval
-## 1      E{Y(0)} 0.5950387 0.02828600 0.5395981 0.6504792    0
-## 2      E{Y(1)} 0.7933579 0.01574644 0.7624949 0.8242209    0
-## 3 E{Y(1)-Y(0)} 0.1983193 0.03189122 0.1358125 0.2608261    0</code></pre>
-<pre class="r"><code>aipw.2$res</code></pre>
-<pre><code>##      parameter       est         se     ci.ll     ci.ul pval
-## 1      E{Y(0)} 0.5950387 0.02828600 0.5395981 0.6504792    0
-## 2      E{Y(1)} 0.7933579 0.01574644 0.7624949 0.8242209    0
-## 3 E{Y(1)-Y(0)} 0.1983193 0.03189122 0.1358125 0.2608261    0</code></pre>
-<p>You should also check tmle3, the newest implmentation of TMLE, where the default option is to fit a CV-TMLE
-<a href="https://tlverse.org/tlverse-handbook/tmle3.html" class="uri">https://tlverse.org/tlverse-handbook/tmle3.html</a></p>
-<p>Remember when doing your own analyses, to tune your learners.
-To learn how to do this using the SL, visit <a href="https://cran.r-project.org/web/packages/SuperLearner/vignettes/Guide-to-SuperLearner.html" class="uri">https://cran.r-project.org/web/packages/SuperLearner/vignettes/Guide-to-SuperLearner.html</a></p>
+## 1      E{Y(0)} 0.5720028 0.02882336 0.5155090 0.6284966    0
+## 2      E{Y(1)} 0.7846837 0.01628671 0.7527618 0.8166057    0
+## 3 E{Y(1)-Y(0)} 0.2126809 0.03276098 0.1484694 0.2768925    0</code></pre>
+</div>
+<div id="tmle" class="section level2">
+<h2>TMLE</h2>
+<p>We can use TMLE for ATE.</p>
+<pre class="r"><code>library(tmle)
+TMLE&lt;- tmle(Y=data$Y,A=data$A,W=W, family=&quot;binomial&quot;, Q.SL.library=SL.library, g.SL.library=SL.library)
+
+TMLE$estimates$ATE</code></pre>
+<pre><code>## $psi
+## [1] 0.2125673
+## 
+## $var.psi
+## [1] 0.001036017
+## 
+## $CI
+## [1] 0.1494804 0.2756543
+## 
+## $pvalue
+## [1] 3.999638e-11</code></pre>
+</div>
+<div id="doubleml" class="section level2">
+<h2>DoubleML</h2>
+<p>The R package DoubleML implements the double/debiased machine learning framework of Chernozhukov et al. (2018). It provides functionalities to estimate parameters in causal models based on machine learning methods. The double machine learning framework consist of three key ingredients: Neyman orthogonality, High-quality machine learning estimation and Sample splitting.</p>
+<p>They consider a partially linear model:</p>
+<p><span class="math display">\[ y_i = \theta d_i + g_0(x_i) + \eta_i \]</span></p>
+<p><span class="math display">\[ d_i = m_0(x_i) + v_i \]</span></p>
+<p>This model is quite general, except it does not allow interaction of <span class="math inline">\(d\)</span> and <span class="math inline">\(x\)</span>; therefore no hetergeneous treatment effect across <span class="math inline">\(x\)</span>. But “DoubleML” implements more than partially linear model, it actually allows for heterogeneous treatment effects, in models such as interactive regression model.</p>
+<p>The basic idea of doubleML is to use any machine learning algorithm to estimate outcome equation (<span class="math inline">\(l_0(X) = E(Y | X)\)</span>) and treatment equation (<span class="math inline">\(m_0(X) = E(D | X)\)</span>). Then get the residuals, namely <span class="math inline">\(\hat W=Y-\hat l_0(X)\)</span> and <span class="math inline">\(\hat V = D - \hat m_0(X)\)</span>.</p>
+<p>Then regress <span class="math inline">\(\hat W\)</span> on <span class="math inline">\(\hat V\)</span>. Based on FWL theorem, you get <span class="math inline">\(\hat \theta\)</span>.</p>
+<p>An important component here is to specify a Neyman-orthogonal score function. In the case of PLR, it can be the product of the two residuals:</p>
+<p><span class="math display">\[\psi (W; \theta, \eta) = (Y-D\theta -g(X))(D-m(X)) \]</span></p>
+<p>The estimators <span class="math inline">\(\hat \theta\)</span> is to solve the equation that the sample mean of this score function being 0.</p>
+<p>And the variance of this score function is used as the variance of the doubleML estimator’s variance.</p>
+<pre class="r"><code>library(DoubleML)
+dml_data = DoubleMLData$new(data,
+                             y_col = &quot;Y&quot;,
+                             d_cols = &quot;A&quot;,
+                             x_cols = c(&quot;w1&quot;,&quot;w2&quot;,&quot;w3&quot;,&quot;w4&quot;))
+print(dml_data)</code></pre>
+<pre><code>## ================= DoubleMLData Object ==================
+## 
+## 
+## ------------------ Data summary      ------------------
+## Outcome variable: Y
+## Treatment variable(s): A
+## Covariates: w1, w2, w3, w4
+## Instrument(s): 
+## No. Observations: 1000</code></pre>
+<pre class="r"><code>library(mlr3)
+library(mlr3learners)
+# surpress messages from mlr3 package during fitting
+lgr::get_logger(&quot;mlr3&quot;)$set_threshold(&quot;warn&quot;)
+
+learner = lrn(&quot;regr.ranger&quot;, num.trees=500,  max.depth=5, min.node.size=2)
+ml_g = learner$clone()
+ml_m = learner$clone()
+
+learner = lrn(&quot;regr.glmnet&quot;)
+ml_g_sim = learner$clone()
+ml_m_sim = learner$clone()
+
+set.seed(3141)
+obj_dml_plr = DoubleMLPLR$new(dml_data, ml_g=ml_g, ml_m=ml_m)
+obj_dml_plr$fit()
+print(obj_dml_plr)</code></pre>
+<pre><code>## ================= DoubleMLPLR Object ==================
+## 
+## 
+## ------------------ Data summary      ------------------
+## Outcome variable: Y
+## Treatment variable(s): A
+## Covariates: w1, w2, w3, w4
+## Instrument(s): 
+## No. Observations: 1000
+## 
+## ------------------ Score &amp; algorithm ------------------
+## Score function: partialling out
+## DML algorithm: dml2
+## 
+## ------------------ Machine learner   ------------------
+## ml_g: regr.ranger
+## ml_m: regr.ranger
+## 
+## ------------------ Resampling        ------------------
+## No. folds: 5
+## No. repeated sample splits: 1
+## Apply cross-fitting: TRUE
+## 
+## ------------------ Fit summary       ------------------
+##  Estimates and significance testing of the effect of target variables
+##   Estimate. Std. Error t value Pr(&gt;|t|)    
+## A   0.23271    0.03224   7.219 5.25e-13 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 </div>
 </div>
-<div id="further-reading" class="section level1">
-<h1>Further reading</h1>
-<div id="causal-machine-learning" class="section level2">
-<h2>Causal machine learning</h2>
-<p>For more general reading on debiased machine learning and tmle, see</p>
-<ul>
-<li><p>van der Laan, M. J. and Rose, S. (2011). Targeted Learning. Springer Series in Statistics. Springer New York,
-New York, NY</p></li>
-<li><p>Chernozhukov, V., Chetverikov, D., Demirer, M., Dufflo, E., Hansen, C., Newey, W., and Robins, J. (2018).
-Double/debiased machine learning for treatment and structural parameters. The Econometrics Journal, 21(1):C1{
-C68.</p></li>
-</ul>
+<div id="simulation-2" class="section level1">
+<h1>simulation 2</h1>
+<p>This simulation is based on a package “AIPW”, which has a simulation data “eager_sim_rct”. <span class="math inline">\(A\)</span> denotes the binary treatment assignment, <span class="math inline">\(Y\)</span> is the binary outcome, and <span class="math inline">\(W_g\)</span> represents the covariate that affects the treatment assignment, which in our case was deemed to be the eligibility stratum indicator, sampled with replacement from the EAGeR Trial. Similarly, <span class="math inline">\(W_Q\)</span> is a set of baseline prognostic covariates, which were also sampled with replacement from the EAGeR Trial, and includes the number of prior pregnancy losses, age, number of months of trying to conceive prior to randomization, body mass index (weight (kg)/height (m)2), and mean arterial blood pressure (denoted W1…5 , respectively).</p>
+<p>Data and the true risk difference.</p>
+<pre class="r"><code>library(AIPW)
+data(&quot;eager_sim_rct&quot;)
+glimpse(eager_sim_rct)</code></pre>
+<pre><code>## Rows: 1,228
+## Columns: 8
+## $ sim_Y             &lt;int&gt; 0, 1, 1, 0, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0…
+## $ sim_Tx            &lt;int&gt; 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0…
+## $ eligibility       &lt;dbl&gt; 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0…
+## $ loss_num          &lt;dbl&gt; 2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 1, 1, 2, 2, 2, 1…
+## $ age               &lt;dbl&gt; 21.93, 30.65, 30.96, 32.24, 31.49, 27.99, 31.60, 25.…
+## $ time_try_pregnant &lt;dbl&gt; 2, 1, 0, 9, 1, 10, 8, 6, 1, 0, 1, 1, 3, 3, 0, 10, 10…
+## $ BMI               &lt;dbl&gt; 19.51963, 25.56474, 20.75446, 21.65728, 24.27480, 19…
+## $ meanAP            &lt;dbl&gt; 73.33333, 79.00000, 79.33333, 63.83333, 97.44444, 85…</code></pre>
+<pre class="r"><code>attributes(eager_sim_rct)$true_rd</code></pre>
+<pre><code>## [1] 0.1324569</code></pre>
+<pre class="r"><code>data &lt;- eager_sim_rct %&gt;%
+  rename(Y=sim_Y, A=sim_Tx) %&gt;%
+  tibble()
+
+W &lt;- data %&gt;%
+  select(-Y,-A)</code></pre>
+<div id="plug-in-estimator-from-outcome-regression-1" class="section level2">
+<h2>plug-in estimator from outcome regression</h2>
+<pre class="r"><code>SL.outcome&lt;- SuperLearner(Y=data$Y, X=data %&gt;% select(-Y),
+                                     SL.library=SL.library, family=&quot;binomial&quot;)</code></pre>
+<pre><code>## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading</code></pre>
+<pre class="r"><code>SL.outcome.obs&lt;- predict(SL.outcome, X=data %&gt;% select(-Y))$pred
+# predict the PO Y^1
+SL.outcome.1&lt;- predict(SL.outcome, newdata=data %&gt;% select(-Y) %&gt;% mutate(A=1))$pred</code></pre>
+<pre><code>## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading</code></pre>
+<pre class="r"><code># predict the PO Y^0
+SL.outcome.0&lt;- predict(SL.outcome, newdata=data %&gt;% select(-Y) %&gt;% mutate(A=0))$pred</code></pre>
+<pre><code>## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading</code></pre>
+<p>This is to do machine learning on the outcome equation; then get prediction on treated vs control, to get <span class="math inline">\(\hat Y^1\)</span> and <span class="math inline">\(\hat Y^0\)</span>. The sample average of the difference is our plug-in estimator.</p>
+<pre class="r"><code>SL.plugin&lt;-mean(SL.outcome.1-SL.outcome.0)
+SL.plugin</code></pre>
+<pre><code>## [1] 0.1206068</code></pre>
+<pre class="r"><code>Q=data.frame(QAW=SL.outcome.obs, Q0W=SL.outcome.0,Q1W=SL.outcome.1)</code></pre>
 </div>
-<div id="influence-functions" class="section level2">
-<h2>Influence functions</h2>
-<ul>
-<li><p>Fisher, A., &amp; Kennedy, E. H. (2020). Visually communicating and
-teaching intuition for influence functions. The American Statistician,
-1-11.</p></li>
-<li><p>Levy, J. (2019).
-Tutorial: Deriving The Efficient Influence Curve for Large Models.
-<a href="https://arxiv.org/abs/1903.01706" class="uri">https://arxiv.org/abs/1903.01706</a></p></li>
-<li><p>Ichimura, H. and Newey, W. K. (2015).
-The influence function of semiparametric estimators. arXiv preprint
-arXiv:1508.01378</p></li>
-</ul>
+<div id="aipw-with-machine-learning-1" class="section level2">
+<h2>AIPW with machine learning</h2>
+<pre class="r"><code>set.seed(123)
+SL.g&lt;- SuperLearner(Y=data$A, X=data %&gt;% select(-Y, -A),
+                    SL.library=SL.library, family=&quot;binomial&quot;)</code></pre>
+<pre><code>## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading</code></pre>
+<pre class="r"><code>g1W &lt;- SL.g$SL.predict
+g0W&lt;- 1- g1W
+IF.1&lt;-((data$A/g1W)*(data$Y-Q$Q1W)+Q$Q1W)
+IF.0&lt;-(((1-data$A)/g0W)*(data$Y-Q$Q0W)+Q$Q0W)
+IF&lt;-IF.1-IF.0
+aipw.1&lt;-mean(IF.1);aipw.0&lt;-mean(IF.0)
+aipw.manual&lt;-aipw.1-aipw.0
+ci.lb&lt;-mean(IF)-qnorm(.975)*sd(IF)/sqrt(length(IF))
+ci.ub&lt;-mean(IF)+qnorm(.975)*sd(IF)/sqrt(length(IF))
+res.manual.aipw&lt;-c(aipw.manual,ci.lb, ci.ub)
+res.manual.aipw</code></pre>
+<pre><code>## [1] 0.13093060 0.06941035 0.19245086</code></pre>
+<p>Now we use “npcausal”.</p>
+<pre class="r"><code>library(npcausal)
+aipw&lt;- ate(y=data$Y, a=data$A, x=W, nsplits=1, sl.lib=SL.library)</code></pre>
+<pre><code>## 
+  |                                                                            
+  |                                                                      |   0%</code></pre>
+<pre><code>## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading</code></pre>
+<pre><code>## 
+  |                                                                            
+  |==================                                                    |  25%</code></pre>
+<pre><code>## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading</code></pre>
+<pre><code>## 
+  |                                                                            
+  |===================================                                   |  50%
+  |                                                                            
+  |====================================================                  |  75%</code></pre>
+<pre><code>## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading</code></pre>
+<pre><code>## 
+  |                                                                            
+  |======================================================================| 100%
+##      parameter       est         se      ci.ll     ci.ul pval
+## 1      E{Y(0)} 0.4463680 0.02281026 0.40165986 0.4910761    0
+## 2      E{Y(1)} 0.5738675 0.02101274 0.53268257 0.6150525    0
+## 3 E{Y(1)-Y(0)} 0.1274996 0.03086141 0.06701122 0.1879879    0</code></pre>
+<p>The results from “npcausal” are almost the same as the manual results. Note here we did not do sample splitting; therefore this is not “bias-corrected” estimator. Sample splitting is to help prevent overfitting, thus reducing bias. “npcausal” does this for you, if you specify “nsplits” option.</p>
+<pre class="r"><code>aipw2&lt;- ate(y=data$Y, a=data$A, x=W, nsplits=10)</code></pre>
+<pre><code>## 
+  |                                                                            
+  |                                                                      |   0%</code></pre>
+<pre><code>## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading</code></pre>
+<pre><code>## 
+  |                                                                            
+  |==                                                                    |   2%</code></pre>
+<pre><code>## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading</code></pre>
+<pre><code>## 
+  |                                                                            
+  |====                                                                  |   5%</code></pre>
+<pre><code>## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading</code></pre>
+<pre><code>## 
+  |                                                                            
+  |=====                                                                 |   8%</code></pre>
+<pre><code>## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading</code></pre>
+<pre><code>## 
+  |                                                                            
+  |=======                                                               |  10%</code></pre>
+<pre><code>## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading</code></pre>
+<pre><code>## 
+  |                                                                            
+  |=========                                                             |  12%</code></pre>
+<pre><code>## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading</code></pre>
+<pre><code>## 
+  |                                                                            
+  |==========                                                            |  15%</code></pre>
+<pre><code>## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading</code></pre>
+<pre><code>## 
+  |                                                                            
+  |============                                                          |  18%</code></pre>
+<pre><code>## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading</code></pre>
+<pre><code>## 
+  |                                                                            
+  |==============                                                        |  20%</code></pre>
+<pre><code>## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading</code></pre>
+<pre><code>## 
+  |                                                                            
+  |================                                                      |  22%</code></pre>
+<pre><code>## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading</code></pre>
+<pre><code>## 
+  |                                                                            
+  |==================                                                    |  25%</code></pre>
+<pre><code>## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading</code></pre>
+<pre><code>## 
+  |                                                                            
+  |===================                                                   |  28%</code></pre>
+<pre><code>## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading</code></pre>
+<pre><code>## 
+  |                                                                            
+  |=====================                                                 |  30%</code></pre>
+<pre><code>## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading</code></pre>
+<pre><code>## 
+  |                                                                            
+  |=======================                                               |  32%</code></pre>
+<pre><code>## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading</code></pre>
+<pre><code>## 
+  |                                                                            
+  |========================                                              |  35%</code></pre>
+<pre><code>## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading</code></pre>
+<pre><code>## 
+  |                                                                            
+  |==========================                                            |  38%</code></pre>
+<pre><code>## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading</code></pre>
+<pre><code>## 
+  |                                                                            
+  |============================                                          |  40%</code></pre>
+<pre><code>## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading</code></pre>
+<pre><code>## 
+  |                                                                            
+  |==============================                                        |  42%</code></pre>
+<pre><code>## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading</code></pre>
+<pre><code>## 
+  |                                                                            
+  |================================                                      |  45%</code></pre>
+<pre><code>## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading</code></pre>
+<pre><code>## 
+  |                                                                            
+  |=================================                                     |  48%</code></pre>
+<pre><code>## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading</code></pre>
+<pre><code>## 
+  |                                                                            
+  |===================================                                   |  50%
+  |                                                                            
+  |=====================================                                 |  52%</code></pre>
+<pre><code>## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading</code></pre>
+<pre><code>## 
+  |                                                                            
+  |======================================                                |  55%
+  |                                                                            
+  |========================================                              |  58%</code></pre>
+<pre><code>## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading</code></pre>
+<pre><code>## 
+  |                                                                            
+  |==========================================                            |  60%
+  |                                                                            
+  |============================================                          |  62%</code></pre>
+<pre><code>## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading</code></pre>
+<pre><code>## 
+  |                                                                            
+  |==============================================                        |  65%
+  |                                                                            
+  |===============================================                       |  68%</code></pre>
+<pre><code>## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading</code></pre>
+<pre><code>## 
+  |                                                                            
+  |=================================================                     |  70%
+  |                                                                            
+  |===================================================                   |  72%</code></pre>
+<pre><code>## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading</code></pre>
+<pre><code>## 
+  |                                                                            
+  |====================================================                  |  75%
+  |                                                                            
+  |======================================================                |  78%</code></pre>
+<pre><code>## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading</code></pre>
+<pre><code>## 
+  |                                                                            
+  |========================================================              |  80%
+  |                                                                            
+  |==========================================================            |  82%</code></pre>
+<pre><code>## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading</code></pre>
+<pre><code>## 
+  |                                                                            
+  |============================================================          |  85%
+  |                                                                            
+  |=============================================================         |  88%</code></pre>
+<pre><code>## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading</code></pre>
+<pre><code>## 
+  |                                                                            
+  |===============================================================       |  90%
+  |                                                                            
+  |=================================================================     |  92%</code></pre>
+<pre><code>## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading</code></pre>
+<pre><code>## 
+  |                                                                            
+  |==================================================================    |  95%
+  |                                                                            
+  |====================================================================  |  98%</code></pre>
+<pre><code>## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading</code></pre>
+<pre><code>## 
+  |                                                                            
+  |======================================================================| 100%
+##      parameter       est         se      ci.ll     ci.ul pval
+## 1      E{Y(0)} 0.4437742 0.02523783 0.39430808 0.4932404    0
+## 2      E{Y(1)} 0.5755262 0.02312439 0.53020242 0.6208500    0
+## 3 E{Y(1)-Y(0)} 0.1317520 0.03411870 0.06487934 0.1986247    0</code></pre>
 </div>
-<div id="r-software-packages" class="section level2">
-<h2>R Software packages</h2>
-<ul>
-<li><p>Kennedy, Edward. Package npcausal <a href="https://github.com/ehkennedy/npcausal" class="uri">https://github.com/ehkennedy/npcausal</a></p></li>
-<li><p>Polley, E. C. and van der Laan, M. J. (2010) Super learner in prediction.
-U.C. Berkeley Division of Biostatistics Working Paper Series Working
-Paper 266. URL <a href="http://biostats.bepress.com/ucbbiostat/paper266" class="uri">http://biostats.bepress.com/ucbbiostat/paper266</a>.</p></li>
-<li><p>Naimi A and Balzer L. Stacked generalization: an introduction to super
-learning. European Journal of Epidemiology (2018) 33:459–464</p></li>
-<li><p>Gruber S, van der Laan MJ (2012). tmle: An R Package for Targeted
-Maximum Likelihood Estimation.” Journal of Statistical Software, 51(13),
-1–35. <a href="doi:10.18637/jss.v051.i13" class="uri">doi:10.18637/jss.v051.i13</a>, <a href="http://www.jstatsoft.org/v51/i13/" class="uri">http://www.jstatsoft.org/v51/i13/</a>.</p></li>
-<li><p>Targeted learning software tlverse tutorials “The Hitchhiker’s Guide to the
-tlverse: A Targeted Learning Practitioner’s Handbook.”
-tmle3 newest implementation of TMLE, default version is to fit a CV-TMLE
-<a href="https://tlverse.org/tlverse-handbook/tmle3.html" class="uri">https://tlverse.org/tlverse-handbook/tmle3.html</a></p></li>
-<li><p>new superlearner sl3 <a href="https://tlverse.org/tlverse-handbook/sl3.html" class="uri">https://tlverse.org/tlverse-handbook/sl3.html</a></p></li>
-</ul>
+<div id="doubleml-1" class="section level2">
+<h2>DoubleML</h2>
+<pre class="r"><code>library(DoubleML)
+dml_data = DoubleMLData$new(as.data.frame(data),
+                             y_col = &quot;Y&quot;,
+                             d_cols = &quot;A&quot;,
+                             x_cols = c(&quot;eligibility&quot; , &quot;loss_num&quot;,&quot;age&quot;, &quot;time_try_pregnant&quot;,&quot;BMI&quot;,&quot;meanAP&quot;))
+print(dml_data)</code></pre>
+<pre><code>## ================= DoubleMLData Object ==================
+## 
+## 
+## ------------------ Data summary      ------------------
+## Outcome variable: Y
+## Treatment variable(s): A
+## Covariates: eligibility, loss_num, age, time_try_pregnant, BMI, meanAP
+## Instrument(s): 
+## No. Observations: 1228</code></pre>
+<pre class="r"><code>library(mlr3)
+library(mlr3learners)
+# surpress messages from mlr3 package during fitting
+lgr::get_logger(&quot;mlr3&quot;)$set_threshold(&quot;warn&quot;)
+
+learner = lrn(&quot;regr.ranger&quot;, num.trees=500,  max.depth=5, min.node.size=2)
+ml_g = learner$clone()
+ml_m = learner$clone()
+
+learner = lrn(&quot;regr.glmnet&quot;)
+ml_g_sim = learner$clone()
+ml_m_sim = learner$clone()
+
+set.seed(3141)
+obj_dml_plr = DoubleMLPLR$new(dml_data, ml_g=ml_g, ml_m=ml_m)
+obj_dml_plr$fit()
+print(obj_dml_plr)</code></pre>
+<pre><code>## ================= DoubleMLPLR Object ==================
+## 
+## 
+## ------------------ Data summary      ------------------
+## Outcome variable: Y
+## Treatment variable(s): A
+## Covariates: eligibility, loss_num, age, time_try_pregnant, BMI, meanAP
+## Instrument(s): 
+## No. Observations: 1228
+## 
+## ------------------ Score &amp; algorithm ------------------
+## Score function: partialling out
+## DML algorithm: dml2
+## 
+## ------------------ Machine learner   ------------------
+## ml_g: regr.ranger
+## ml_m: regr.ranger
+## 
+## ------------------ Resampling        ------------------
+## No. folds: 5
+## No. repeated sample splits: 1
+## Apply cross-fitting: TRUE
+## 
+## ------------------ Fit summary       ------------------
+##  Estimates and significance testing of the effect of target variables
+##   Estimate. Std. Error t value Pr(&gt;|t|)    
+## A   0.12505    0.03292   3.798 0.000146 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 </div>
 </div>
