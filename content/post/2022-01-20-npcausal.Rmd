@@ -43,7 +43,7 @@ $$ \sqrt n (\hat \psi - \psi) = \sqrt n P_n(\phi) + o_P(1) \rightarrow N(0, var(
 
 Then this estimator is $\sqrt n$ consistent and asympotically normal; and $\phi$ is the influence function.  The efficient influence function is the one with variance at the lower bound (similar to parametric case for Cramer-Rao lower bound).
 
-For ATE, $\psi = E \{ E(Y | X, A=1)\} $, the efficient influence function is 
+For ATE, target parameter $\psi = E \{ E(Y | X, A=1) \}$, the efficient influence function is 
 $$\phi (Z; P) = \frac{A}{\pi (X)} \{ Y - \mu (X) \} + \mu(X) - \psi$$
 where $\pi (X) = P(A=1 | X)$ the propensity score model, $\mu (X) = E(Y |X, A=1)$, the outcome model.
 
@@ -64,7 +64,7 @@ Unfortunately influence function is hard to derive for different situations.  Ed
 
 The simulated data is from  https://migariane.github.io/TMLE.nb.html
 
-```{r, results = 'hide', include=FALSE, warning=FALSE }
+```{r chunk1, results = 'hide', include=TRUE, warning=FALSE,  cache=TRUE, message=FALSE}
 library(npcausal)
 library(boot)
 library(MASS) 
@@ -74,7 +74,7 @@ library(tidyverse)
 library(ranger)
 ```
 
-```{r}
+```{r chunk2, include=TRUE, warning=FALSE,  cache=TRUE, message=FALSE, echo=TRUE}
 set.seed(123)
 n=1000  
 w1 <- rbinom(n, size=1, prob=0.5)
@@ -94,14 +94,13 @@ cat(" True_Psi:", True_Psi)
 
 We first include a few learners.  "npcausal" has a set of default learners.
 
-```{r, include = TRUE, echo = FALSE, warning=FALSE}
+```{r chunk3, include=TRUE, warning=FALSE,  cache=TRUE, message=FALSE, echo=TRUE}
 SL.library <- c("SL.earth","SL.gam","SL.glm","SL.glmnet","SL.glm.interaction", "SL.mean","SL.ranger", "SL.xgboost")
-
 ```
 
 ## plug-in estimator from outcome regression
 
-```{r, include = TRUE, echo=FALSE, warning=FALSE}
+```{r chunk4, include=TRUE, warning=FALSE,  cache=TRUE, message=FALSE, echo=TRUE}
 SL.outcome<- SuperLearner(Y=data$Y, X=data %>% select(w1,w2,w3,w4,A),
                                      SL.library=SL.library, family="binomial")
 SL.outcome.obs<- predict(SL.outcome, X=data %>% select(w1,w2,w3,w4,A))$pred
@@ -113,7 +112,7 @@ SL.outcome.0<- predict(SL.outcome, newdata=data %>% select(w1,w2,w3,w4,A) %>% mu
 ```
 This is to do machine learning on the outcome equation; then get prediction on treated vs control, to get $\hat Y^1$ and $\hat Y^0$.  The sample average of the difference is our plug-in estimator.
 
-```{r, include = TRUE, echo = TRUE, warning=FALSE}
+```{r chunk5, include=TRUE, warning=FALSE,  cache=TRUE, message=FALSE, echo=TRUE}
 SL.plugin<-mean(SL.outcome.1-SL.outcome.0)
 SL.plugin
 ```
@@ -122,7 +121,7 @@ It's not too far from the truth in this case.
 
 
 
-```{r, include = TRUE, echo = TRUE, warning=FALSE}
+```{r chunk5.1, include=TRUE, warning=FALSE,  cache=TRUE, message=FALSE, echo=TRUE}
 Q=data.frame(QAW=SL.outcome.obs, Q0W=SL.outcome.0,Q1W=SL.outcome.1)
 
 ```
@@ -133,7 +132,7 @@ We can use "npcausal" to do AIPW, or we can manually calculate it.
 
 First we get propensity score.  Then, based on both $\hat \mu$ and $\hat \pi$, we can get the AIPW estimator.
 
-```{r, include = TRUE, echo = TRUE, warning=FALSE}
+```{r chunk6, include=TRUE, warning=FALSE,  cache=TRUE, message=FALSE, echo=TRUE}
 set.seed(123)
 SL.g<- SuperLearner(Y=data$A, X=data %>% select(w1,w2,w3,w4),
                     SL.library=SL.library, family="binomial")
@@ -151,7 +150,7 @@ res.manual.aipw
 ```
 Now we use "npcausal".
 
-```{r, include = TRUE, echo = TRUE, warning=FALSE}
+```{r chunk7, include=TRUE, warning=FALSE,  cache=TRUE, message=FALSE, echo=TRUE}
 library(npcausal)
 aipw<- ate(y=Y, a=A, x=W, nsplits=1, sl.lib=SL.library)
 aipw$res
@@ -159,7 +158,8 @@ aipw$res
 
 The results from "npcausal" are almost the same as the manual results.  Note here we did not do sample splitting; therefore this is not "bias-corrected" estimator.  Sample splitting is to help prevent overfitting, thus reducing bias.  "npcausal" does this for you, if you specify "nsplits" option.
 
-```{r, include = T, echo = TRUE, warning=FALSE}
+
+```{r chunk8, include=TRUE, warning=FALSE,  cache=TRUE, message=FALSE, echo=TRUE}
 aipw2<- ate(y=Y, a=A, x=W, nsplits=10)
 ```
 
@@ -167,7 +167,8 @@ aipw2<- ate(y=Y, a=A, x=W, nsplits=10)
 
 We can use TMLE for ATE.
 
-```{r, include = TRUE, echo = TRUE, warning=FALSE}
+
+```{r chunk9, include=TRUE, warning=FALSE,  cache=TRUE, message=FALSE, echo=TRUE}
 library(tmle)
 TMLE<- tmle(Y=data$Y,A=data$A,W=W, family="binomial", Q.SL.library=SL.library, g.SL.library=SL.library)
 
@@ -200,7 +201,7 @@ And the variance of this score function is used as the variance of the doubleML 
 
 
 
-```{r, include = TRUE, echo = TRUE, warning=FALSE}
+```{r chunk10, include=TRUE, warning=FALSE,  cache=TRUE, message=FALSE, echo=TRUE}
 library(DoubleML)
 dml_data = DoubleMLData$new(data,
                              y_col = "Y",
@@ -210,7 +211,7 @@ print(dml_data)
 
 ```
 
-```{r, include = TRUE, echo = TRUE, warning=FALSE}
+```{r chunk11, include=TRUE, warning=FALSE,  cache=TRUE, message=FALSE, echo=TRUE}
 library(mlr3)
 library(mlr3learners)
 # surpress messages from mlr3 package during fitting
@@ -235,7 +236,8 @@ print(obj_dml_plr)
 This simulation is based on a package "AIPW", which has a simulation data "eager_sim_rct".  $A$ denotes the binary treatment assignment, $Y$ is the binary outcome, and $W_g$ represents the covariate that affects the treatment assignment, which in our case was deemed to be the eligibility stratum indicator, sampled with replacement from the EAGeR Trial. Similarly, $W_Q$ is a set of baseline prognostic covariates, which were also sampled with replacement from the EAGeR Trial, and includes the number of prior pregnancy losses, age, number of months of trying to conceive prior to randomization, body mass index (weight (kg)/height (m)2), and mean arterial blood pressure (denoted W1...5 , respectively). 
 
 Data and the true risk difference:
-```{r, include = TRUE, echo = TRUE, warning=FALSE}
+
+```{r chunk12, include=TRUE, warning=FALSE,  cache=TRUE, message=FALSE, echo=TRUE}
 library(AIPW)
 data("eager_sim_rct")
 glimpse(eager_sim_rct)
@@ -252,7 +254,7 @@ W <- data %>%
 
 ## plug-in estimator from outcome regression
 
-```{r, include = TRUE, echo = TRUE, warning=FALSE}
+```{r chunk13, include=TRUE, warning=FALSE,  cache=TRUE, message=FALSE, echo=TRUE}
 SL.outcome<- SuperLearner(Y=data$Y, X=data %>% select(-Y),
                                      SL.library=SL.library, family="binomial")
 SL.outcome.obs<- predict(SL.outcome, X=data %>% select(-Y))$pred
@@ -264,7 +266,8 @@ SL.outcome.0<- predict(SL.outcome, newdata=data %>% select(-Y) %>% mutate(A=0))$
 ```
 This is to do machine learning on the outcome equation; then get prediction on treated vs control, to get $\hat Y^1$ and $\hat Y^0$.  The sample average of the difference is our plug-in estimator.
 
-```{r, include = TRUE, echo = TRUE, warning=FALSE}
+
+```{r chunk14, include=TRUE, warning=FALSE,  cache=TRUE, message=FALSE, echo=TRUE}
 SL.plugin<-mean(SL.outcome.1-SL.outcome.0)
 SL.plugin
 Q=data.frame(QAW=SL.outcome.obs, Q0W=SL.outcome.0,Q1W=SL.outcome.1)
@@ -274,7 +277,8 @@ Q=data.frame(QAW=SL.outcome.obs, Q0W=SL.outcome.0,Q1W=SL.outcome.1)
 
 ##   AIPW with machine learning
 
-```{r, include = TRUE, echo = TRUE, warning=FALSE}
+
+```{r chunk15, include=TRUE, warning=FALSE,  cache=TRUE, message=FALSE, echo=TRUE}
 set.seed(123)
 SL.g<- SuperLearner(Y=data$A, X=data %>% select(-Y, -A),
                     SL.library=SL.library, family="binomial")
@@ -292,21 +296,22 @@ res.manual.aipw
 ```
 Now we use "npcausal".
 
-```{r, include = TRUE, echo = TRUE, warning=FALSE}
+```{r chunk16, include=TRUE, warning=FALSE,  cache=TRUE, message=FALSE, echo=TRUE}
 library(npcausal)
 aipw<- ate(y=data$Y, a=data$A, x=W, nsplits=1, sl.lib=SL.library)
 ```
 
 The results from "npcausal" are almost the same as the manual results.  Note here we did not do sample splitting; therefore this is not "bias-corrected" estimator.  Sample splitting is to help prevent overfitting, thus reducing bias.  "npcausal" does this for you, if you specify "nsplits" option.
 
-```{r, include = T, echo = TRUE, warning=FALSE}
+```{r chunk17, include=TRUE, warning=FALSE,  cache=TRUE, message=FALSE, echo=TRUE}
 aipw2<- ate(y=data$Y, a=data$A, x=W, nsplits=10)
 ```
 
 
 ## DoubleML
 
-```{r, include = TRUE, echo = TRUE, warning=FALSE}
+
+```{r chunk18, include=TRUE, warning=FALSE,  cache=TRUE, message=FALSE, echo=TRUE}
 library(DoubleML)
 dml_data = DoubleMLData$new(as.data.frame(data),
                              y_col = "Y",
@@ -316,7 +321,8 @@ print(dml_data)
 
 ```
 
-```{r, include = TRUE, echo = TRUE, warning=FALSE}
+
+```{r chunk19, include=TRUE, warning=FALSE,  cache=TRUE, message=FALSE, echo=TRUE}
 library(mlr3)
 library(mlr3learners)
 # surpress messages from mlr3 package during fitting
