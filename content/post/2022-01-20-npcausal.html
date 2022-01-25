@@ -86,9 +86,8 @@ library(SuperLearner)</code></pre>
 ## x dplyr::select()     masks MASS::select()
 ## x tidyr::unpack()     masks Matrix::unpack()
 ## x purrr::when()       masks foreach::when()</code></pre>
-<pre class="r"><code>library(ranger)
-
-set.seed(123)
+<pre class="r"><code>library(ranger)</code></pre>
+<pre class="r"><code>set.seed(123)
 n=1000  
 w1 &lt;- rbinom(n, size=1, prob=0.5)
 w2 &lt;- rbinom(n, size=1, prob=0.65)
@@ -104,18 +103,10 @@ True_Psi &lt;- mean(data$Y.1-data$Y.0);
 cat(&quot; True_Psi:&quot;, True_Psi)</code></pre>
 <pre><code>##  True_Psi: 0.203</code></pre>
 <p>We first include a few learners. “npcausal” has a set of default learners.</p>
-<pre class="r"><code>SL.library &lt;- c(&quot;SL.earth&quot;,&quot;SL.gam&quot;,&quot;SL.glm&quot;,&quot;SL.glmnet&quot;,&quot;SL.glm.interaction&quot;, &quot;SL.mean&quot;,&quot;SL.ranger&quot;, &quot;SL.xgboost&quot;)</code></pre>
 <div id="plug-in-estimator-from-outcome-regression" class="section level2">
 <h2>plug-in estimator from outcome regression</h2>
-<pre class="r"><code>SL.outcome&lt;- SuperLearner(Y=data$Y, X=data %&gt;% select(w1,w2,w3,w4,A),
-                                     SL.library=SL.library, family=&quot;binomial&quot;)</code></pre>
 <pre><code>## Loading required namespace: earth</code></pre>
 <pre><code>## Loading required namespace: xgboost</code></pre>
-<pre class="r"><code>SL.outcome.obs&lt;- predict(SL.outcome, X=data %&gt;% select(w1,w2,w3,w4,A))$pred
-# predict the PO Y^1
-SL.outcome.1&lt;- predict(SL.outcome, newdata=data %&gt;% select(w1,w2,w3,w4,A) %&gt;% mutate(A=1))$pred
-# predict the PO Y^0
-SL.outcome.0&lt;- predict(SL.outcome, newdata=data %&gt;% select(w1,w2,w3,w4,A) %&gt;% mutate(A=0))$pred</code></pre>
 <p>This is to do machine learning on the outcome equation; then get prediction on treated vs control, to get <span class="math inline">\(\hat Y^1\)</span> and <span class="math inline">\(\hat Y^0\)</span>. The sample average of the difference is our plug-in estimator.</p>
 <pre class="r"><code>SL.plugin&lt;-mean(SL.outcome.1-SL.outcome.0)
 SL.plugin</code></pre>
@@ -359,7 +350,7 @@ print(obj_dml_plr)</code></pre>
 <div id="simulation-2" class="section level1">
 <h1>simulation 2</h1>
 <p>This simulation is based on a package “AIPW”, which has a simulation data “eager_sim_rct”. <span class="math inline">\(A\)</span> denotes the binary treatment assignment, <span class="math inline">\(Y\)</span> is the binary outcome, and <span class="math inline">\(W_g\)</span> represents the covariate that affects the treatment assignment, which in our case was deemed to be the eligibility stratum indicator, sampled with replacement from the EAGeR Trial. Similarly, <span class="math inline">\(W_Q\)</span> is a set of baseline prognostic covariates, which were also sampled with replacement from the EAGeR Trial, and includes the number of prior pregnancy losses, age, number of months of trying to conceive prior to randomization, body mass index (weight (kg)/height (m)2), and mean arterial blood pressure (denoted W1…5 , respectively).</p>
-<p>Data and the true risk difference.</p>
+<p>Data and the true risk difference:</p>
 <pre class="r"><code>library(AIPW)
 data(&quot;eager_sim_rct&quot;)
 glimpse(eager_sim_rct)</code></pre>
