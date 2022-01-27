@@ -48,11 +48,11 @@ $$\phi (Z; P) = \frac{A}{\pi (X)} \{ Y - \mu (X) \} + \mu(X) - \psi$$
 where $\pi (X) = P(A=1 | X)$ the propensity score model, $\mu (X) = E(Y |X, A=1)$, the outcome model.
 
 
-The idea is to use so called "one-step correction" to estimate the "plug-in" bias.  The bias is approximated by first deriving the influence function; then based on the influence function, the bias can be estimated by using the influence function as a slope to the path from "plug-in" estimate" to true parameter.  This path can be non-linear; therefore this one-step correction may not be perfect, but it should be closer to the truth than the original estimate.
+The idea of IF-based estimator is to use so called "one-step correction" to estimate the "plug-in" bias.  The bias is approximated by first deriving the influence function; then based on the influence function, the bias can be estimated by using the influence function as a slope to the path from "plug-in" estimate" to true parameter.  This path can be non-linear; therefore this one-step correction may not be perfect, but it should be closer to the truth than the original estimate.
 
 For example, an IF-based bias-corrected estimator
 $$\hat \psi = P_n [ \frac{A}{\hat \pi (X)} \{ Y - \hat \mu (X) \} + \hat \mu(X) ]$$
-where $P_n$ means sample mean.  This is the familiar AIPW estimator.  It is known to be doubly robust.  Since we know the influence function, we can calculate its variance, and thus the variance of the estimator, regardless of how the nuisance parameters are estimated.
+where $P_n$ means sample mean.  This is the familiar AIPW estimator.  It is known to be doubly robust.  Since we know the influence function, we can calculate its variance.  This variance is the same as variance of $\hat \psi$ since they differ by a constant $\psi$.  We can use any estimators to estimate the nuisance parameters, then get $\hat \psi$.  Then the sample variance is the variance of the influence function; and the sample mean is the ATE.
 
 In this estimator, both $\hat \mu$ and $\hat \pi$ can be done using any estimator, such as machine learning.  
 

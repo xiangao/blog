@@ -138,7 +138,7 @@ it’s equivalent to estimate</p>
 <p>Wooldrige calls this POLS of regressing <span class="math inline">\(y_{it}\)</span> on regressors <span class="math inline">\(X_{it}\)</span> and two sets of addtional controls <span class="math inline">\(X_{i \cdot}\)</span> and <span class="math inline">\(X_{\cdot t}\)</span> Two-way Mundlak (TWM) model.</p>
 <p>One advantage of TWM is that it has potentially huge cut on the number of regressors, if you use the dummy variable approach for the TWFE.</p>
 <p>The other advantage is that you can actually include time-invariant or unit-invariant variables in the regression and the <span class="math inline">\(\beta\)</span>’s remain unchanged. We all know that in TWFE model you cannot include those time-invariant or unit-invariant variables in the model.</p>
-<p>We can see in the following example of POLS (which is TWM), we add in “race” which is time-invariant. It can be estimated in TWM, but would not be estimatible in TWFE. Notice that coefficients on age and union remain unchanged. This is basically to say that race is orthogonal to the surface of all the <span class="math inline">\(X\)</span>’s and the means of <span class="math inline">\(X\)</span>’s. We did not add in unit invariant variables, but that would be the same story.</p>
+<p>We can see in the following example of POLS (which is TWM), we add in “race” which is unit-invariant. It can be estimated in TWM, but would not be estimatible in TWFE. Notice that coefficients on age and union remain unchanged. This is basically to say that race is orthogonal to the surface of all the <span class="math inline">\(X\)</span>’s and the means of <span class="math inline">\(X\)</span>’s. We did not add in time invariant variables, but that would be the same story.</p>
 <pre class="stata"><code>
 reg ln_wage age union mean_age mean_union i.race, cluster(idcode)
 </code></pre>
@@ -247,6 +247,7 @@ Panel variable: id (strongly balanced)
      Total |       300        100 |       400 </code></pre>
 <p>In this data set, we have 100 units, four years (2012 to 2015). Half units are treated, treatment happens on 2014. Treatment dummy <span class="math inline">\(d\)</span>, <span class="math inline">\(w\)</span> is <span class="math inline">\(d * post\)</span>. Treatment effect is 2.5 in year 2014, and 3.5 in year 2015. If we estimate ATT for the entire post treatment period, we should expect to see ATT about 3, given the balanced panel.</p>
 <p>All the following code are from Wooldridge. I just used it on the simulated data.</p>
+<p>The difficulty is that we have to be careful and mindful about what we want to estimate, then come up with the correct code for all those interaction terms.</p>
 <pre class="stata"><code>
 * Basic DID regression. Only need the post-treatment dummy but including
 * all time dummies is harmless (and necessary for heterogeneous trends).

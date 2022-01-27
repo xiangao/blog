@@ -84,7 +84,7 @@ One advantage of TWM is that it has potentially huge cut on the number of regres
 
 The other advantage is that you can actually include time-invariant or unit-invariant variables in the regression and the $\beta$'s remain unchanged.  We all know that in TWFE model you cannot include those time-invariant or unit-invariant variables in the model.
 
-We can see in the following example of POLS (which is TWM), we add in "race" which is time-invariant.  It can be estimated in TWM, but would not be estimatible in TWFE.  Notice that coefficients on age and union remain unchanged.  This is basically to say that race is orthogonal to the surface of all the $X$'s and the means of $X$'s.  We did not add in unit invariant variables, but that would be the same story.  
+We can see in the following example of POLS (which is TWM), we add in "race" which is unit-invariant.  It can be estimated in TWM, but would not be estimatible in TWFE.  Notice that coefficients on age and union remain unchanged.  This is basically to say that race is orthogonal to the surface of all the $X$'s and the means of $X$'s.  We did not add in time invariant variables, but that would be the same story.  
 
 
 ```{stata stata2, echo=T, cache=T}
@@ -166,6 +166,8 @@ tab year w
 In this data set, we have 100 units, four years (2012 to 2015).  Half units are treated, treatment happens on 2014.  Treatment dummy $d$, $w$ is $d * post$.  Treatment effect is 2.5 in year 2014, and 3.5 in year 2015.  If we estimate ATT for the entire post treatment period, we should expect to see ATT about 3, given the balanced panel.
 
 All the following code are from Wooldridge.  I just used it on the simulated data.
+
+The difficulty is that we have to be careful and mindful about what we want to estimate, then come up with the correct code for all those interaction terms.
 
 ```{stata stata4,  echo=T, cache=T}
 
