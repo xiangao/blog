@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="generator" content="Hugo 0.49" />
+<meta name="generator" content="Hugo 0.92.1" />
 
 
 <title>Causal Forest in panel data  - A Hugo website</title>
@@ -20,7 +20,7 @@
 
 
 
-<link href='//cdn.bootcss.com/highlight.js/9.11.0/styles/github.min.css' rel='stylesheet' type='text/css' />
+<link href='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css' rel='stylesheet' type='text/css' />
 
 
 
@@ -65,7 +65,10 @@
     
 
     <div class="article-content">
-      <div id="introduction" class="section level1">
+      
+
+
+<div id="introduction" class="section level1">
 <h1>Introduction</h1>
 <p>In this simulation exercise, we use Causal Forest (Now is implemented in Generalized Random Forest) (<a href="https://github.com/swager/grf" class="uri">https://github.com/swager/grf</a>) to calculated conditional average treatment effect (or heterogenous treatment effect). We assume three different data generating processes. The first one is a linear interaction between a variable of interest and the treatment dummy. The second one assumes a nonlinear function (a step function) of a variable of interest, say <span class="math inline">\(X\)</span>, and the treatment dummy <span class="math inline">\(W\)</span>. The third one is also nonlinear, assuming we have variable <span class="math inline">\(X\)</span>, but the real DGP is the interaction of log of <span class="math inline">\(X\)</span> and <span class="math inline">\(W\)</span>.</p>
 </div>
@@ -653,19 +656,19 @@ ggplot(graph.data4, aes(x=cate, y=predictions)) + geom_point()  + geom_abline(sl
 
 
 
-<script src="//cdn.bootcss.com/highlight.js/9.11.0/highlight.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
 
 
 
-<script src="//cdn.bootcss.com/highlight.js/9.11.0/languages/r.min.js"></script>
-<script src="//cdn.bootcss.com/highlight.js/9.11.0/languages/yaml.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/r.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/yaml.min.js"></script>
 <script>hljs.configure({languages: []}); hljs.initHighlightingOnLoad();</script>
 
 
 
     
 <script src="/js/math-code.js"></script>
-<script async src="//cdn.bootcss.com/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script async src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"></script>
 
 
     
@@ -681,7 +684,6 @@ if (!doNotTrack) {
 	ga('send', 'pageview');
 }
 </script>
-
   </body>
 </html>
 

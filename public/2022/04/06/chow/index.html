@@ -1,0 +1,1148 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Hugo 0.92.1" />
+
+
+<title>Chow test and more - A Hugo website</title>
+<meta property="og:title" content="Chow test and more - A Hugo website">
+
+
+
+  
+
+
+
+
+
+
+
+
+<link href='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css' rel='stylesheet' type='text/css' />
+
+
+
+<link rel="stylesheet" href="/css/fonts.css" media="all">
+<link rel="stylesheet" href="/css/main.css" media="all">
+
+
+
+  </head>
+  <body>
+    <div class="wrapper">
+      <header class="header">
+        <nav class="nav">
+  <a href="/" class="nav-logo">
+    <img src="/images/logo.png"
+         width="50"
+         height="50"
+         alt="Logo">
+  </a>
+
+  <ul class="nav-links">
+    
+    <li><a href="/about/">About me</a></li>
+    
+  </ul>
+</nav>
+
+      </header>
+
+
+<main class="content" role="main">
+
+  <article class="article">
+    
+    <span class="article-duration">21 min read</span>
+    
+
+    <h1 class="article-title">Chow test and more</h1>
+
+    
+    <span class="article-date">2022/04/06</span>
+    
+
+    <div class="article-content">
+      
+
+
+<div id="chow-test" class="section level1">
+<h1>Chow test</h1>
+<p>Comparing coefficients across regressions is common. Chow test is one of them. If you’d like to compare coefficients of regressions for two subsets, that’s the original Chow test.</p>
+<p>The idea is to interact the subset indicator with all the covariates or only the covariate you are interested (treatment). If you only interact the dummy with the treatment variable, then you are assuming all other covariates have the same effect across the two subsets. This may or may not be reasonable.</p>
+<p>This post is inspired by Austin Nicholas (<a href="https://www.stata.com/statalist/archive/2009-11/msg01485.html" class="uri">https://www.stata.com/statalist/archive/2009-11/msg01485.html</a>). The case with overlapping samples is all from his code.</p>
+<p>Let’s see a simple example:</p>
+<pre class="stata"><code>
+est clear
+sysuse nlsw88, clear
+reg wage hours if south
+est sto south
+reg wage hours if !south
+est sto nonsouth
+suest south nonsouth
+est sto suest
+gen hours1=hours*(south==1)
+gen hours2=hours*(south==0)
+reg wage south hours?
+est sto chow
+test _b[hours1]-_b[hours2]=0
+esttab south nonsouth suest chow, nogaps mti
+</code></pre>
+<pre><code>(NLSW, 1988 extract)
+
+      Source |       SS           df       MS      Number of obs   =       938
+-------------+----------------------------------   F(1, 936)       =     12.47
+       Model |  344.732583         1  344.732583   Prob &gt; F        =    0.0004
+    Residual |  25866.3404       936   27.634979   R-squared       =    0.0132
+-------------+----------------------------------   Adj R-squared   =    0.0121
+       Total |  26211.0729       937   27.973397   Root MSE        =    5.2569
+
+------------------------------------------------------------------------------
+        wage | Coefficient  Std. err.      t    P&gt;|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+       hours |   .0623497   .0176532     3.53   0.000     .0277053    .0969941
+       _cons |   4.520583   .6957145     6.50   0.000     3.155242    5.885923
+------------------------------------------------------------------------------
+
+      Source |       SS           df       MS      Number of obs   =     1,304
+-------------+----------------------------------   F(1, 1302)      =     55.93
+       Model |  1929.41943         1  1929.41943   Prob &gt; F        =    0.0000
+    Residual |  44919.1023     1,302  34.5000785   R-squared       =    0.0412
+-------------+----------------------------------   Adj R-squared   =    0.0404
+       Total |  46848.5217     1,303  35.9543528   Root MSE        =    5.8737
+
+------------------------------------------------------------------------------
+        wage | Coefficient  Std. err.      t    P&gt;|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+       hours |   .1107536     .01481     7.48   0.000     .0816995    .1398076
+       _cons |   4.357811    .564756     7.72   0.000      3.24988    5.465743
+------------------------------------------------------------------------------
+
+
+
+Simultaneous results for south, nonsouth                 Number of obs = 2,242
+
+------------------------------------------------------------------------------
+             |               Robust
+             | Coefficient  std. err.      z    P&gt;|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+south_mean   |
+       hours |   .0623497   .0174426     3.57   0.000     .0281629    .0965366
+       _cons |   4.520583   .6599379     6.85   0.000     3.227128    5.814037
+-------------+----------------------------------------------------------------
+south_lnvar  |
+       _cons |   3.319082   .1435305    23.12   0.000     3.037768    3.600397
+-------------+----------------------------------------------------------------
+nonsouth_m~n |
+       hours |   .1107536   .0134936     8.21   0.000     .0843066    .1372006
+       _cons |   4.357811   .4633326     9.41   0.000     3.449696    5.265927
+-------------+----------------------------------------------------------------
+nonsouth_l~r |
+       _cons |   3.540962   .1006119    35.19   0.000     3.343766    3.738157
+------------------------------------------------------------------------------
+
+
+(4 missing values generated)
+
+(4 missing values generated)
+
+      Source |       SS           df       MS      Number of obs   =     2,242
+-------------+----------------------------------   F(3, 2238)      =     36.91
+       Model |  3502.37892         3  1167.45964   Prob &gt; F        =    0.0000
+    Residual |  70785.4426     2,238  31.6288841   R-squared       =    0.0471
+-------------+----------------------------------   Adj R-squared   =    0.0459
+       Total |  74287.8215     2,241  33.1494072   Root MSE        =     5.624
+
+------------------------------------------------------------------------------
+        wage | Coefficient  Std. err.      t    P&gt;|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+       south |   .1627711   .9199871     0.18   0.860    -1.641346    1.966888
+      hours1 |   .0623497   .0188858     3.30   0.001     .0253142    .0993852
+      hours2 |   .1107536   .0141803     7.81   0.000     .0829456    .1385616
+       _cons |   4.357811   .5407453     8.06   0.000     3.297397    5.418226
+------------------------------------------------------------------------------
+
+
+
+ ( 1)  hours1 - hours2 = 0
+
+       F(  1,  2238) =    4.20
+            Prob &gt; F =    0.0405
+
+
+----------------------------------------------------------------------------
+                      (1)             (2)             (3)             (4)   
+                    south        nonsouth           suest            chow   
+----------------------------------------------------------------------------
+main                                                                        
+hours              0.0623***        0.111***       0.0623***                
+                   (3.53)          (7.48)          (3.57)                   
+south                                                               0.163   
+                                                                   (0.18)   
+hours1                                                             0.0623***
+                                                                   (3.30)   
+hours2                                                              0.111***
+                                                                   (7.81)   
+_cons               4.521***        4.358***        4.521***        4.358***
+                   (6.50)          (7.72)          (6.85)          (8.06)   
+----------------------------------------------------------------------------
+south_lnvar                                                                 
+_cons                                               3.319***                
+                                                  (23.12)                   
+----------------------------------------------------------------------------
+nonsouth_m~n                                                                
+hours                                               0.111***                
+                                                   (8.21)                   
+_cons                                               4.358***                
+                                                   (9.41)                   
+----------------------------------------------------------------------------
+nonsouth_l~r                                                                
+_cons                                               3.541***                
+                                                  (35.19)                   
+----------------------------------------------------------------------------
+N                     938            1304            2242            2242   
+----------------------------------------------------------------------------
+t statistics in parentheses
+* p&lt;0.05, ** p&lt;0.01, *** p&lt;0.001</code></pre>
+<p>In the above example, we are interested in the effect of hours on wage for south and non-south subsets. The Chow test is to use the entire sample which has both south and nonsouth data. Then use the interaction of south indicator and hours to find the effect of hours for south and nonsouth. By including these two subsamples in the same regression, we can test the equality of the two coefficients.</p>
+<p>The other way to do this is to use Stata’s “suest” command. This command basically take the two regressions and the variance covariance structure; then a test of the difference between two coefficients can be done. However, “suest” does not work for some commands. In my opinion, using interaction can be more flexible.</p>
+</div>
+<div id="a-comparison-with-two-different-outcomes" class="section level1">
+<h1>A comparison with two different outcomes</h1>
+<p>We can also use the same idea to compare the effect of some treatment on two different outcomes, if we have the same set of covariates. We just need to “stack” the two outcomes and run a pooled regression with some interactions.</p>
+<p>Here is an example.</p>
+<pre class="stata"><code>
+
+est clear
+sysuse nlsw88, clear
+reg south wage hours 
+est sto south
+reg smsa wage hours 
+est sto smsa
+suest south smsa
+est sto suest
+preserve
+gen Y1=south
+gen Y2=smsa
+gen id=_n
+reshape long Y, i(id) j(subsample)
+gen wage1=wage*(subsample==1)
+gen wage2=wage*(subsample==2)
+gen hours1=hours*(subsample==1)
+gen hours2=hours*(subsample==2)
+reg Y wage? hours? subsample
+test _b[wage1]-_b[wage2]=0
+est sto stacked
+esttab south smsa suest stacked, nogaps mti
+</code></pre>
+<pre><code>(NLSW, 1988 extract)
+
+      Source |       SS           df       MS      Number of obs   =     2,242
+-------------+----------------------------------   F(2, 2239)      =     30.60
+       Model |   14.513685         2  7.25684251   Prob &gt; F        =    0.0000
+    Residual |  531.049205     2,239  .237181423   R-squared       =    0.0266
+-------------+----------------------------------   Adj R-squared   =    0.0257
+       Total |   545.56289     2,241   .24344618   Root MSE        =    .48701
+
+------------------------------------------------------------------------------
+       south | Coefficient  Std. err.      t    P&gt;|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+        wage |  -.0124053   .0018099    -6.85   0.000    -.0159545    -.008856
+       hours |   .0047722   .0009916     4.81   0.000     .0028277    .0067167
+       _cons |   .3372108   .0387354     8.71   0.000     .2612497    .4131718
+------------------------------------------------------------------------------
+
+      Source |       SS           df       MS      Number of obs   =     2,242
+-------------+----------------------------------   F(2, 2239)      =     36.17
+       Model |  14.6274602         2  7.31373012   Prob &gt; F        =    0.0000
+    Residual |  452.719551     2,239  .202197209   R-squared       =    0.0313
+-------------+----------------------------------   Adj R-squared   =    0.0304
+       Total |  467.347012     2,241  .208543959   Root MSE        =    .44966
+
+------------------------------------------------------------------------------
+        smsa | Coefficient  Std. err.      t    P&gt;|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+        wage |   .0139103   .0016711     8.32   0.000     .0106332    .0171873
+       hours |   .0003663   .0009155     0.40   0.689    -.0014291    .0021616
+       _cons |   .5820585   .0357648    16.27   0.000      .511923    .6521941
+------------------------------------------------------------------------------
+
+
+
+Simultaneous results for south, smsa                     Number of obs = 2,242
+
+------------------------------------------------------------------------------
+             |               Robust
+             | Coefficient  std. err.      z    P&gt;|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+south_mean   |
+        wage |  -.0124053   .0019287    -6.43   0.000    -.0161854   -.0086251
+       hours |   .0047722   .0009825     4.86   0.000     .0028465    .0066978
+       _cons |   .3372108   .0379918     8.88   0.000     .2627483    .4116733
+-------------+----------------------------------------------------------------
+south_lnvar  |
+       _cons |   -1.43893   .0096645  -148.89   0.000    -1.457872   -1.419988
+-------------+----------------------------------------------------------------
+smsa_mean    |
+        wage |   .0139103   .0018313     7.60   0.000      .010321    .0174996
+       hours |   .0003663   .0009099     0.40   0.687    -.0014172    .0021497
+       _cons |   .5820585   .0361037    16.12   0.000     .5112965    .6528205
+-------------+----------------------------------------------------------------
+smsa_lnvar   |
+       _cons |  -1.598512   .0195103   -81.93   0.000    -1.636751   -1.560272
+------------------------------------------------------------------------------
+
+
+
+
+
+
+(j = 1 2)
+
+Data                               Wide   -&gt;   Long
+-----------------------------------------------------------------------------
+Number of observations            2,246   -&gt;   4,492       
+Number of variables                  23   -&gt;   23          
+j variable (2 values)                     -&gt;   subsample
+xij variables:
+                                  Y1 Y2   -&gt;   Y
+-----------------------------------------------------------------------------
+
+
+
+(8 missing values generated)
+
+(8 missing values generated)
+
+      Source |       SS           df       MS      Number of obs   =     4,484
+-------------+----------------------------------   F(5, 4478)      =    109.69
+       Model |  120.488157         5  24.0976314   Prob &gt; F        =    0.0000
+    Residual |  983.768757     4,478  .219689316   R-squared       =    0.1091
+-------------+----------------------------------   Adj R-squared   =    0.1081
+       Total |  1104.25691     4,483  .246320971   Root MSE        =    .46871
+
+------------------------------------------------------------------------------
+           Y | Coefficient  Std. err.      t    P&gt;|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+       wage1 |  -.0124053   .0017419    -7.12   0.000    -.0158202   -.0089903
+       wage2 |   .0139103   .0017419     7.99   0.000     .0104953    .0173252
+      hours1 |   .0047722   .0009543     5.00   0.000     .0029013    .0066431
+      hours2 |   .0003663   .0009543     0.38   0.701    -.0015046    .0022372
+   subsample |   .2448477   .0527214     4.64   0.000     .1414877    .3482078
+       _cons |    .092363   .0833599     1.11   0.268    -.0710635    .2557896
+------------------------------------------------------------------------------
+
+
+ ( 1)  wage1 - wage2 = 0
+
+       F(  1,  4478) =  114.12
+            Prob &gt; F =    0.0000
+
+
+
+----------------------------------------------------------------------------
+                      (1)             (2)             (3)             (4)   
+                    south            smsa           suest         stacked   
+----------------------------------------------------------------------------
+main                                                                        
+wage              -0.0124***       0.0139***      -0.0124***                
+                  (-6.85)          (8.32)         (-6.43)                   
+hours             0.00477***     0.000366         0.00477***                
+                   (4.81)          (0.40)          (4.86)                   
+wage1                                                             -0.0124***
+                                                                  (-7.12)   
+wage2                                                              0.0139***
+                                                                   (7.99)   
+hours1                                                            0.00477***
+                                                                   (5.00)   
+hours2                                                           0.000366   
+                                                                   (0.38)   
+subsample                                                           0.245***
+                                                                   (4.64)   
+_cons               0.337***        0.582***        0.337***       0.0924   
+                   (8.71)         (16.27)          (8.88)          (1.11)   
+----------------------------------------------------------------------------
+south_lnvar                                                                 
+_cons                                              -1.439***                
+                                                (-148.89)                   
+----------------------------------------------------------------------------
+smsa_mean                                                                   
+wage                                               0.0139***                
+                                                   (7.60)                   
+hours                                            0.000366                   
+                                                   (0.40)                   
+_cons                                               0.582***                
+                                                  (16.12)                   
+----------------------------------------------------------------------------
+smsa_lnvar                                                                  
+_cons                                              -1.599***                
+                                                 (-81.93)                   
+----------------------------------------------------------------------------
+N                    2242            2242            2242            4484   
+----------------------------------------------------------------------------
+t statistics in parentheses
+* p&lt;0.05, ** p&lt;0.01, *** p&lt;0.001</code></pre>
+<p>In this example, we are interested in comparing the effect of wage on south vs. smsa (not interesting, but just as an example). What I did is to reshape it to long format, stacking south and smsa as “Y”. Then creat interaction of other covariates with subsample indicator. Then run the regression with Y on the interaction terms.</p>
+</div>
+<div id="overlapping-samples" class="section level1">
+<h1>Overlapping samples</h1>
+<p>What if we’d like to compare coefficients for two overlapping subsamples? As I mentioned, Austin Nichols gave the following example:</p>
+<pre class="stata"><code>
+
+est clear
+sysuse nlsw88, clear
+ta south smsa
+reg wage hours if south
+est sto south
+reg wage hours if smsa
+est sto smsa
+suest south smsa
+est sto suest
+preserve
+expand 2
+bys idcode: g n=_n
+keep if (n==1&amp;south)|(n==2&amp;smsa)
+g hours1=hours*!(n==1&amp;south)
+g hours2=hours*!(n==2&amp;smsa)
+reg wage hours? n, cl(idcode)
+est sto stacked
+restore
+esttab south smsa suest stacked, nogaps mti
+</code></pre>
+<pre><code>(NLSW, 1988 extract)
+
+
+  Lives in |     Lives in SMSA
+ the south |  Not SMSA       SMSA |     Total
+-----------+----------------------+----------
+ Not south |       308        996 |     1,304 
+     South |       357        585 |       942 
+-----------+----------------------+----------
+     Total |       665      1,581 |     2,246 
+
+      Source |       SS           df       MS      Number of obs   =       938
+-------------+----------------------------------   F(1, 936)       =     12.47
+       Model |  344.732583         1  344.732583   Prob &gt; F        =    0.0004
+    Residual |  25866.3404       936   27.634979   R-squared       =    0.0132
+-------------+----------------------------------   Adj R-squared   =    0.0121
+       Total |  26211.0729       937   27.973397   Root MSE        =    5.2569
+
+------------------------------------------------------------------------------
+        wage | Coefficient  Std. err.      t    P&gt;|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+       hours |   .0623497   .0176532     3.53   0.000     .0277053    .0969941
+       _cons |   4.520583   .6957145     6.50   0.000     3.155242    5.885923
+------------------------------------------------------------------------------
+
+      Source |       SS           df       MS      Number of obs   =     1,578
+-------------+----------------------------------   F(1, 1576)      =     46.48
+       Model |  1594.14881         1  1594.14881   Prob &gt; F        =    0.0000
+    Residual |  54048.2539     1,576  34.2945773   R-squared       =    0.0286
+-------------+----------------------------------   Adj R-squared   =    0.0280
+       Total |  55642.4027     1,577  35.2837049   Root MSE        =    5.8562
+
+------------------------------------------------------------------------------
+        wage | Coefficient  Std. err.      t    P&gt;|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+       hours |   .0953636   .0139872     6.82   0.000     .0679281    .1227991
+       _cons |   4.861519   .5443826     8.93   0.000     3.793729    5.929309
+------------------------------------------------------------------------------
+
+
+
+Simultaneous results for south, smsa                     Number of obs = 1,934
+
+------------------------------------------------------------------------------
+             |               Robust
+             | Coefficient  std. err.      z    P&gt;|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+south_mean   |
+       hours |   .0623497   .0174432     3.57   0.000     .0281617    .0965378
+       _cons |   4.520583   .6599613     6.85   0.000     3.227082    5.814083
+-------------+----------------------------------------------------------------
+south_lnvar  |
+       _cons |   3.319082   .1435356    23.12   0.000     3.037758    3.600407
+-------------+----------------------------------------------------------------
+smsa_mean    |
+       hours |   .0953636   .0132806     7.18   0.000      .069334    .1213931
+       _cons |   4.861519   .4842914    10.04   0.000     3.912325    5.810713
+-------------+----------------------------------------------------------------
+smsa_lnvar   |
+       _cons |   3.534987   .0910825    38.81   0.000     3.356469    3.713506
+------------------------------------------------------------------------------
+
+
+
+(2,246 observations created)
+
+
+(1,969 observations deleted)
+
+(7 missing values generated)
+
+(7 missing values generated)
+
+
+Linear regression                               Number of obs     =      2,516
+                                                F(3, 1933)        =      40.81
+                                                Prob &gt; F          =     0.0000
+                                                R-squared         =     0.0399
+                                                Root MSE          =     5.6403
+
+                             (Std. err. adjusted for 1,934 clusters in idcode)
+------------------------------------------------------------------------------
+             |               Robust
+        wage | Coefficient  std. err.      t    P&gt;|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+      hours1 |   .0953636   .0132886     7.18   0.000     .0693022     .121425
+      hours2 |   .0623497   .0174536     3.57   0.000     .0281198    .0965796
+           n |   .3409364   .6124145     0.56   0.578    -.8601261    1.541999
+       _cons |   4.179646   1.177889     3.55   0.000     1.869579    6.489713
+------------------------------------------------------------------------------
+
+
+
+
+----------------------------------------------------------------------------
+                      (1)             (2)             (3)             (4)   
+                    south            smsa           suest         stacked   
+----------------------------------------------------------------------------
+main                                                                        
+hours              0.0623***       0.0954***       0.0623***                
+                   (3.53)          (6.82)          (3.57)                   
+hours1                                                             0.0954***
+                                                                   (7.18)   
+hours2                                                             0.0623***
+                                                                   (3.57)   
+n                                                                   0.341   
+                                                                   (0.56)   
+_cons               4.521***        4.862***        4.521***        4.180***
+                   (6.50)          (8.93)          (6.85)          (3.55)   
+----------------------------------------------------------------------------
+south_lnvar                                                                 
+_cons                                               3.319***                
+                                                  (23.12)                   
+----------------------------------------------------------------------------
+smsa_mean                                                                   
+hours                                              0.0954***                
+                                                   (7.18)                   
+_cons                                               4.862***                
+                                                  (10.04)                   
+----------------------------------------------------------------------------
+smsa_lnvar                                                                  
+_cons                                               3.535***                
+                                                  (38.81)                   
+----------------------------------------------------------------------------
+N                     938            1578            1934            2516   
+----------------------------------------------------------------------------
+t statistics in parentheses
+* p&lt;0.05, ** p&lt;0.01, *** p&lt;0.001</code></pre>
+</div>
+<div id="iv-regression" class="section level1">
+<h1>IV regression</h1>
+<p>What about IV regression?</p>
+<pre class="stata"><code>sysuse nlsw88, clear
+ivregress 2sls wage (hours=union) if south
+ivregress 2sls wage (hours=union) if !south
+gen hours1=hours*(south==1)
+gen hours2=hours*(south==0)
+gen union1=union*(south==1)
+gen union2=union*(south==0)
+
+ivregress 2sls wage south (hours? = union?)</code></pre>
+<pre><code> already preserved
+r(621);
+
+
+(NLSW, 1988 extract)
+
+
+Instrumental variables 2SLS regression            Number of obs   =        798
+                                                  Wald chi2(1)    =       2.61
+                                                  Prob &gt; chi2     =     0.1060
+                                                  R-squared       =          .
+                                                  Root MSE        =     9.5807
+
+------------------------------------------------------------------------------
+        wage | Coefficient  Std. err.      z    P&gt;|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+       hours |     .97819   .6050822     1.62   0.106    -.2077492    2.164129
+       _cons |  -30.96026   23.32846    -1.33   0.184     -76.6832    14.76268
+------------------------------------------------------------------------------
+Instrumented: hours
+ Instruments: union
+
+
+Instrumental variables 2SLS regression            Number of obs   =      1,079
+                                                  Wald chi2(1)    =       6.03
+                                                  Prob &gt; chi2     =     0.0140
+                                                  R-squared       =          .
+                                                  Root MSE        =     7.0372
+
+------------------------------------------------------------------------------
+        wage | Coefficient  Std. err.      z    P&gt;|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+       hours |   .6255843   .2546731     2.46   0.014     .1264342    1.124735
+       _cons |   -14.9159   9.401508    -1.59   0.113    -33.34252    3.510714
+------------------------------------------------------------------------------
+Instrumented: hours
+ Instruments: union
+
+(4 missing values generated)
+
+(4 missing values generated)
+
+(368 missing values generated)
+
+(368 missing values generated)
+
+
+Instrumental variables 2SLS regression            Number of obs   =      1,877
+                                                  Wald chi2(3)    =      21.75
+                                                  Prob &gt; chi2     =     0.0001
+                                                  R-squared       =          .
+                                                  Root MSE        =     8.2154
+
+------------------------------------------------------------------------------
+        wage | Coefficient  Std. err.      z    P&gt;|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+      hours1 |     .97819   .5188511     1.89   0.059    -.0387394    1.995119
+      hours2 |   .6255843    .297311     2.10   0.035     .0428654    1.208303
+       south |  -16.04435   22.81705    -0.70   0.482    -60.76495    28.67625
+       _cons |   -14.9159   10.97553    -1.36   0.174    -36.42754    6.595735
+------------------------------------------------------------------------------
+Instrumented: hours1 hours2
+ Instruments: south union1 union2</code></pre>
+<p>We can see same Chow kind of test works, with IV regression, if we have the right interaction terms.</p>
+</div>
+<div id="iv-with-fixed-effects" class="section level1">
+<h1>IV with fixed effects</h1>
+<p>However, when doing with a fixed effet IV, I seem to have difficulties. In this example, I use “reghdfe” to do an IV regression with fixed effect. We can also use “xtivreg2”, but “reghdfe” is supposed to be faster.</p>
+<pre class="stata"><code>
+sysuse nlsw88, clear
+gen hours1=hours*(south==1)
+gen hours2=hours*(south==0)
+gen union1=union*(south==1)
+gen union2=union*(south==0)
+reghdfe wage (hours=union) if south, a(race) cluster(race) old
+reghdfe wage (hours=union) if !south, a(race) cluster(race) old
+reghdfe wage south (hours? = union?) , a(race) cluster(race) old
+</code></pre>
+<pre><code> already preserved
+r(621);
+
+
+(NLSW, 1988 extract)
+
+(4 missing values generated)
+
+(4 missing values generated)
+
+(368 missing values generated)
+
+(368 missing values generated)
+
+(running historical version of reghdfe)
+(converged in 1 iterations)
+
+HDFE IV (2SLS) estimation
+-------------------------
+
+Estimates efficient for homoskedasticity only
+Statistics robust to heteroskedasticity and clustering on race
+
+Number of clusters (race) =          3                Number of obs =      798
+                                                      F(  1,     2) =    69.36
+                                                      Prob &gt; F      =   0.0141
+Total (centered) SS     =   12186.8806                Centered R2   =  -6.2318
+Total (uncentered) SS   =   12186.8806                Uncentered R2 =        .
+Residual SS             =  90825.44631                Root MSE      =     10.7
+
+------------------------------------------------------------------------------
+             |               Robust
+        wage | Coefficient  std. err.      t    P&gt;|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+       hours |   1.107099   .1329286     8.33   0.014     .5351539    1.679045
+------------------------------------------------------------------------------
+Underidentification test (Kleibergen-Paap rk LM statistic):              1.756
+                                                   Chi-sq(1) P-val =    0.1852
+------------------------------------------------------------------------------
+Weak identification test (Cragg-Donald Wald F statistic):                3.237
+                         (Kleibergen-Paap rk Wald F statistic):         13.995
+Stock-Yogo weak ID test critical values: 10% maximal IV size             16.38
+                                         15% maximal IV size              8.96
+                                         20% maximal IV size              6.66
+                                         25% maximal IV size              5.53
+Source: Stock-Yogo (2005).  Reproduced by permission.
+NB: Critical values are for Cragg-Donald F statistic and i.i.d. errors.
+------------------------------------------------------------------------------
+Hansen J statistic (overidentification test of all instruments):         0.000
+                                                 (equation exactly identified)
+------------------------------------------------------------------------------
+Instrumented:         hours
+Excluded instruments: union
+------------------------------------------------------------------------------
+
+Absorbed degrees of freedom:
+---------------------------------------------------------------+
+ Absorbed FE |  Num. Coefs.  =   Categories  -   Redundant     | 
+-------------+-------------------------------------------------|
+        race |            0               3              3 *   | 
+---------------------------------------------------------------+
+* = fixed effect nested within cluster; treated as redundant for DoF computatio
+&gt; n
+
+(running historical version of reghdfe)
+(converged in 1 iterations)
+
+HDFE IV (2SLS) estimation
+-------------------------
+
+Estimates efficient for homoskedasticity only
+Statistics robust to heteroskedasticity and clustering on race
+
+Number of clusters (race) =          3                Number of obs =     1079
+                                                      F(  1,     2) =     1.42
+                                                      Prob &gt; F      =   0.3562
+Total (centered) SS     =  19086.22115                Centered R2   =  -2.3252
+Total (uncentered) SS   =  19086.22115                Uncentered R2 =        .
+Residual SS             =  63560.97528                Root MSE      =    7.689
+
+------------------------------------------------------------------------------
+             |               Robust
+        wage | Coefficient  std. err.      t    P&gt;|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+       hours |   .7023322   .5903032     1.19   0.356    -1.837538    3.242202
+------------------------------------------------------------------------------
+Underidentification test (Kleibergen-Paap rk LM statistic):              0.789
+                                                   Chi-sq(1) P-val =    0.3745
+------------------------------------------------------------------------------
+Weak identification test (Cragg-Donald Wald F statistic):                5.506
+                         (Kleibergen-Paap rk Wald F statistic):          3.775
+Stock-Yogo weak ID test critical values: 10% maximal IV size             16.38
+                                         15% maximal IV size              8.96
+                                         20% maximal IV size              6.66
+                                         25% maximal IV size              5.53
+Source: Stock-Yogo (2005).  Reproduced by permission.
+NB: Critical values are for Cragg-Donald F statistic and i.i.d. errors.
+------------------------------------------------------------------------------
+Hansen J statistic (overidentification test of all instruments):         0.000
+                                                 (equation exactly identified)
+------------------------------------------------------------------------------
+Instrumented:         hours
+Excluded instruments: union
+------------------------------------------------------------------------------
+
+Absorbed degrees of freedom:
+---------------------------------------------------------------+
+ Absorbed FE |  Num. Coefs.  =   Categories  -   Redundant     | 
+-------------+-------------------------------------------------|
+        race |            0               3              3 *   | 
+---------------------------------------------------------------+
+* = fixed effect nested within cluster; treated as redundant for DoF computatio
+&gt; n
+
+(running historical version of reghdfe)
+(converged in 1 iterations)
+Warning: estimated covariance matrix of moment conditions not of full rank.
+         overidentification statistic not reported, and standard errors and
+         model tests should be interpreted with caution.
+Possible causes:
+         number of clusters insufficient to calculate robust covariance matrix
+         singleton dummy variable (dummy with one 1 and N-1 0s or vice versa)
+partial option may address problem.
+
+HDFE IV (2SLS) estimation
+-------------------------
+
+Estimates efficient for homoskedasticity only
+Statistics robust to heteroskedasticity and clustering on race
+
+Number of clusters (race) =          3                Number of obs =     1877
+                                                      F(  3,     2) =  1036.79
+                                                      Prob &gt; F      =   0.0010
+Total (centered) SS     =    32142.319                Centered R2   =  -3.8348
+Total (uncentered) SS   =    32142.319                Uncentered R2 =        .
+Residual SS             =  157627.5718                Root MSE      =    9.179
+
+------------------------------------------------------------------------------
+             |               Robust
+        wage | Coefficient  std. err.      t    P&gt;|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+      hours1 |   1.142036   .0650334    17.56   0.003     .8622201    1.421852
+      hours2 |   .6880691    .526378     1.31   0.321    -1.576753    2.952891
+       south |  -19.74773   22.10221    -0.89   0.466    -114.8459    75.35039
+------------------------------------------------------------------------------
+Underidentification test (Kleibergen-Paap rk LM statistic):              1.793
+                                                   Chi-sq(1) P-val =    0.1806
+------------------------------------------------------------------------------
+Weak identification test (Cragg-Donald Wald F statistic):                3.586
+                         (Kleibergen-Paap rk Wald F statistic):          8.489
+Stock-Yogo weak ID test critical values: 10% maximal IV size              7.03
+                                         15% maximal IV size              4.58
+                                         20% maximal IV size              3.95
+                                         25% maximal IV size              3.63
+Source: Stock-Yogo (2005).  Reproduced by permission.
+NB: Critical values are for Cragg-Donald F statistic and i.i.d. errors.
+------------------------------------------------------------------------------
+Warning: estimated covariance matrix of moment conditions not of full rank.
+         overidentification statistic not reported, and standard errors and
+         model tests should be interpreted with caution.
+Possible causes:
+         number of clusters insufficient to calculate robust covariance matrix
+         singleton dummy variable (dummy with one 1 and N-1 0s or vice versa)
+partial option may address problem.
+------------------------------------------------------------------------------
+Instrumented:         hours1 hours2
+Included instruments: south
+Excluded instruments: union1 union2
+------------------------------------------------------------------------------
+
+Absorbed degrees of freedom:
+---------------------------------------------------------------+
+ Absorbed FE |  Num. Coefs.  =   Categories  -   Redundant     | 
+-------------+-------------------------------------------------|
+        race |            0               3              3 *   | 
+---------------------------------------------------------------+
+* = fixed effect nested within cluster; treated as redundant for DoF computatio
+&gt; n</code></pre>
+<p>We can see I failed to replicate the first two regressions in the third regression. Why? Because we’ll need the fixed effect to be interacted with the subsample indicator to make it right.</p>
+<p>Here is another try:</p>
+<pre class="stata"><code>
+sysuse nlsw88, clear
+gen hours1=hours*(south==1)
+gen hours2=hours*(south==0)
+gen union1=union*(south==1)
+gen union2=union*(south==0)
+
+gen race1=race*(south==1)
+gen race2=race*(south==0)
+
+
+reghdfe wage (hours=union) if south, a(race) cluster(race) old
+reghdfe wage (hours=union) if !south, a(race) cluster(race) old
+ivregress 2sls wage south (hours? = union?) i.race?, cluster(race) 
+</code></pre>
+<pre><code> already preserved
+r(621);
+
+
+(NLSW, 1988 extract)
+
+(4 missing values generated)
+
+(4 missing values generated)
+
+(368 missing values generated)
+
+(368 missing values generated)
+
+
+
+(running historical version of reghdfe)
+(converged in 1 iterations)
+
+HDFE IV (2SLS) estimation
+-------------------------
+
+Estimates efficient for homoskedasticity only
+Statistics robust to heteroskedasticity and clustering on race
+
+Number of clusters (race) =          3                Number of obs =      798
+                                                      F(  1,     2) =    69.36
+                                                      Prob &gt; F      =   0.0141
+Total (centered) SS     =   12186.8806                Centered R2   =  -6.2318
+Total (uncentered) SS   =   12186.8806                Uncentered R2 =        .
+Residual SS             =  90825.44631                Root MSE      =     10.7
+
+------------------------------------------------------------------------------
+             |               Robust
+        wage | Coefficient  std. err.      t    P&gt;|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+       hours |   1.107099   .1329286     8.33   0.014     .5351539    1.679045
+------------------------------------------------------------------------------
+Underidentification test (Kleibergen-Paap rk LM statistic):              1.756
+                                                   Chi-sq(1) P-val =    0.1852
+------------------------------------------------------------------------------
+Weak identification test (Cragg-Donald Wald F statistic):                3.237
+                         (Kleibergen-Paap rk Wald F statistic):         13.995
+Stock-Yogo weak ID test critical values: 10% maximal IV size             16.38
+                                         15% maximal IV size              8.96
+                                         20% maximal IV size              6.66
+                                         25% maximal IV size              5.53
+Source: Stock-Yogo (2005).  Reproduced by permission.
+NB: Critical values are for Cragg-Donald F statistic and i.i.d. errors.
+------------------------------------------------------------------------------
+Hansen J statistic (overidentification test of all instruments):         0.000
+                                                 (equation exactly identified)
+------------------------------------------------------------------------------
+Instrumented:         hours
+Excluded instruments: union
+------------------------------------------------------------------------------
+
+Absorbed degrees of freedom:
+---------------------------------------------------------------+
+ Absorbed FE |  Num. Coefs.  =   Categories  -   Redundant     | 
+-------------+-------------------------------------------------|
+        race |            0               3              3 *   | 
+---------------------------------------------------------------+
+* = fixed effect nested within cluster; treated as redundant for DoF computatio
+&gt; n
+
+(running historical version of reghdfe)
+(converged in 1 iterations)
+
+HDFE IV (2SLS) estimation
+-------------------------
+
+Estimates efficient for homoskedasticity only
+Statistics robust to heteroskedasticity and clustering on race
+
+Number of clusters (race) =          3                Number of obs =     1079
+                                                      F(  1,     2) =     1.42
+                                                      Prob &gt; F      =   0.3562
+Total (centered) SS     =  19086.22115                Centered R2   =  -2.3252
+Total (uncentered) SS   =  19086.22115                Uncentered R2 =        .
+Residual SS             =  63560.97528                Root MSE      =    7.689
+
+------------------------------------------------------------------------------
+             |               Robust
+        wage | Coefficient  std. err.      t    P&gt;|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+       hours |   .7023322   .5903032     1.19   0.356    -1.837538    3.242202
+------------------------------------------------------------------------------
+Underidentification test (Kleibergen-Paap rk LM statistic):              0.789
+                                                   Chi-sq(1) P-val =    0.3745
+------------------------------------------------------------------------------
+Weak identification test (Cragg-Donald Wald F statistic):                5.506
+                         (Kleibergen-Paap rk Wald F statistic):          3.775
+Stock-Yogo weak ID test critical values: 10% maximal IV size             16.38
+                                         15% maximal IV size              8.96
+                                         20% maximal IV size              6.66
+                                         25% maximal IV size              5.53
+Source: Stock-Yogo (2005).  Reproduced by permission.
+NB: Critical values are for Cragg-Donald F statistic and i.i.d. errors.
+------------------------------------------------------------------------------
+Hansen J statistic (overidentification test of all instruments):         0.000
+                                                 (equation exactly identified)
+------------------------------------------------------------------------------
+Instrumented:         hours
+Excluded instruments: union
+------------------------------------------------------------------------------
+
+Absorbed degrees of freedom:
+---------------------------------------------------------------+
+ Absorbed FE |  Num. Coefs.  =   Categories  -   Redundant     | 
+-------------+-------------------------------------------------|
+        race |            0               3              3 *   | 
+---------------------------------------------------------------+
+* = fixed effect nested within cluster; treated as redundant for DoF computatio
+&gt; n
+
+note: 3.race1 omitted because of collinearity.
+note: 3.race2 omitted because of collinearity.
+
+Instrumental variables 2SLS regression            Number of obs   =      1,877
+                                                  Wald chi2(7)    =  101696.08
+                                                  Prob &gt; chi2     =     0.0000
+                                                  R-squared       =          .
+                                                  Root MSE        =     9.0693
+
+                                   (Std. err. adjusted for 3 clusters in race)
+------------------------------------------------------------------------------
+             |               Robust
+        wage | Coefficient  std. err.      z    P&gt;|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+      hours1 |   1.107099   .1085357    10.20   0.000     .8943732    1.319825
+      hours2 |   .7023322   .4819806     1.46   0.145    -.2423324    1.646997
+       south |  -21.52299   22.35225    -0.96   0.336    -65.33259    22.28662
+             |
+       race1 |
+          1  |   3.054296   .1451752    21.04   0.000     2.769758    3.338834
+          2  |   1.987268    .176538    11.26   0.000      1.64126    2.333277
+          3  |          0  (omitted)
+             |
+       race2 |
+          1  |  -.4816127    .434723    -1.11   0.268    -1.333654    .3704287
+          2  |  -2.065527   .7694573    -2.68   0.007    -3.573635   -.5574181
+          3  |          0  (omitted)
+             |
+       _cons |  -17.01633   18.01689    -0.94   0.345    -52.32879    18.29614
+------------------------------------------------------------------------------
+Instrumented: hours1 hours2
+ Instruments: south 1.race1 2.race1 1.race2 2.race2 union1 union2</code></pre>
+<p>This works. Basically we use dummies which are interactions of subsample indicator and the fixed effect dummies. This would not work if we have a lot of fixed effect units.</p>
+<p>But we can trick “reghdfe” to use a two way fixed effect option:</p>
+<p>This way we can do a test to see whether hours effect differs between these two samples.</p>
+<pre class="stata"><code>
+sysuse nlsw88, clear
+gen hours1=hours*(south==1)
+gen hours2=hours*(south==0)
+gen union1=union*(south==1)
+gen union2=union*(south==0)
+gen race1=race*(south==1)
+gen race2=race*(south==0)
+
+reghdfe wage south (hours? = union?) , a(race1 race2) cluster(race) old
+reghdfe, coeflegend
+test _b[hours1]-_b[hours2]=0</code></pre>
+<pre><code> already preserved
+r(621);
+
+
+(NLSW, 1988 extract)
+
+(4 missing values generated)
+
+(4 missing values generated)
+
+(368 missing values generated)
+
+(368 missing values generated)
+
+
+
+(running historical version of reghdfe)
+(converged in 3 iterations)
+warning: -ranktest- error in calculating underidentification test statistics;
+         may be caused by collinearities
+warning: -ranktest- error in calculating weak identification test statistics;
+         may be caused by collinearities
+Warning - collinearities detected
+Vars dropped:  south
+
+HDFE IV (2SLS) estimation
+-------------------------
+
+Estimates efficient for homoskedasticity only
+Statistics robust to heteroskedasticity and clustering on race
+
+Number of clusters (race) =          3                Number of obs =     1877
+                                                      F(  2,     2) = 13010.62
+                                                      Prob &gt; F      =   0.0001
+Total (centered) SS     =  31273.10174                Centered R2   =  -3.7353
+Total (uncentered) SS   =  31273.10174                Uncentered R2 =        .
+Residual SS             =  154386.4216                Root MSE      =    9.089
+
+------------------------------------------------------------------------------
+             |               Robust
+        wage | Coefficient  std. err.      t    P&gt;|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+      hours1 |   1.107099   .1331773     8.31   0.014     .5340838    1.680115
+      hours2 |   .7023322   .5914076     1.19   0.357     -1.84229    3.246954
+       south |          0  (omitted)
+------------------------------------------------------------------------------
+Underidentification test (Kleibergen-Paap rk LM statistic):                  .
+                                                   Chi-sq(.) P-val =         .
+------------------------------------------------------------------------------
+Weak identification test (Cragg-Donald Wald F statistic):                    .
+                         (Kleibergen-Paap rk Wald F statistic):              .
+Stock-Yogo weak ID test critical values: 10% maximal IV size              7.03
+                                         15% maximal IV size              4.58
+                                         20% maximal IV size              3.95
+                                         25% maximal IV size              3.63
+Source: Stock-Yogo (2005).  Reproduced by permission.
+NB: Critical values are for Cragg-Donald F statistic and i.i.d. errors.
+------------------------------------------------------------------------------
+Hansen J statistic (overidentification test of all instruments):         0.000
+                                                 (equation exactly identified)
+------------------------------------------------------------------------------
+Instrumented:         hours1 hours2
+Excluded instruments: union1 union2
+Dropped collinear:    south
+------------------------------------------------------------------------------
+
+Absorbed degrees of freedom:
+---------------------------------------------------------------+
+ Absorbed FE |  Num. Coefs.  =   Categories  -   Redundant     | 
+-------------+-------------------------------------------------|
+       race1 |            4               4              0     | 
+       race2 |            2               4              2     | 
+---------------------------------------------------------------+
+
+
+HDFE IV (2SLS) estimation                         Number of obs   =      1,877
+Absorbing 2 HDFE groups                           F(   8,      2) =   13010.62
+Statistics robust to heteroskedasticity           Prob &gt; F        =     0.0001
+                                                  R-squared       =    -3.7353
+                                                  Adj R-squared   =    -3.7531
+                                                  Within R-sq.    =    -3.9367
+Number of clusters (race)    =          .         Root MSE        =     9.0887
+
+                                   (Std. err. adjusted for 3 clusters in race)
+------------------------------------------------------------------------------
+        wage | Coefficient  Legend
+-------------+----------------------------------------------------------------
+      hours1 |   1.107099  _b[hours1]
+      hours2 |   .7023322  _b[hours2]
+       south |          0  _b[o.south]
+------------------------------------------------------------------------------
+
+Absorbed degrees of freedom:
+-----------------------------------------------------+
+ Absorbed FE | Categories  - Redundant  = Num. Coefs |
+-------------+---------------------------------------|
+          r1 |         .           .           .     |
+-----------------------------------------------------+
+
+
+ ( 1)  hours1 - hours2 = 0
+
+       F(  1,     2) =    0.31
+            Prob &gt; F =    0.6325</code></pre>
+</div>
+
+    </div>
+  </article>
+
+  
+
+
+</main>
+
+      <footer class="footer">
+        <ul class="footer-links">
+          <li>
+            <a href="/index.xml" type="application/rss+xml" target="_blank">RSS feed</a>
+          </li>
+          <li>
+            <a href="https://gohugo.io/" class="footer-links-kudos">Made with <img src="/images/hugo-logo.png" width="22" height="22"></a>
+          </li>
+        </ul>
+      </footer>
+
+    </div>
+    
+
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/r.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/yaml.min.js"></script>
+<script>hljs.configure({languages: []}); hljs.initHighlightingOnLoad();</script>
+
+
+
+    
+
+    
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+	(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+	m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+	})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+	ga('create', 'UA-106731399-1', 'auto');
+	
+	ga('send', 'pageview');
+}
+</script>
+  </body>
+</html>
+

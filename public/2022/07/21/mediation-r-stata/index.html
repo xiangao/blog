@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Hugo 0.92.1" />
+
+
+<title>Recent development in Causal Mediation Analysis - A Hugo website</title>
+<meta property="og:title" content="Recent development in Causal Mediation Analysis - A Hugo website">
+
+
+
+  
+
+
+
+
+
+
+
+
+<link href='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css' rel='stylesheet' type='text/css' />
+
+
+
+<link rel="stylesheet" href="/css/fonts.css" media="all">
+<link rel="stylesheet" href="/css/main.css" media="all">
+
+
+
+  </head>
+  <body>
+    <div class="wrapper">
+      <header class="header">
+        <nav class="nav">
+  <a href="/" class="nav-logo">
+    <img src="/images/logo.png"
+         width="50"
+         height="50"
+         alt="Logo">
+  </a>
+
+  <ul class="nav-links">
+    
+    <li><a href="/about/">About me</a></li>
+    
+  </ul>
+</nav>
+
+      </header>
+
+
+<main class="content" role="main">
+
+  <article class="article">
+    
+    <span class="article-duration">10 min read</span>
+    
+
+    <h1 class="article-title">Recent development in Causal Mediation Analysis</h1>
+
+    
+    <span class="article-date">2022/07/21</span>
+    
+
+    <div class="article-content">
+      
+
+
+<div id="traditional-mediation-analysis" class="section level1">
+<h1>Traditional mediation analysis</h1>
+<p>We summarized how to do traditional mediation analysis (Baron and Kenny, 1986) with R and Stata in my last blog about mediation.</p>
+<p>Traditionally mediation model can be represented in the following equations:</p>
+<p><span class="math display">\[ Y = a A + b M + \epsilon_1 \]</span></p>
+<p><span class="math display">\[ M = c A + \epsilon_2 \]</span></p>
+<p>There are three main variables, A (treatment, or exposure), M (mediator) and Y (outcome). There are two pathways from A to Y, a direct effect, and an indirect effect through A -&gt; M -&gt; Y.</p>
+<p>The traditional approach is to model these two equations directly, and get the estimates of direct and indirect effects.</p>
+</div>
+<div id="causal-mediation-analysis" class="section level1">
+<h1>Causal mediation analysis</h1>
+<p>The traditional method is criticized for lack of causal interpretation. The causal mediation analysis makes assumptions up front. If those assumptions are met, then you have a causal interpretation.</p>
+<p>In a random experiment, usually A is randomly assigned, but M is not. If there is a confounder on the M to Y pathway, then we don’t have a causal effect, or say we cannot estimate causal effect without confounder bias.</p>
+<p>Causal mediation analysis needs that too; it’s not like if you use a causal mediation package then you get the causal effect.</p>
+<p>The other shortcoming of the traditional mediation method is that it assumes a homogeneous treatment indirect effect; that is, there is no <span class="math inline">\(A\)</span> - <span class="math inline">\(M\)</span> interaction. With causal mediation, this interaction can be allowed.</p>
+<div id="controlled-direct-effect" class="section level2">
+<h2>Controlled direct effect</h2>
+<p>Suppose we can set <span class="math inline">\(A\)</span> and <span class="math inline">\(M\)</span> at will to any <span class="math inline">\((a, m)\)</span>, then we have the potential outcome <span class="math inline">\(Y(a,m)\)</span>.</p>
+<p>Conditional direct effect (CDE) is defined as <span class="math display">\[ CDE(m) = E(Y(1,m)-Y(0,m)) \]</span> That is, setting <span class="math inline">\(M\)</span> to <span class="math inline">\(m\)</span>, what is the effect of <span class="math inline">\(A\)</span> on <span class="math inline">\(Y\)</span>?</p>
+<div id="assumptions" class="section level3">
+<h3>Assumptions</h3>
+<p>What are the assumptions for CDE to be identified (estimatible)?</p>
+<ol style="list-style-type: decimal">
+<li><p>Conditional treatment randomization. Suppose we observe confounders W, which can be a joint set of confounders for the A to Y pathway, or the M to Y pathway.</p>
+<p><span class="math display">\[
+Y(a,m) \perp A|W
+\]</span></p>
+<p>This is the usual conditional independence (unconfoundedness, ignorability, etc.) assumption. This is saying the assignment of treatment, given covariates W, has nothing to do with potential outcomes.</p></li>
+<li><p>Conditional mediator randomization.</p>
+<p><span class="math display">\[
+Y(a,m) \perp M|W, A=a
+\]</span></p>
+<p>This is to say, within each strata of W, given treatment status, the assignment of mediator gives no information about potential outcome. This randomization is usually not implemented during many experiments (random trials). This is the assumption that makes a lot of mediation hard to make a causal claim.</p></li>
+<li><p>Positivity.</p>
+<p>There are two positivity assumptions:</p>
+<p><span class="math display">\[
+P(A=a | W=w) &gt; 0
+\]</span> for all w.</p>
+<p>This is the usual positivity assumption.</p>
+<p><span class="math display">\[
+P(M=m | W=w, A=a) &gt; 0
+\]</span></p>
+<p>for all w. This is the mediator positivity.</p></li>
+</ol>
+<p>If these assumptions can be met, then we can do causal mediation analysis. In reality, the ignorability assumptions are untestable. The positivity assumptions can be tested.</p>
+</div>
+<div id="estimation" class="section level3">
+<h3>Estimation</h3>
+<p>CDE can be estimated using G-computation method, or IPW, or the doubly-robust methods, one of them is AIPW (augmented IPW).</p>
+<p>G-computation is to model the outcome equation:</p>
+<p><span class="math display">\[
+CDE_G(m) = E[ E(Y(A=1, M=m, W=w) - E(Y(A=0, M=m, W=w)))]
+\]</span> <span class="math display">\[
+CDE_G(m) = \sum_w [ E(Y(A=1, M=m, W=w) - E(Y(A=0, M=m, W=w))) ] P(W=w)
+\]</span></p>
+<p>IPW is to model the treatment assignment equation and the mediator assignment equation:</p>
+<p><span class="math display">\[
+E[Y(a,m)] = E[{\frac{I(A=a, M=m)}{P(A=a, M=m | W)}} Y]
+\]</span></p>
+<p>Therefore,</p>
+<p><span class="math display">\[
+CDE_{ipw}(m) = E[{\frac{I(A=1,M=m)}{g_M(m|1,W)g_A(1,W)} - \frac{I(A=0,M=m)}{g_M(m|0,W)g_A(0,W)}} Y]
+\]</span></p>
+<p>where <span class="math inline">\(g_M\)</span> is the probability of mediator, g_A is the probability of treatment.</p>
+<p>For the AIPW estimator:</p>
+<p><span class="math display">\[ CDE_{AIPW} = CDE_G(m) + B(\bar Q, g_M, g_A) \]</span> where <span class="math inline">\(\bar Q\)</span> is the mean outcome function.</p>
+<p><span class="math display">\[
+B(\bar Q, g_M, g_A) = \frac{1}{n} \sum_n {\frac{I(M=m, A=1)}{g_m(m|1, W) g_A(1|W)}[Y-\bar Q(m,1,W)]}  - \frac{1}{n} \sum_n {\frac{I(M=m, A=0)}{g_m(m|0, W) g_A(0|W)}[Y-\bar Q(m,0,W)]}
+\]</span></p>
+</div>
+<div id="simulation-example" class="section level3">
+<h3>simulation example</h3>
+<p>This example is from <a href="https://si.biostat.washington.edu/archives/siscer2021/CR2113" class="uri">https://si.biostat.washington.edu/archives/siscer2021/CR2113</a></p>
+<p>First, G-computation:</p>
+<pre class="r"><code>set.seed(1234)
+n &lt;- 5000
+# confounder of A/Y
+W1 &lt;- rnorm(n)
+# confounder of M/Y
+W2 &lt;- rnorm(n)
+# treatment
+A &lt;- rbinom(n, 1, plogis(-1 + W1 / 2))
+# binary mediator
+M &lt;- rbinom(n, 1, plogis(-2 + A / 2 + W2 / 3))
+# binary outcome
+Y &lt;- rbinom(n, 1, plogis(-1 + A - M / 2 + W1 / 3 + W2 / 3))
+full_data &lt;- data.frame(W1 = W1, W2 = W2, A = A, M = M, Y = Y)
+
+# fit outcome regression
+or_fit &lt;- glm(Y ~ A + M + W1 + W2, family = binomial(), data = full_data)
+# new data setting A and M
+data_A1_M0 &lt;- data_A0_M0 &lt;- full_data
+data_A1_M0$A &lt;- 1; data_A1_M0$M &lt;- 0
+data_A0_M0$A &lt;- 0; data_A0_M0$M &lt;- 0
+# predict on new data
+Qbar_A1_M0 &lt;- predict(or_fit, newdata = data_A1_M0, type = &quot;response&quot;)
+Qbar_A0_M0 &lt;- predict(or_fit, newdata = data_A0_M0, type = &quot;response&quot;)
+# gcomp estimate of CDE(0)
+mean(Qbar_A1_M0 - Qbar_A0_M0)</code></pre>
+<pre><code>## [1] 0.2515527</code></pre>
+<p>Second, IPW:</p>
+<pre class="r"><code># model for P(A = 1 | W)
+ps_fit1 &lt;- glm(A ~ W1 + W2, family = binomial(), data = full_data)
+P_A1_W &lt;- predict(ps_fit1, type = &quot;response&quot;)
+P_A0_W &lt;- 1 - P_A1_W
+# model for P(M = 0 | A, W)
+ps_fit2 &lt;- glm(M ~ A + W1 + W2, family = binomial(), data = full_data)
+# P(M = 0 | A = 1, W)
+data_A1 &lt;- full_data; data_A1$A &lt;- 1
+P_M0_A1_W &lt;- 1 - predict(ps_fit2, newdata = data_A1, type = &quot;response&quot;)
+# P(M = 0 | A = 0, W)
+data_A0 &lt;- full_data; data_A0$A &lt;- 0
+P_M0_A0_W &lt;- 1 - predict(ps_fit2, newdata = data_A0, type = &quot;response&quot;)
+# ipw estimate of CDE(0)
+mean( (A == 1) / P_A1_W * (M == 0) / P_M0_A1_W * Y ) -
+mean( (A == 0) / P_A0_W * (M == 0) / P_M0_A0_W * Y )</code></pre>
+<pre><code>## [1] 0.2553091</code></pre>
+<p>AIPW:</p>
+<pre class="r"><code># aipw estimate of E[Y(1,0)]
+aiptw_EY_A1_M0 &lt;- mean(Qbar_A1_M0) +
+mean( (A == 1) / P_A1_W * (M == 0) / P_M0_A1_W * (Y - Qbar_A1_M0) )
+# aipw estimate of E[Y(0,0)]
+aiptw_EY_A0_M0 &lt;- mean(Qbar_A0_M0) +
+mean( (A == 0) / P_A0_W * (M == 0) / P_M0_A0_W * (Y - Qbar_A0_M0) )
+# aipw estimate of CDE(0)
+aiptw_EY_A1_M0 - aiptw_EY_A0_M0</code></pre>
+<pre><code>## [1] 0.2554265</code></pre>
+</div>
+</div>
+<div id="natural-direct-and-indirect-effect" class="section level2">
+<h2>Natural direct and indirect effect</h2>
+<p>CDE is to study the effect of treatment, given the level of mediator. In stead, Natural Effect is to set mediator to its natural value with the value of treatment, that is, <span class="math inline">\(M=M(a)\)</span>.</p>
+<p><span class="math display">\[
+ATE = NIE + NDE =  (E[ Y(1,M(1))] - E[Y(1,M(0))]) + (E[Y(1, M(0))] - E[Y(0,M(0))])
+\]</span></p>
+<p>There are two different ways to decompose the <span class="math inline">\(ATE\)</span> in terms of <span class="math inline">\(NIE\)</span> and <span class="math inline">\(NDE\)</span>. Above is one of them.</p>
+<p>The advantage of NDE and NIE comparing to CDE is that it’s more “natural”; that is, you don’t set the level of mediator deterministicly. And it can decompose the ATE into direct and indirect effects.</p>
+<p>However, there is an additional assumption for NDE and NIE identified.</p>
+<p>Assumption 4:</p>
+<p><span class="math display">\[ Y(a, m) \perp M(a^*) | W\]</span></p>
+<p>This is the “cross-wold” condition: the outcome under <span class="math inline">\((a,m)\)</span> is independent of <span class="math inline">\(M\)</span> under <span class="math inline">\(a^*\)</span>. These two situations cannot happen in the same world; you cannot set <span class="math inline">\(A\)</span> to both <span class="math inline">\(a\)</span> and <span class="math inline">\(a^*\)</span>. There is no experiment can implement it.</p>
+<p>Then there are the usual positivity assumptions.</p>
+<p>Simulation example from the same website materials:</p>
+<pre class="r"><code># fit outcome regression (include interaction because we can)
+or_fit &lt;- glm(Y ~ A + M + W1 + W2 + A*M + M*W1,
+family = binomial(), data = full_data)
+# need E(Y | A = 0/1, M = 0/1, W1 = W1i, W2 = W2i)
+get_EY_a_m_Wi &lt;- function(full_data, or_fit, a, m){
+data_Aa_Mm_Wi &lt;- full_data
+data_Aa_Mm_Wi$A &lt;- a; data_Aa_Mm_Wi$M &lt;- m
+predict(or_fit, newdata = data_Aa_Mm_Wi, type = &quot;response&quot;)
+}
+EY_A0_M0_Wi &lt;- get_EY_a_m_Wi(full_data, or_fit, a = 0, m = 0)
+EY_A0_M1_Wi &lt;- get_EY_a_m_Wi(full_data, or_fit, a = 0, m = 1)
+EY_A1_M0_Wi &lt;- get_EY_a_m_Wi(full_data, or_fit, a = 1, m = 0)
+EY_A1_M1_Wi &lt;- get_EY_a_m_Wi(full_data, or_fit, a = 1, m = 1)
+
+# include interactions -- why not?
+med_fit &lt;- glm(M ~ A*W1 + W1*W2, family = binomial(), data = full_data)
+# estimates of P(M = m | A = a, W = W_i)
+get_Pm_a_Wi &lt;- function(full_data, med_fit, a, m){
+data_Aa_Wi &lt;- full_data; data_Aa_Wi$A &lt;- a
+p &lt;- predict(med_fit, newdata = data_Aa_Wi, type = &quot;response&quot;)
+if(m == 1){
+p
+}else{
+1 - p
+}
+}
+PM0_A0_Wi &lt;- get_Pm_a_Wi(full_data, med_fit, a = 0, m = 0)
+PM1_A0_Wi &lt;- get_Pm_a_Wi(full_data, med_fit, a = 0, m = 1)
+PM0_A1_Wi &lt;- get_Pm_a_Wi(full_data, med_fit, a = 1, m = 0)
+PM1_A1_Wi &lt;- get_Pm_a_Wi(full_data, med_fit, a = 1, m = 1)
+
+# E(E(Y | A = 1, M, W) | A = 1, W)
+EY1M1_Wi &lt;- EY_A1_M1_Wi * PM1_A1_Wi + EY_A1_M0_Wi * PM0_A1_Wi
+# E(E(Y | A = 0, M, W) | A = 1, W)
+EY0M1_Wi &lt;- EY_A0_M1_Wi * PM1_A1_Wi + EY_A0_M0_Wi * PM0_A1_Wi
+# E(E(Y | A = 1, M, W) | A = 0, W)
+EY1M0_Wi &lt;- EY_A1_M1_Wi * PM1_A0_Wi + EY_A1_M0_Wi * PM0_A0_Wi
+# E(E(Y | A = 0, M, W) | A = 0, W)
+EY0M0_Wi &lt;- EY_A0_M1_Wi * PM1_A0_Wi + EY_A0_M0_Wi * PM0_A0_Wi
+
+# estimate of E[Y(1, M(1))]
+E_Y1M1 &lt;- mean(EY1M1_Wi)
+# estimate of E[Y(0, M(1))]
+E_Y0M1 &lt;- mean(EY0M1_Wi)
+# estimate of E[Y(1, M(0))]
+E_Y1M0 &lt;- mean(EY1M0_Wi)
+# estimate of E[Y(0, M(0))]
+E_Y0M0 &lt;- mean(EY0M0_Wi)</code></pre>
+<p>There are other methods to estimate natural effects, some of them are doubly robust. The “mediation” package can be used to do it.</p>
+</div>
+<div id="when-there-is-an-exposure-induced-confounder" class="section level2">
+<h2>When there is an exposure-induced confounder</h2>
+<p>When there is an exposure-induced confounder, say <span class="math inline">\(Z\)</span>, that means in the pathway of <span class="math inline">\(A\)</span> to <span class="math inline">\(M\)</span> there is an intermediate confounder <span class="math inline">\(Z\)</span> which is the child of <span class="math inline">\(A\)</span>. When that happens and we observe <span class="math inline">\(Z\)</span>, <span class="math inline">\(CDE\)</span> can still be estimated, but <span class="math inline">\(NIE\)</span> and <span class="math inline">\(NDE\)</span> cannot. The reason is that the presence of <span class="math inline">\(Z\)</span> implies that the cross-world assumption cannot hold.</p>
+</div>
+<div id="interventional-direct-and-indirect-effects" class="section level2">
+<h2>Interventional direct and indirect effects</h2>
+<p>People are not happy with the cross-world assumption in general. Interventional direct and indirect effects are introduced to avoid this assumption and still be able to decompose the <span class="math inline">\(ATE\)</span>.</p>
+<p><span class="math display">\[ ATE = IIE + IDE = (E[ Y(1,M(1))] - E[Y(1,M^*)]) + (E[Y(1,M^*)]-E[Y(0,M(0))])
+\]</span></p>
+<p>The different point here is to set <span class="math inline">\(M=M^*\)</span>, where <span class="math inline">\(M^*\)</span> is a random draw from <span class="math inline">\(M(a^*) | W=w\)</span>. That is, there is a distribution of <span class="math inline">\(M\)</span> in the strata that <span class="math inline">\(W=w\)</span>. We take a random draw, instead of setting to a specific value.</p>
+<p>The advantage of this is that it does not need cross-world assumption to identify <span class="math inline">\(IIE\)</span> and <span class="math inline">\(IDE\)</span>.</p>
+<div id="an-example" class="section level3">
+<h3>an example</h3>
+<p>Here is an example from package “medoutcon”, which implements interventional effects:</p>
+<pre class="r"><code>library(data.table)
+library(tidyverse)
+library(medoutcon)
+set.seed(1584)
+
+# produces a simple data set based on ca causal model with mediation
+make_example_data &lt;- function(n_obs = 1000) {
+  ## baseline covariates
+  w_1 &lt;- rbinom(n_obs, 1, prob = 0.6)
+  w_2 &lt;- rbinom(n_obs, 1, prob = 0.3)
+  w_3 &lt;- rbinom(n_obs, 1, prob = pmin(0.2 + (w_1 + w_2) / 3, 1))
+  w &lt;- cbind(w_1, w_2, w_3)
+  w_names &lt;- paste(&quot;W&quot;, seq_len(ncol(w)), sep = &quot;_&quot;)
+
+  ## exposure
+  a &lt;- as.numeric(rbinom(n_obs, 1, plogis(rowSums(w) - 2)))
+
+  ## mediator-outcome confounder affected by treatment
+  z &lt;- rbinom(n_obs, 1, plogis(rowMeans(-log(2) + w - a) + 0.2))
+
+  ## mediator -- could be multivariate
+  m &lt;- rbinom(n_obs, 1, plogis(rowSums(log(3) * w[, -3] + a - z)))
+  m_names &lt;- &quot;M&quot;
+
+  ## outcome
+  y &lt;- rbinom(n_obs, 1, plogis(1 / (rowSums(w) - z + a + m)))
+
+  ## construct output
+  dat &lt;- as.data.table(cbind(w = w, a = a, z = z, m = m, y = y))
+  setnames(dat, c(w_names, &quot;A&quot;, &quot;Z&quot;, m_names, &quot;Y&quot;))
+  return(dat)
+}
+
+# set seed and simulate example data
+example_data &lt;- make_example_data()
+w_names &lt;- str_subset(colnames(example_data), &quot;W&quot;)
+m_names &lt;- str_subset(colnames(example_data), &quot;M&quot;)
+
+# quick look at the data
+head(example_data)</code></pre>
+<pre><code>##    W_1 W_2 W_3 A Z M Y
+## 1:   1   0   1 0 0 0 1
+## 2:   0   1   0 0 0 1 0
+## 3:   1   1   1 1 0 1 1
+## 4:   0   1   1 0 0 1 0
+## 5:   0   0   0 0 0 1 1
+## 6:   1   0   1 1 0 1 0</code></pre>
+<pre class="r"><code># compute one-step estimate of the interventional direct effect
+os_de &lt;- medoutcon(W = example_data[, ..w_names],
+                   A = example_data$A,
+                   Z = example_data$Z,
+                   M = example_data[, ..m_names],
+                   Y = example_data$Y,
+                   effect = &quot;direct&quot;,
+                   estimator = &quot;onestep&quot;)
+os_de
+
+# compute targeted minimum loss estimate of the interventional direct effect
+tmle_de &lt;- medoutcon(W = example_data[, ..w_names],
+                     A = example_data$A,
+                     Z = example_data$Z,
+                     M = example_data[, ..m_names],
+                     Y = example_data$Y,
+                     effect = &quot;direct&quot;,
+                     estimator = &quot;tmle&quot;)
+tmle_de</code></pre>
+</div>
+<div id="potential-problem" class="section level3">
+<h3>potential problem</h3>
+<p>However, there is a recent paper by Caleb Miles that points out the interventional effects does not satisfy “sharp mediational null”. “Intuitively, an indirect effect measure should be null whenever there is no individual-level effect for anyone in the population.” He found a counter example that the interventional effects cannot pass this “sharp mediational null” criterion.</p>
+<p>More recently, Ivan Diaz comes up with “causal influence” which seems to overcome this problem.</p>
+<p>To be continued…</p>
+</div>
+</div>
+</div>
+
+    </div>
+  </article>
+
+  
+
+
+</main>
+
+      <footer class="footer">
+        <ul class="footer-links">
+          <li>
+            <a href="/index.xml" type="application/rss+xml" target="_blank">RSS feed</a>
+          </li>
+          <li>
+            <a href="https://gohugo.io/" class="footer-links-kudos">Made with <img src="/images/hugo-logo.png" width="22" height="22"></a>
+          </li>
+        </ul>
+      </footer>
+
+    </div>
+    
+
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/r.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/yaml.min.js"></script>
+<script>hljs.configure({languages: []}); hljs.initHighlightingOnLoad();</script>
+
+
+
+    
+<script src="/js/math-code.js"></script>
+<script async src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+
+
+    
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+	(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+	m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+	})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+	ga('create', 'UA-106731399-1', 'auto');
+	
+	ga('send', 'pageview');
+}
+</script>
+  </body>
+</html>
+

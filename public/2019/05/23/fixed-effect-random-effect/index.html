@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="generator" content="Hugo 0.49" />
+<meta name="generator" content="Hugo 0.92.1" />
 
 
 <title>Fixed or Random Effect, or Both? - A Hugo website</title>
@@ -20,7 +20,7 @@
 
 
 
-<link href='//cdn.bootcss.com/highlight.js/9.11.0/styles/github.min.css' rel='stylesheet' type='text/css' />
+<link href='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css' rel='stylesheet' type='text/css' />
 
 
 
@@ -65,7 +65,10 @@
     
 
     <div class="article-content">
-      <div id="panel-data" class="section level1">
+      
+
+
+<div id="panel-data" class="section level1">
 <h1>Panel data</h1>
 <p>When we have a panel data (repeated observations over time, or observations clustered at higher level), we usually think of two choices: random effect or fixed effect? Economists usually prefers fixed effect models, since it wipes out all within unit heterogeneity. Economists do not like random effect models since it has a big assumption: the random effects need to be uncorrelated to other covariates in the model. To see this, suppose we have</p>
 <p><span class="math display">\[ y_{it} = \beta_0  + \beta_1 x_{it} + c_i + \epsilon_{it} \]</span></p>
@@ -303,19 +306,19 @@ corr(u_i, X)   = 0 (assumed)                    Prob &gt; chi2       =     0.000
 
 
 
-<script src="//cdn.bootcss.com/highlight.js/9.11.0/highlight.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
 
 
 
-<script src="//cdn.bootcss.com/highlight.js/9.11.0/languages/r.min.js"></script>
-<script src="//cdn.bootcss.com/highlight.js/9.11.0/languages/yaml.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/r.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/yaml.min.js"></script>
 <script>hljs.configure({languages: []}); hljs.initHighlightingOnLoad();</script>
 
 
 
     
 <script src="/js/math-code.js"></script>
-<script async src="//cdn.bootcss.com/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script async src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"></script>
 
 
     
@@ -331,7 +334,6 @@ if (!doNotTrack) {
 	ga('send', 'pageview');
 }
 </script>
-
   </body>
 </html>
 

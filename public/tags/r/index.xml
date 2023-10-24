@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>R on A Hugo website</title>
@@ -6,10 +6,27 @@
     <description>Recent content in R on A Hugo website</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Thu, 23 May 2019 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Wed, 06 Apr 2022 00:00:00 +0000</lastBuildDate><atom:link href="/tags/r/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Chow test and more</title>
+      <link>/2022/04/06/chow/</link>
+      <pubDate>Wed, 06 Apr 2022 00:00:00 +0000</pubDate>
+      
+      <guid>/2022/04/06/chow/</guid>
+      <description>Chow test Comparing coefficients across regressions is common. Chow test is one of them. If you’d like to compare coefficients of regressions for two subsets, that’s the original Chow test.
+The idea is to interact the subset indicator with all the covariates or only the covariate you are interested (treatment). If you only interact the dummy with the treatment variable, then you are assuming all other covariates have the same effect across the two subsets.</description>
+    </item>
     
-	<atom:link href="/tags/r/index.xml" rel="self" type="application/rss+xml" />
-    
+    <item>
+      <title>Recent causal inference tools</title>
+      <link>/2022/01/20/npcausal/</link>
+      <pubDate>Thu, 20 Jan 2022 00:00:00 +0000</pubDate>
+      
+      <guid>/2022/01/20/npcausal/</guid>
+      <description>In this post, I’ll use simulated data to see how a few recently developed causal inference packages work.
+In other posts, I have discussed some methods involving machine learning, such as TMLE, or causal forest. This time we’ll talk about nonparametric methods and double machine learning.
+Identification First suppose we have a “target” parameter in mind, which is some function of the some unknown distribution \(P^*\), called a functional, say \(\psi^*(P^*)\).</description>
+    </item>
     
     <item>
       <title>Fixed or Random Effect, or Both?</title>

@@ -1,8 +1,8 @@
 ---
-title: "Recent development in Causal Mediation Analysis"
+title: "Doing the same multi-level model with R and stata"
 author: "Xiang Ao"
-date: '2022-07-21'
-slug: mediation-R-stata
+date: '2023-10-26'
+slug: multilevel-R-stata
 tags: R Stata
 categories:
 - R

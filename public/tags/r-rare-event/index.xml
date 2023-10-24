@@ -1,16 +1,12 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>R Rare Event on A Hugo website</title>
+    <title>R rare event on A Hugo website</title>
     <link>/tags/r-rare-event/</link>
-    <description>Recent content in R Rare Event on A Hugo website</description>
+    <description>Recent content in R rare event on A Hugo website</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Thu, 26 Oct 2017 00:00:00 +0000</lastBuildDate>
-    
-	<atom:link href="/tags/r-rare-event/index.xml" rel="self" type="application/rss+xml" />
-    
-    
+    <lastBuildDate>Thu, 26 Oct 2017 00:00:00 +0000</lastBuildDate><atom:link href="/tags/r-rare-event/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>What model to use for rare events</title>
       <link>/2017/10/26/rare-event/</link>

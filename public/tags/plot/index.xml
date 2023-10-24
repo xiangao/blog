@@ -1,15 +1,22 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Plot on A Hugo website</title>
+    <title>plot on A Hugo website</title>
     <link>/tags/plot/</link>
-    <description>Recent content in Plot on A Hugo website</description>
+    <description>Recent content in plot on A Hugo website</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Tue, 10 Oct 2017 00:00:00 +0000</lastBuildDate>
-    
-	<atom:link href="/tags/plot/index.xml" rel="self" type="application/rss+xml" />
-    
+    <lastBuildDate>Thu, 20 Jan 2022 00:00:00 +0000</lastBuildDate><atom:link href="/tags/plot/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Recent causal inference tools</title>
+      <link>/2022/01/20/npcausal/</link>
+      <pubDate>Thu, 20 Jan 2022 00:00:00 +0000</pubDate>
+      
+      <guid>/2022/01/20/npcausal/</guid>
+      <description>In this post, I’ll use simulated data to see how a few recently developed causal inference packages work.
+In other posts, I have discussed some methods involving machine learning, such as TMLE, or causal forest. This time we’ll talk about nonparametric methods and double machine learning.
+Identification First suppose we have a “target” parameter in mind, which is some function of the some unknown distribution \(P^*\), called a functional, say \(\psi^*(P^*)\).</description>
+    </item>
     
     <item>
       <title>Which count data model to use</title>

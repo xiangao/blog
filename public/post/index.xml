@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Posts on A Hugo website</title>
@@ -6,10 +6,73 @@
     <description>Recent content in Posts on A Hugo website</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Tue, 06 Aug 2019 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Thu, 21 Jul 2022 00:00:00 +0000</lastBuildDate><atom:link href="/post/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Recent development in Causal Mediation Analysis</title>
+      <link>/2022/07/21/mediation-r-stata/</link>
+      <pubDate>Thu, 21 Jul 2022 00:00:00 +0000</pubDate>
+      
+      <guid>/2022/07/21/mediation-r-stata/</guid>
+      <description>Traditional mediation analysis We summarized how to do traditional mediation analysis (Baron and Kenny, 1986) with R and Stata in my last blog about mediation.
+Traditionally mediation model can be represented in the following equations:
+\[ Y = a A + b M + \epsilon_1 \]
+\[ M = c A + \epsilon_2 \]
+There are three main variables, A (treatment, or exposure), M (mediator) and Y (outcome). There are two pathways from A to Y, a direct effect, and an indirect effect through A -&amp;gt; M -&amp;gt; Y.</description>
+    </item>
     
-	<atom:link href="/post/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Chow test and more</title>
+      <link>/2022/04/06/chow/</link>
+      <pubDate>Wed, 06 Apr 2022 00:00:00 +0000</pubDate>
+      
+      <guid>/2022/04/06/chow/</guid>
+      <description>Chow test Comparing coefficients across regressions is common. Chow test is one of them. If you’d like to compare coefficients of regressions for two subsets, that’s the original Chow test.
+The idea is to interact the subset indicator with all the covariates or only the covariate you are interested (treatment). If you only interact the dummy with the treatment variable, then you are assuming all other covariates have the same effect across the two subsets.</description>
+    </item>
     
+    <item>
+      <title>Recent causal inference tools</title>
+      <link>/2022/01/20/npcausal/</link>
+      <pubDate>Thu, 20 Jan 2022 00:00:00 +0000</pubDate>
+      
+      <guid>/2022/01/20/npcausal/</guid>
+      <description>In this post, I’ll use simulated data to see how a few recently developed causal inference packages work.
+In other posts, I have discussed some methods involving machine learning, such as TMLE, or causal forest. This time we’ll talk about nonparametric methods and double machine learning.
+Identification First suppose we have a “target” parameter in mind, which is some function of the some unknown distribution \(P^*\), called a functional, say \(\psi^*(P^*)\).</description>
+    </item>
+    
+    <item>
+      <title>When is OLS coefficient the ATE</title>
+      <link>/2021/11/03/r-stata/</link>
+      <pubDate>Wed, 03 Nov 2021 00:00:00 +0000</pubDate>
+      
+      <guid>/2021/11/03/r-stata/</guid>
+      <description>OLS cannot be ATE (most of the time) Tymon Słoczyński has this cool paper(https://people.brandeis.edu/~tslocz/Sloczynski_paper_regression.pdf) which helps me understand OLS better.
+A common setup in empirical studies:
+\[ y = \alpha + \tau d + X \beta \]
+\(d\) is the treatment dummy, \(X\) is the covariates. This model assumes homogeneous treatment effect. That is, \(\tau\) is the ATE if treatment effect is homogeneous. But, if not, then \(\tau\) is not ATE anymore, although most people treat it as ATE.</description>
+    </item>
+    
+    <item>
+      <title>Mundlak device in fixed effect models</title>
+      <link>/2021/10/23/r-stata/</link>
+      <pubDate>Sat, 23 Oct 2021 00:00:00 +0000</pubDate>
+      
+      <guid>/2021/10/23/r-stata/</guid>
+      <description>TWFE Two-way fixed effect model has been widely used, especially in difference-in-difference situation, when we have a panel data with pre and post data. The basic setup is:
+\[ y_{it} = X_{it} \beta + c_i + f_t + u_{it} \]
+with \(X\) has \(k\) variables, \(t\) has \(T\) periods, and \(i\) has \(N\) units.
+For a linear model, we know we can put in \(k\) unit dummies and \(T\) time dummies to estimate the model.</description>
+    </item>
+    
+    <item>
+      <title>Synthetic Control in R and Stata</title>
+      <link>/2021/09/12/synth-r-stata/</link>
+      <pubDate>Sun, 12 Sep 2021 00:00:00 +0000</pubDate>
+      
+      <guid>/2021/09/12/synth-r-stata/</guid>
+      <description>Synthetic control Abadie et al. have a few papers on synthetic control (https://economics.mit.edu/files/11859, https://economics.mit.edu/files/17847). The key idea is for a case study situation. A single unit, say a state/firm/country is exposed to a shock, and we are interested in the effect of that shock. For example, Card et al studied the effect of minimum wage increase for the state of New Jersey. They used diff-in-diff, with Pennsylvania as the control state.</description>
+    </item>
     
     <item>
       <title>Mediation analysis in R and Stata</title>
@@ -38,7 +101,7 @@ Baron and Kenny’s (http://davidakenny.net/cm/mediate.htm) method is done in fo
       <pubDate>Mon, 22 Apr 2019 00:00:00 +0000</pubDate>
       
       <guid>/2019/04/22/marginal-effects-in-margins/</guid>
-      <description>Comparing Marginal effects Stata’s margins command has been a powerful tool for many economists. It can calculate predicted means as well as predicted marginal effects. Sometimes we’d like to compare those marginal effects. People use margins and marginsplot to generate marginal effects; then draw conclusions on whether there is a difference between marginal effects, based on whether the confidence intervals overlap or not. However, that can actually be wrong. In this post, I’d like to introduce a way to compare effects.</description>
+      <description>Comparing Marginal effects Stata’s margins command has been a powerful tool for many economists. It can calculate predicted means as well as predicted marginal effects. Sometimes we’d like to compare those marginal effects. People use margins and marginsplot to generate marginal effects; then draw conclusions on whether there is a difference between marginal effects, based on whether the confidence intervals overlap or not. However, that can actually be wrong.</description>
     </item>
     
     <item>

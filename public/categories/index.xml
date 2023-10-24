@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Categories on A Hugo website</title>
@@ -6,14 +6,11 @@
     <description>Recent content in Categories on A Hugo website</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    
-	<atom:link href="/categories/index.xml" rel="self" type="application/rss+xml" />
-    
-    
+    <lastBuildDate>Thu, 21 Jul 2022 00:00:00 +0000</lastBuildDate><atom:link href="/categories/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>R</title>
       <link>/categories/r/</link>
-      <pubDate>Tue, 06 Aug 2019 00:00:00 +0000</pubDate>
+      <pubDate>Thu, 21 Jul 2022 00:00:00 +0000</pubDate>
       
       <guid>/categories/r/</guid>
       <description></description>
@@ -22,14 +19,14 @@
     <item>
       <title>Stata</title>
       <link>/categories/stata/</link>
-      <pubDate>Tue, 06 Aug 2019 00:00:00 +0000</pubDate>
+      <pubDate>Thu, 21 Jul 2022 00:00:00 +0000</pubDate>
       
       <guid>/categories/stata/</guid>
       <description></description>
     </item>
     
     <item>
-      <title>Statistics</title>
+      <title>statistics</title>
       <link>/categories/statistics/</link>
       <pubDate>Thu, 23 May 2019 00:00:00 +0000</pubDate>
       

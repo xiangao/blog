@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Hugo 0.92.1" />
+
+
+<title>Synthetic Control in R and Stata - A Hugo website</title>
+<meta property="og:title" content="Synthetic Control in R and Stata - A Hugo website">
+
+
+
+  
+
+
+
+
+
+
+
+
+<link href='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css' rel='stylesheet' type='text/css' />
+
+
+
+<link rel="stylesheet" href="/css/fonts.css" media="all">
+<link rel="stylesheet" href="/css/main.css" media="all">
+
+
+
+  </head>
+  <body>
+    <div class="wrapper">
+      <header class="header">
+        <nav class="nav">
+  <a href="/" class="nav-logo">
+    <img src="/images/logo.png"
+         width="50"
+         height="50"
+         alt="Logo">
+  </a>
+
+  <ul class="nav-links">
+    
+    <li><a href="/about/">About me</a></li>
+    
+  </ul>
+</nav>
+
+      </header>
+
+
+<main class="content" role="main">
+
+  <article class="article">
+    
+    <span class="article-duration">12 min read</span>
+    
+
+    <h1 class="article-title">Synthetic Control in R and Stata</h1>
+
+    
+    <span class="article-date">2021/09/12</span>
+    
+
+    <div class="article-content">
+      
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+
+
+<div id="synthetic-control" class="section level1">
+<h1>Synthetic control</h1>
+<p>Abadie et al. have a few papers on synthetic control (<a href="https://economics.mit.edu/files/11859" class="uri">https://economics.mit.edu/files/11859</a>, <a href="https://economics.mit.edu/files/17847" class="uri">https://economics.mit.edu/files/17847</a>). The key idea is for a case study situation. A single unit, say a state/firm/country is exposed to a shock, and we are interested in the effect of that shock. For example, Card et al studied the effect of minimum wage increase for the state of New Jersey. They used diff-in-diff, with Pennsylvania as the control state. The point of synthetic control is that maybe parallel trend assumption does not hold for the control unit. Is Pennsylvania a good control for New Jersey? Does it follow the same trend as New Jersey? Maybe not. Synthetic control is to generate a more comparable control with some combination of multiple control units, which can have a much closer parallel trend as the treated unit, than using any of the control units.</p>
+<p>Now, how to construct this synthetic control unit? Basically it is a weighted average of multiple control units. There are two sets of weights to be determined. One set for the control units, one set to determine the importance of predictors. Abadie et al (2010) propose to choose a set of <span class="math inline">\(w_i\)</span>’s so that the resulting synthetic control best resembles the pre-intervention values for the treated unit of predictors of the outcome variable, subject to the constraints that the weights are non-negative and sum to 1. Another set of weights <span class="math inline">\(v_h\)</span> for predictor importance is determined such that it minimizes the mean squared prediction error (MSPE) of this synthetic control with respect to the outcome in the pre-treatment period. The intuition of these weights are to pick <span class="math inline">\(w_i\)</span>’s to make the weighted sum of each predictor as close to the treated unit’s value of predictor as close as possible, given a set of <span class="math inline">\(v_h\)</span>’s. Then <span class="math inline">\(v_h\)</span>’s are determined by how important each predictor is to predict the outcome. We don’t use any information post-treatment to determine the weights. But we can use pre-treatment outcome to see the relative importance of each predictor in terms of predictor outcome. We can do this by out-of-sample validation. Basically divide the pre-treatment period into training and validation periods (that’s one reason that the pre-treatment period cannot be too short). Iterate the process of choosing <span class="math inline">\(w_i\)</span> and <span class="math inline">\(v_h\)</span> to achieve a minimization of MSPE in the validation period.</p>
+</div>
+<div id="inference" class="section level1">
+<h1>inference</h1>
+<p>Since sythetic control is for case study situation, we have essentially one treated unit and one synthetic control. The usual inference method would not work. Abadie et al suggested a permutation based approach. The basic idea is to permute the label of treatment; in other words, suppose one control unit is now a treated unit. Then follow the same procedure to get the synthetic control for that “treated unit”; look at the effect. Now if the treatment is truely for the treated unit only, then there would not be any effect for all the control unit. Therefore we can have a distribution of treatment effects after permutation of treatment label.</p>
+</div>
+<div id="an-example" class="section level1">
+<h1>an example</h1>
+<p>The canonical sythetic control is implemented in both R and Stata (<a href="https://web.stanford.edu/~jhain/synthpage.html" class="uri">https://web.stanford.edu/~jhain/synthpage.html</a>). We use a package called “tidysynth” here to study one of the original examples, which evaluates the impact of Proposition 99 on cigarette consumption in California.</p>
+<pre><code>## Rows: 1,209
+## Columns: 7
+## $ state     &lt;chr&gt; &quot;Rhode Island&quot;, &quot;Tennessee&quot;, &quot;Indiana&quot;, &quot;Nevada&quot;, &quot;Louisiana&quot;, &quot;Oklahoma&quot;, &quot;New Hampshire&quot;, &quot;North Dakota&quot;, &quot;Arkansas&quot;, &quot;Virginia&quot;, &quot;Illinoi…
+## $ year      &lt;dbl&gt; 1970, 1970, 1970, 1970, 1970, 1970, 1970, 1970, 1970, 1970, 1970, 1970, 1970, 1970, 1970, 1970, 1970, 1970, 1970, 1970, 1970, 1970, 1970, 19…
+## $ cigsale   &lt;dbl&gt; 123.9, 99.8, 134.6, 189.5, 115.9, 108.4, 265.7, 93.8, 100.3, 124.3, 124.8, 92.7, 65.5, 109.9, 93.4, 124.8, 104.3, 123.0, 106.4, 155.8, 128.5…
+## $ lnincome  &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, …
+## $ beer      &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, …
+## $ age15to24 &lt;dbl&gt; 0.1831579, 0.1780438, 0.1765159, 0.1615542, 0.1851852, 0.1754592, 0.1707317, 0.1844660, 0.1690068, 0.1894216, 0.1669667, 0.1786787, 0.202077…
+## $ retprice  &lt;dbl&gt; 39.3, 39.9, 30.6, 38.9, 34.3, 38.4, 31.4, 37.3, 36.7, 28.8, 41.4, 38.5, 34.6, 34.3, 36.2, 29.4, 39.1, 38.8, 40.4, 28.3, 38.0, 27.3, 34.0, 37…</code></pre>
+<p><img src="/post/2021-09-12-synthetic-control2_files/figure-html/rchunk2-1.png" width="672" /><img src="/post/2021-09-12-synthetic-control2_files/figure-html/rchunk2-2.png" width="672" /><img src="/post/2021-09-12-synthetic-control2_files/figure-html/rchunk2-3.png" width="672" /></p>
+<pre><code>## # A tibble: 7 × 4
+##   variable     California synthetic_California donor_sample
+##   &lt;chr&gt;             &lt;dbl&gt;                &lt;dbl&gt;        &lt;dbl&gt;
+## 1 ln_income        10.1                  9.84         9.83 
+## 2 ret_price        89.4                 89.4         87.3  
+## 3 youth             0.174                0.174        0.173
+## 4 beer_sales       24.3                 24.3         23.7  
+## 5 cigsale_1975    127.                 127.         137.   
+## 6 cigsale_1980    120.                 120.         138.   
+## 7 cigsale_1988     90.1                 90.8        114.</code></pre>
+<p><img src="/post/2021-09-12-synthetic-control2_files/figure-html/rchunk2-4.png" width="672" /><img src="/post/2021-09-12-synthetic-control2_files/figure-html/rchunk2-5.png" width="672" /><img src="/post/2021-09-12-synthetic-control2_files/figure-html/rchunk2-6.png" width="672" /></p>
+<pre><code>## # A tibble: 39 × 8
+##    unit_name     type    pre_mspe post_mspe mspe_ratio  rank fishers_exact_pvalue z_score
+##    &lt;chr&gt;         &lt;chr&gt;      &lt;dbl&gt;     &lt;dbl&gt;      &lt;dbl&gt; &lt;int&gt;                &lt;dbl&gt;   &lt;dbl&gt;
+##  1 California    Treated     3.94     390.       99.0      1               0.0256  5.13  
+##  2 Georgia       Donor       3.48     174.       49.8      2               0.0513  2.33  
+##  3 Virginia      Donor       5.86     171.       29.2      3               0.0769  1.16  
+##  4 Indiana       Donor      18.4      415.       22.6      4               0.103   0.787 
+##  5 West Virginia Donor      14.3      287.       20.1      5               0.128   0.646 
+##  6 Connecticut   Donor      27.3      335.       12.3      6               0.154   0.202 
+##  7 Nebraska      Donor       6.47      54.3       8.40     7               0.179  -0.0189
+##  8 Missouri      Donor       9.19      77.0       8.38     8               0.205  -0.0199
+##  9 Texas         Donor      24.5      160.        6.54     9               0.231  -0.125 
+## 10 Idaho         Donor      53.2      340.        6.39    10               0.256  -0.133 
+## # … with 29 more rows</code></pre>
+<pre><code>## # A tibble: 31 × 3
+##    time_unit real_y synth_y
+##        &lt;dbl&gt;  &lt;dbl&gt;   &lt;dbl&gt;
+##  1      1970   123     116.
+##  2      1971   121     118.
+##  3      1972   124.    123.
+##  4      1973   124.    124.
+##  5      1974   127.    126.
+##  6      1975   127.    127.
+##  7      1976   128     127.
+##  8      1977   126.    125.
+##  9      1978   126.    125.
+## 10      1979   122.    122.
+## # … with 21 more rows</code></pre>
+<pre><code>## # A tibble: 1,209 × 5
+##    .id        .placebo time_unit real_y synth_y
+##    &lt;chr&gt;         &lt;dbl&gt;     &lt;dbl&gt;  &lt;dbl&gt;   &lt;dbl&gt;
+##  1 California        0      1970   123     116.
+##  2 California        0      1971   121     118.
+##  3 California        0      1972   124.    123.
+##  4 California        0      1973   124.    124.
+##  5 California        0      1974   127.    126.
+##  6 California        0      1975   127.    127.
+##  7 California        0      1976   128     127.
+##  8 California        0      1977   126.    125.
+##  9 California        0      1978   126.    125.
+## 10 California        0      1979   122.    122.
+## # … with 1,199 more rows</code></pre>
+<pre><code>## # A tibble: 1,482 × 50
+##    .id        .placebo .type   time_unit California `Rhode Island` Tennessee Indiana Nevada Louisiana Oklahoma `New Hampshire` `North Dakota` Arkansas Virginia
+##    &lt;chr&gt;         &lt;dbl&gt; &lt;chr&gt;       &lt;dbl&gt;      &lt;dbl&gt;          &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;  &lt;dbl&gt;     &lt;dbl&gt;    &lt;dbl&gt;           &lt;dbl&gt;          &lt;dbl&gt;    &lt;dbl&gt;    &lt;dbl&gt;
+##  1 California        0 treated      1970       123              NA        NA      NA     NA        NA       NA              NA             NA       NA       NA
+##  2 California        0 treated      1971       121              NA        NA      NA     NA        NA       NA              NA             NA       NA       NA
+##  3 California        0 treated      1972       124.             NA        NA      NA     NA        NA       NA              NA             NA       NA       NA
+##  4 California        0 treated      1973       124.             NA        NA      NA     NA        NA       NA              NA             NA       NA       NA
+##  5 California        0 treated      1974       127.             NA        NA      NA     NA        NA       NA              NA             NA       NA       NA
+##  6 California        0 treated      1975       127.             NA        NA      NA     NA        NA       NA              NA             NA       NA       NA
+##  7 California        0 treated      1976       128              NA        NA      NA     NA        NA       NA              NA             NA       NA       NA
+##  8 California        0 treated      1977       126.             NA        NA      NA     NA        NA       NA              NA             NA       NA       NA
+##  9 California        0 treated      1978       126.             NA        NA      NA     NA        NA       NA              NA             NA       NA       NA
+## 10 California        0 treated      1979       122.             NA        NA      NA     NA        NA       NA              NA             NA       NA       NA
+## # … with 1,472 more rows, and 35 more variables: Illinois &lt;dbl&gt;, South Dakota &lt;dbl&gt;, Utah &lt;dbl&gt;, Georgia &lt;dbl&gt;, Mississippi &lt;dbl&gt;, Colorado &lt;dbl&gt;,
+## #   Minnesota &lt;dbl&gt;, Texas &lt;dbl&gt;, Kentucky &lt;dbl&gt;, Maine &lt;dbl&gt;, North Carolina &lt;dbl&gt;, Montana &lt;dbl&gt;, Vermont &lt;dbl&gt;, Iowa &lt;dbl&gt;, Connecticut &lt;dbl&gt;, Kansas &lt;dbl&gt;,
+## #   Delaware &lt;dbl&gt;, Wisconsin &lt;dbl&gt;, Idaho &lt;dbl&gt;, New Mexico &lt;dbl&gt;, West Virginia &lt;dbl&gt;, Pennsylvania &lt;dbl&gt;, South Carolina &lt;dbl&gt;, Ohio &lt;dbl&gt;, Nebraska &lt;dbl&gt;,
+## #   Missouri &lt;dbl&gt;, Alabama &lt;dbl&gt;, Wyoming &lt;dbl&gt;, .predictors &lt;list&gt;, .synthetic_control &lt;list&gt;, .unit_weights &lt;list&gt;, .predictor_weights &lt;list&gt;,
+## #   .original_data &lt;list&gt;, .meta &lt;list&gt;, .loss &lt;list&gt;</code></pre>
+</div>
+<div id="generalized-synthetic-control" class="section level1">
+<h1>Generalized Synthetic Control</h1>
+<p>The idea of generalized SC is to combine both an interactive fixed effect model and synthetic control. It is basically a panel data synthetic control. It naturally takes multiple treated units and uses bootstrap to get standard errors. It generates ATT with standard errors.</p>
+<p>Examples are here: <a href="https://yiqingxu.org/packages/gsynth/gsynth_examples.html" class="uri">https://yiqingxu.org/packages/gsynth/gsynth_examples.html</a></p>
+<p><img src="/post/2021-09-12-synthetic-control2_files/figure-html/rchunk3-1.png" width="672" /><img src="/post/2021-09-12-synthetic-control2_files/figure-html/rchunk3-2.png" width="672" /></p>
+<pre><code>## Cross-validating ... 
+##  r = 0; sigma2 = 1.84865; IC = 1.02023; PC = 1.74458; MSPE = 2.37280
+##  r = 1; sigma2 = 1.51541; IC = 1.20588; PC = 1.99818; MSPE = 1.71743
+##  r = 2; sigma2 = 0.99737; IC = 1.16130; PC = 1.69046; MSPE = 1.14540*
+##  r = 3; sigma2 = 0.94664; IC = 1.47216; PC = 1.96215; MSPE = 1.15032
+##  r = 4; sigma2 = 0.89411; IC = 1.76745; PC = 2.19241; MSPE = 1.21397
+##  r = 5; sigma2 = 0.85060; IC = 2.05928; PC = 2.40964; MSPE = 1.23876
+## 
+##  r* = 2
+## 
+## 
+Simulating errors .............
+Bootstrapping ...
+## ..........</code></pre>
+<pre><code>##    user  system elapsed 
+##   5.789   0.000   5.805</code></pre>
+<pre><code>## Call:
+## gsynth.formula(formula = Y ~ D + X1 + X2, data = simdata, index = c(&quot;id&quot;, 
+##     &quot;time&quot;), force = &quot;two-way&quot;, r = c(0, 5), CV = TRUE, se = TRUE, 
+##     nboots = 1000, inference = &quot;parametric&quot;, parallel = FALSE)
+## 
+## Average Treatment Effect on the Treated:
+##         Estimate   S.E. CI.lower CI.upper p.value
+## ATT.avg    5.544 0.2612    5.032    6.055       0
+## 
+##    ~ by Period (including Pre-treatment Periods):
+##           ATT   S.E. CI.lower CI.upper   p.value n.Treated
+## -19  0.392160 0.5383  -0.6629  1.44725 4.663e-01         0
+## -18  0.276548 0.4453  -0.5963  1.14937 5.346e-01         0
+## -17 -0.275393 0.5315  -1.3172  0.76640 6.044e-01         0
+## -16  0.441201 0.4384  -0.4181  1.30047 3.142e-01         0
+## -15 -0.889595 0.4784  -1.8273  0.04807 6.296e-02         0
+## -14  0.593891 0.4595  -0.3067  1.49446 1.962e-01         0
+## -13  0.528749 0.3850  -0.2259  1.28338 1.697e-01         0
+## -12  0.171569 0.5457  -0.8980  1.24110 7.532e-01         0
+## -11  0.610832 0.4625  -0.2956  1.51722 1.865e-01         0
+## -10  0.170597 0.4726  -0.7557  1.09687 7.181e-01         0
+## -9  -0.271892 0.5605  -1.3705  0.82670 6.276e-01         0
+## -8   0.094843 0.5242  -0.9325  1.12223 8.564e-01         0
+## -7  -0.651976 0.5524  -1.7346  0.43066 2.379e-01         0
+## -6   0.573686 0.4650  -0.3377  1.48507 2.173e-01         0
+## -5  -0.469686 0.4875  -1.4253  0.48589 3.354e-01         0
+## -4  -0.077766 0.5481  -1.1521  0.99655 8.872e-01         0
+## -3  -0.141785 0.5683  -1.2555  0.97198 8.030e-01         0
+## -2  -0.157100 0.4065  -0.9539  0.63970 6.992e-01         0
+## -1  -0.915575 0.5371  -1.9682  0.13706 8.824e-02         0
+## 0   -0.003309 0.3453  -0.6801  0.67348 9.924e-01         0
+## 1    1.235962 0.7176  -0.1706  2.64249 8.502e-02         5
+## 2    1.630264 0.5545   0.5434  2.71708 3.282e-03         5
+## 3    2.712178 0.5746   1.5860  3.83832 2.354e-06         5
+## 4    3.466758 0.7110   2.0732  4.86029 1.083e-06         5
+## 5    5.740132 0.5429   4.6760  6.80424 0.000e+00         5
+## 6    5.280035 0.5479   4.2062  6.35391 0.000e+00         5
+## 7    8.436485 0.4708   7.5137  9.35928 0.000e+00         5
+## 8    7.839902 0.6607   6.5450  9.13476 0.000e+00         5
+## 9    9.455115 0.5314   8.4135 10.49672 0.000e+00         5
+## 10   9.638509 0.4949   8.6685 10.60852 0.000e+00         5
+## 
+## Coefficients for the Covariates:
+##     beta    S.E. CI.lower CI.upper p.value
+## X1 1.022 0.03143   0.9603    1.083       0
+## X2 3.053 0.02916   2.9959    3.110       0</code></pre>
+<pre><code>##              ATT      S.E.   CI.lower    CI.upper      p.value n.Treated
+## -19  0.392159788 0.5383217 -0.6629313  1.44725089 4.663162e-01         0
+## -18  0.276547958 0.4453278 -0.5962785  1.14937444 5.346005e-01         0
+## -17 -0.275392926 0.5315388 -1.3171899  0.76640403 6.043850e-01         0
+## -16  0.441201288 0.4384083 -0.4180632  1.30046578 3.142373e-01         0
+## -15 -0.889595124 0.4784093 -1.8272602  0.04806992 6.295838e-02         0
+## -14  0.593890957 0.4594830 -0.3066791  1.49446101 1.961771e-01         0
+## -13  0.528749012 0.3850232 -0.2258825  1.28338055 1.696618e-01         0
+## -12  0.171568737 0.5456898 -0.8979636  1.24110106 7.532119e-01         0
+## -11  0.610832288 0.4624523 -0.2955575  1.51722209 1.865498e-01         0
+## -10  0.170597468 0.4725947 -0.7556710  1.09686596 7.181140e-01         0
+## -9  -0.271891657 0.5605161 -1.3704829  0.82669962 6.276240e-01         0
+## -8   0.094842558 0.5241845 -0.9325402  1.12222527 8.564197e-01         0
+## -7  -0.651975701 0.5523735 -1.7346080  0.43065656 2.378743e-01         0
+## -6   0.573686472 0.4649980 -0.3376928  1.48506575 2.172999e-01         0
+## -5  -0.469685905 0.4875497 -1.4252657  0.48589385 3.353668e-01         0
+## -4  -0.077766449 0.5481285 -1.1520786  0.99654571 8.871777e-01         0
+## -3  -0.141784521 0.5682564 -1.2555467  0.97197765 8.029679e-01         0
+## -2  -0.157100323 0.4065397 -0.9539035  0.63970286 6.991761e-01         0
+## -1  -0.915575087 0.5370691 -1.9682112  0.13706099 8.823878e-02         0
+## 0   -0.003308833 0.3453058 -0.6800958  0.67347815 9.923545e-01         0
+## 1    1.235962010 0.7176306 -0.1705682  2.64249222 8.501853e-02         5
+## 2    1.630264312 0.5545081  0.5434484  2.71708022 3.281922e-03         5
+## 3    2.712177702 0.5745724  1.5860365  3.83831895 2.354497e-06         5
+## 4    3.466757691 0.7109978  2.0732275  4.86028786 1.083109e-06         5
+## 5    5.740132310 0.5429224  4.6760239  6.80424073 0.000000e+00         5
+## 6    5.280034526 0.5479067  4.2061571  6.35391194 0.000000e+00         5
+## 7    8.436484821 0.4708215  7.5136917  9.35927791 0.000000e+00         5
+## 8    7.839901526 0.6606565  6.5450387  9.13476439 0.000000e+00         5
+## 9    9.455114684 0.5314416  8.4135084 10.49672101 0.000000e+00         5
+## 10   9.638509457 0.4949127  8.6684985 10.60852043 0.000000e+00         5</code></pre>
+<pre><code>##         Estimate      S.E. CI.lower CI.upper p.value
+## ATT.avg 5.543534 0.2611512 5.031687 6.055381       0</code></pre>
+<pre><code>##        beta       S.E.  CI.lower CI.upper p.value
+## X1 1.021890 0.03142726 0.9602939 1.083487       0
+## X2 3.052994 0.02915502 2.9958516 3.110137       0</code></pre>
+<pre><code>## Parallel computing ...
+## Cross-validating ... 
+##  r = 0; sigma2 = 1.84865; IC = 1.02023; PC = 1.74458; MSPE = 2.37280
+##  r = 1; sigma2 = 1.51541; IC = 1.20588; PC = 1.99818; MSPE = 1.71743
+##  r = 2; sigma2 = 0.99737; IC = 1.16130; PC = 1.69046; MSPE = 1.14540*
+##  r = 3; sigma2 = 0.94664; IC = 1.47216; PC = 1.96215; MSPE = 1.15032
+##  r = 4; sigma2 = 0.89411; IC = 1.76745; PC = 2.19241; MSPE = 1.21397
+##  r = 5; sigma2 = 0.85060; IC = 2.05928; PC = 2.40964; MSPE = 1.23876
+## 
+##  r* = 2
+## 
+## 
+Simulating errors ...
+Bootstrapping ...
+## </code></pre>
+<pre><code>##    user  system elapsed 
+##   1.317   0.002  19.123</code></pre>
+<pre><code>##           CATT      S.E.   CI.lower   CI.upper p.value
+## 0 -0.003308833 0.3266574 -0.5773503  0.7000896   0.918
+## 1  1.232653177 0.8510226 -0.3575374  2.9809081   0.142
+## 2  2.862917489 1.0614389  0.8444397  4.9409303   0.008
+## 3  5.575095192 1.1981878  3.2156968  7.9073223   0.000
+## 4  9.041852883 1.5605409  5.9440932 12.1205905   0.000
+## 5 14.781985192 1.8420618 11.1454249 18.2272044   0.000</code></pre>
+<pre><code>##         CATT      S.E.   CI.lower  CI.upper p.value
+## 0 -0.2277091 0.3850916 -0.9324429 0.5775746   0.556
+## 1  2.2491804 0.8499516  0.5569541 3.8722829   0.010
+## 2  2.3930760 0.6816647  0.9888229 3.7416706   0.000
+## 3  2.3067796 0.6929185  0.8417326 3.6171810   0.000
+## 4  2.5812540 0.8621074  0.8097772 4.1672884   0.008
+## 5  4.7445071 0.6666032  3.3288818 6.0082990   0.000</code></pre>
+<p><img src="/post/2021-09-12-synthetic-control2_files/figure-html/rchunk3-3.png" width="672" /></p>
+</div>
+
+    </div>
+  </article>
+
+  
+
+
+</main>
+
+      <footer class="footer">
+        <ul class="footer-links">
+          <li>
+            <a href="/index.xml" type="application/rss+xml" target="_blank">RSS feed</a>
+          </li>
+          <li>
+            <a href="https://gohugo.io/" class="footer-links-kudos">Made with <img src="/images/hugo-logo.png" width="22" height="22"></a>
+          </li>
+        </ul>
+      </footer>
+
+    </div>
+    
+
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/r.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/yaml.min.js"></script>
+<script>hljs.configure({languages: []}); hljs.initHighlightingOnLoad();</script>
+
+
+
+    
+<script src="/js/math-code.js"></script>
+<script async src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+
+
+    
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+	(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+	m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+	})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+	ga('create', 'UA-106731399-1', 'auto');
+	
+	ga('send', 'pageview');
+}
+</script>
+  </body>
+</html>
+
