@@ -6,7 +6,25 @@
     <description>Recent content in R Stata on A Hugo website</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-US</language>
-    <lastBuildDate>Thu, 21 Jul 2022 00:00:00 +0000</lastBuildDate><atom:link href="/tags/r-stata/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Thu, 26 Oct 2023 00:00:00 +0000</lastBuildDate><atom:link href="/tags/r-stata/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Doing the same multi-level model with R and stata</title>
+      <link>/2023/10/26/multilevel-r-stata/</link>
+      <pubDate>Thu, 26 Oct 2023 00:00:00 +0000</pubDate>
+      
+      <guid>/2023/10/26/multilevel-r-stata/</guid>
+      <description>This post is a demo for doing the same multi-level models with R and stata. R’s multilevel models are mostly done with lme4 and nlme. Stata’s multilevel models are mostly done with mixed and menl. The two packages are not exactly the same. For example, mixed does not allow complicated structure for the residual. That’s why we need menl. Likewise, in R lme4’s “lmer” does not allow this specification. We have to use nlme.</description>
+    </item>
+    
+    <item>
+      <title>Multi-level model with R and stata</title>
+      <link>/2023/10/26/multi-level-model-with-r-and-stata/</link>
+      <pubDate>Thu, 26 Oct 2023 00:00:00 +0000</pubDate>
+      
+      <guid>/2023/10/26/multi-level-model-with-r-and-stata/</guid>
+      <description>This post is a demo for doing the same multi-level models with R and stata. R’s multilevel models are mostly done with lme4 and nlme. Stata’s multilevel models are mostly done with mixed and menl. The two packages are not exactly the same. For example, mixed does not allow complicated structure for the residual. That’s why we need menl. Likewise, in R lme4’s “lmer” does not allow this specification. We have to use nlme.</description>
+    </item>
+    
     <item>
       <title>Recent development in Causal Mediation Analysis</title>
       <link>/2022/07/21/mediation-r-stata/</link>
@@ -71,7 +89,7 @@ Baron and Kenny’s (http://davidakenny.net/cm/mediate.htm) method is done in fo
       <pubDate>Mon, 22 Apr 2019 00:00:00 +0000</pubDate>
       
       <guid>/2019/04/22/marginal-effects-in-margins/</guid>
-      <description>Comparing Marginal effects Stata’s margins command has been a powerful tool for many economists. It can calculate predicted means as well as predicted marginal effects. Sometimes we’d like to compare those marginal effects. People use margins and marginsplot to generate marginal effects; then draw conclusions on whether there is a difference between marginal effects, based on whether the confidence intervals overlap or not. However, that can actually be wrong. In this post, I’d like to introduce a way to compare effects.</description>
+      <description>Comparing Marginal effects Stata’s margins command has been a powerful tool for many economists. It can calculate predicted means as well as predicted marginal effects. Sometimes we’d like to compare those marginal effects. People use margins and marginsplot to generate marginal effects; then draw conclusions on whether there is a difference between marginal effects, based on whether the confidence intervals overlap or not. However, that can actually be wrong.</description>
     </item>
     
     <item>
