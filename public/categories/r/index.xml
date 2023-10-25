@@ -5,7 +5,7 @@
     <link>/categories/r/</link>
     <description>Recent content in R on A Hugo website</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language>
+    <language>en-US</language>
     <lastBuildDate>Thu, 21 Jul 2022 00:00:00 +0000</lastBuildDate><atom:link href="/categories/r/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Recent development in Causal Mediation Analysis</title>
@@ -75,6 +75,17 @@ For a linear model, we know we can put in \(k\) unit dummies and \(T\) time dumm
     </item>
     
     <item>
+      <title>Hello R Markdown</title>
+      <link>/2020/12/01/hello-r-markdown/</link>
+      <pubDate>Tue, 01 Dec 2020 21:13:14 -0500</pubDate>
+      
+      <guid>/2020/12/01/hello-r-markdown/</guid>
+      <description>R Markdown This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see http://rmarkdown.rstudio.com.
+You can embed an R code chunk like this:
+summary(cars) ## speed dist ## Min. : 4.0 Min. : 2.00 ## 1st Qu.:12.0 1st Qu.: 26.00 ## Median :15.0 Median : 36.00 ## Mean :15.4 Mean : 42.98 ## 3rd Qu.</description>
+    </item>
+    
+    <item>
       <title>Mediation analysis in R and Stata</title>
       <link>/2019/08/06/mediation-r-stata/</link>
       <pubDate>Tue, 06 Aug 2019 00:00:00 +0000</pubDate>
@@ -101,7 +112,7 @@ Baron and Kenny’s (http://davidakenny.net/cm/mediate.htm) method is done in fo
       <pubDate>Mon, 22 Apr 2019 00:00:00 +0000</pubDate>
       
       <guid>/2019/04/22/marginal-effects-in-margins/</guid>
-      <description>Comparing Marginal effects Stata’s margins command has been a powerful tool for many economists. It can calculate predicted means as well as predicted marginal effects. Sometimes we’d like to compare those marginal effects. People use margins and marginsplot to generate marginal effects; then draw conclusions on whether there is a difference between marginal effects, based on whether the confidence intervals overlap or not. However, that can actually be wrong.</description>
+      <description>Comparing Marginal effects Stata’s margins command has been a powerful tool for many economists. It can calculate predicted means as well as predicted marginal effects. Sometimes we’d like to compare those marginal effects. People use margins and marginsplot to generate marginal effects; then draw conclusions on whether there is a difference between marginal effects, based on whether the confidence intervals overlap or not. However, that can actually be wrong. In this post, I’d like to introduce a way to compare effects.</description>
     </item>
     
     <item>

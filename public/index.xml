@@ -5,7 +5,7 @@
     <link>/</link>
     <description>Recent content on A Hugo website</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language>
+    <language>en-US</language>
     <lastBuildDate>Thu, 21 Jul 2022 00:00:00 +0000</lastBuildDate><atom:link href="/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Recent development in Causal Mediation Analysis</title>
@@ -75,6 +75,17 @@ For a linear model, we know we can put in \(k\) unit dummies and \(T\) time dumm
     </item>
     
     <item>
+      <title>Hello R Markdown</title>
+      <link>/2020/12/01/hello-r-markdown/</link>
+      <pubDate>Tue, 01 Dec 2020 21:13:14 -0500</pubDate>
+      
+      <guid>/2020/12/01/hello-r-markdown/</guid>
+      <description>R Markdown This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see http://rmarkdown.rstudio.com.
+You can embed an R code chunk like this:
+summary(cars) ## speed dist ## Min. : 4.0 Min. : 2.00 ## 1st Qu.:12.0 1st Qu.: 26.00 ## Median :15.0 Median : 36.00 ## Mean :15.4 Mean : 42.98 ## 3rd Qu.</description>
+    </item>
+    
+    <item>
       <title>Mediation analysis in R and Stata</title>
       <link>/2019/08/06/mediation-r-stata/</link>
       <pubDate>Tue, 06 Aug 2019 00:00:00 +0000</pubDate>
@@ -101,7 +112,7 @@ Baron and Kenny’s (http://davidakenny.net/cm/mediate.htm) method is done in fo
       <pubDate>Mon, 22 Apr 2019 00:00:00 +0000</pubDate>
       
       <guid>/2019/04/22/marginal-effects-in-margins/</guid>
-      <description>Comparing Marginal effects Stata’s margins command has been a powerful tool for many economists. It can calculate predicted means as well as predicted marginal effects. Sometimes we’d like to compare those marginal effects. People use margins and marginsplot to generate marginal effects; then draw conclusions on whether there is a difference between marginal effects, based on whether the confidence intervals overlap or not. However, that can actually be wrong.</description>
+      <description>Comparing Marginal effects Stata’s margins command has been a powerful tool for many economists. It can calculate predicted means as well as predicted marginal effects. Sometimes we’d like to compare those marginal effects. People use margins and marginsplot to generate marginal effects; then draw conclusions on whether there is a difference between marginal effects, based on whether the confidence intervals overlap or not. However, that can actually be wrong. In this post, I’d like to introduce a way to compare effects.</description>
     </item>
     
     <item>
@@ -201,17 +212,36 @@ library(MASS) library(ggplot2) library(dplyr) ## ## Attaching package: &amp;#39;
       <description>简介 在本文中我们用机器学习和统计的方法来分析红楼梦的作者。红楼梦是中国最著名的小说之一(https://en.wikipedia.org/wiki/Dream_of_the_Red_Chamber)。 大多数人认为前八十回为曹雪芹所作， 后四十回为后人续作。 除非我们从考古中发现证据，唯一能告诉我们的便是小说本身。我们可以从文章的用词风格来判断作者。 即使续作者尽量模仿原作者的风格，也很难不在字里行间露出自己固有的风格。（我们也许可以用同样的方法来鉴定真画和假画，但是需要有原作者的大量画作）。
 我是从这里下载的红楼梦原著120回版（具体哪个版本我也没仔细研究）: http://www.shuyaya.cc/book/2034/#download
 我用了R中的 “Rwordseg” 来做中文分词。 就是把一句话分成词和词组。 然后用了 “cleanNLP” 得到分词频率矩阵 （“term frenquency matrix”）。 然后在最后一个模型用到 “topicmodels”。
- 读入文本进行分词 这一部分就是读入文本， 把它分为120回，每一回作为一个文本， 然后分词。
+读入文本进行分词 这一部分就是读入文本， 把它分为120回，每一回作为一个文本， 然后分词。
 # analysis starts here library(rticles) library(cleanNLP) library(readr) library(stringi) library(ggplot2) library(glmnet) library(ggrepel) library(viridis) library(magrittr) library(topicmodels) library(tidyverse) library(rJava) library(Rwordseg) library(RColorBrewer) library(tm) require(readtext) honglou1 &amp;lt;- readtext(&amp;quot;~/projects/honglongmeng/honglou1.txt&amp;quot;, text_field = &amp;quot;texts&amp;quot;) # here is to split into chapters using stringr&amp;#39;s splitting functions my_split &amp;lt;- function(text) { pattern &amp;lt;- &amp;#39;第.{1,3}回 &amp;#39; x &amp;lt;- str_split(text, pattern)[[1]] y &amp;lt;- str_extract_all(text, pattern)[[1]] data.</description>
     </item>
     
     <item>
-      <title>About me</title>
+      <title>A Plain Markdown Post</title>
+      <link>/2016/12/30/a-plain-markdown-post/</link>
+      <pubDate>Fri, 30 Dec 2016 21:49:57 -0700</pubDate>
+      
+      <guid>/2016/12/30/a-plain-markdown-post/</guid>
+      <description>This is a post written in plain Markdown (*.md) instead of R Markdown (*.Rmd). The major differences are:
+You cannot run any R code in a plain Markdown document, whereas in an R Markdown document, you can embed R code chunks (```{r}); A plain Markdown post is rendered through Blackfriday, and an R Markdown document is compiled by rmarkdown and Pandoc. There are many differences in syntax between Blackfriday&amp;rsquo;s Markdown and Pandoc&amp;rsquo;s Markdown.</description>
+    </item>
+    
+    <item>
+      <title>About</title>
       <link>/about/</link>
       <pubDate>Thu, 05 May 2016 21:48:51 -0700</pubDate>
       
       <guid>/about/</guid>
-      <description>This is a blog site for mostly statistical blogs. I am a statistician at HBS My linkedin page.</description>
+      <description>This is a &amp;ldquo;hello world&amp;rdquo; example website for the blogdown package. The theme was forked from @jrutheiser/hugo-lithium-theme and modified by Yihui Xie.</description>
+    </item>
+    
+    <item>
+      <title>Lorem Ipsum</title>
+      <link>/2015/01/01/lorem-ipsum/</link>
+      <pubDate>Thu, 01 Jan 2015 13:09:13 -0600</pubDate>
+      
+      <guid>/2015/01/01/lorem-ipsum/</guid>
+      <description>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</description>
     </item>
     
   </channel>

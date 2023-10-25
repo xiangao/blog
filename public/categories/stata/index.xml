@@ -5,7 +5,7 @@
     <link>/categories/stata/</link>
     <description>Recent content in Stata on A Hugo website</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language>
+    <language>en-US</language>
     <lastBuildDate>Thu, 21 Jul 2022 00:00:00 +0000</lastBuildDate><atom:link href="/categories/stata/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Recent development in Causal Mediation Analysis</title>
@@ -80,7 +80,7 @@ Baron and Kenny’s (http://davidakenny.net/cm/mediate.htm) method is done in fo
       <pubDate>Mon, 22 Apr 2019 00:00:00 +0000</pubDate>
       
       <guid>/2019/04/22/marginal-effects-in-margins/</guid>
-      <description>Comparing Marginal effects Stata’s margins command has been a powerful tool for many economists. It can calculate predicted means as well as predicted marginal effects. Sometimes we’d like to compare those marginal effects. People use margins and marginsplot to generate marginal effects; then draw conclusions on whether there is a difference between marginal effects, based on whether the confidence intervals overlap or not. However, that can actually be wrong.</description>
+      <description>Comparing Marginal effects Stata’s margins command has been a powerful tool for many economists. It can calculate predicted means as well as predicted marginal effects. Sometimes we’d like to compare those marginal effects. People use margins and marginsplot to generate marginal effects; then draw conclusions on whether there is a difference between marginal effects, based on whether the confidence intervals overlap or not. However, that can actually be wrong. In this post, I’d like to introduce a way to compare effects.</description>
     </item>
     
     <item>
