@@ -6,25 +6,7 @@
     <description>Recent content in Posts on A Hugo website</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-US</language>
-    <lastBuildDate>Thu, 26 Oct 2023 00:00:00 +0000</lastBuildDate><atom:link href="/post/index.xml" rel="self" type="application/rss+xml" />
-    <item>
-      <title>Doing the same multi-level model with R and stata</title>
-      <link>/2023/10/26/multilevel-r-stata/</link>
-      <pubDate>Thu, 26 Oct 2023 00:00:00 +0000</pubDate>
-      
-      <guid>/2023/10/26/multilevel-r-stata/</guid>
-      <description>This post is a demo for doing the same multi-level models with R and stata. R’s multilevel models are mostly done with lme4 and nlme. Stata’s multilevel models are mostly done with mixed and menl. The two packages are not exactly the same. For example, mixed does not allow complicated structure for the residual. That’s why we need menl. Likewise, in R lme4’s “lmer” does not allow this specification. We have to use nlme.</description>
-    </item>
-    
-    <item>
-      <title>Multi-level model with R and stata</title>
-      <link>/2023/10/26/multi-level-model-with-r-and-stata/</link>
-      <pubDate>Thu, 26 Oct 2023 00:00:00 +0000</pubDate>
-      
-      <guid>/2023/10/26/multi-level-model-with-r-and-stata/</guid>
-      <description>This post is a demo for doing the same multi-level models with R and stata. R’s multilevel models are mostly done with lme4 and nlme. Stata’s multilevel models are mostly done with mixed and menl. The two packages are not exactly the same. For example, mixed does not allow complicated structure for the residual. That’s why we need menl. Likewise, in R lme4’s “lmer” does not allow this specification. We have to use nlme.</description>
-    </item>
-    
+    <lastBuildDate>Thu, 21 Jul 2022 00:00:00 +0000</lastBuildDate><atom:link href="/post/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Recent development in Causal Mediation Analysis</title>
       <link>/2022/07/21/mediation-r-stata/</link>
@@ -90,17 +72,6 @@ For a linear model, we know we can put in \(k\) unit dummies and \(T\) time dumm
       
       <guid>/2021/09/12/synth-r-stata/</guid>
       <description>Synthetic control Abadie et al. have a few papers on synthetic control (https://economics.mit.edu/files/11859, https://economics.mit.edu/files/17847). The key idea is for a case study situation. A single unit, say a state/firm/country is exposed to a shock, and we are interested in the effect of that shock. For example, Card et al studied the effect of minimum wage increase for the state of New Jersey. They used diff-in-diff, with Pennsylvania as the control state.</description>
-    </item>
-    
-    <item>
-      <title>Hello R Markdown</title>
-      <link>/2020/12/01/hello-r-markdown/</link>
-      <pubDate>Tue, 01 Dec 2020 21:13:14 -0500</pubDate>
-      
-      <guid>/2020/12/01/hello-r-markdown/</guid>
-      <description>R Markdown This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see http://rmarkdown.rstudio.com.
-You can embed an R code chunk like this:
-summary(cars) ## speed dist ## Min. : 4.0 Min. : 2.00 ## 1st Qu.:12.0 1st Qu.: 26.00 ## Median :15.0 Median : 36.00 ## Mean :15.4 Mean : 42.98 ## 3rd Qu.</description>
     </item>
     
     <item>
@@ -232,25 +203,6 @@ library(MASS) library(ggplot2) library(dplyr) ## ## Attaching package: &amp;#39;
 我用了R中的 “Rwordseg” 来做中文分词。 就是把一句话分成词和词组。 然后用了 “cleanNLP” 得到分词频率矩阵 （“term frenquency matrix”）。 然后在最后一个模型用到 “topicmodels”。
  读入文本进行分词 这一部分就是读入文本， 把它分为120回，每一回作为一个文本， 然后分词。
 # analysis starts here library(rticles) library(cleanNLP) library(readr) library(stringi) library(ggplot2) library(glmnet) library(ggrepel) library(viridis) library(magrittr) library(topicmodels) library(tidyverse) library(rJava) library(Rwordseg) library(RColorBrewer) library(tm) require(readtext) honglou1 &amp;lt;- readtext(&amp;quot;~/projects/honglongmeng/honglou1.txt&amp;quot;, text_field = &amp;quot;texts&amp;quot;) # here is to split into chapters using stringr&amp;#39;s splitting functions my_split &amp;lt;- function(text) { pattern &amp;lt;- &amp;#39;第.{1,3}回 &amp;#39; x &amp;lt;- str_split(text, pattern)[[1]] y &amp;lt;- str_extract_all(text, pattern)[[1]] data.</description>
-    </item>
-    
-    <item>
-      <title>A Plain Markdown Post</title>
-      <link>/2016/12/30/a-plain-markdown-post/</link>
-      <pubDate>Fri, 30 Dec 2016 21:49:57 -0700</pubDate>
-      
-      <guid>/2016/12/30/a-plain-markdown-post/</guid>
-      <description>This is a post written in plain Markdown (*.md) instead of R Markdown (*.Rmd). The major differences are:
- You cannot run any R code in a plain Markdown document, whereas in an R Markdown document, you can embed R code chunks (```{r}); A plain Markdown post is rendered through Blackfriday, and an R Markdown document is compiled by rmarkdown and Pandoc.  There are many differences in syntax between Blackfriday&amp;rsquo;s Markdown and Pandoc&amp;rsquo;s Markdown.</description>
-    </item>
-    
-    <item>
-      <title>Lorem Ipsum</title>
-      <link>/2015/01/01/lorem-ipsum/</link>
-      <pubDate>Thu, 01 Jan 2015 13:09:13 -0600</pubDate>
-      
-      <guid>/2015/01/01/lorem-ipsum/</guid>
-      <description>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</description>
     </item>
     
   </channel>
