@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>A Hugo website</title>
+    <link>/</link>
+    <description>Recent content on A Hugo website</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-US</language>
+    <lastBuildDate>Thu, 26 Oct 2023 00:00:00 +0000</lastBuildDate><atom:link href="/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Doing the same multi-level model with R and stata</title>
+      <link>/2023/10/26/multilevel-r-stata/</link>
+      <pubDate>Thu, 26 Oct 2023 00:00:00 +0000</pubDate>
+      
+      <guid>/2023/10/26/multilevel-r-stata/</guid>
+      <description>This post is a demo for doing the same multi-level models with R and stata. R’s multilevel models are mostly done with lme4 and nlme. Stata’s multilevel models are mostly done with mixed and menl. The two packages are not exactly the same. For example, mixed does not allow complicated structure for the residual. That’s why we need menl. Likewise, in R lme4’s “lmer” does not allow this specification. We have to use nlme.</description>
+    </item>
+    
+    <item>
+      <title>Recent development in Causal Mediation Analysis</title>
+      <link>/2022/07/21/mediation-r-stata/</link>
+      <pubDate>Thu, 21 Jul 2022 00:00:00 +0000</pubDate>
+      
+      <guid>/2022/07/21/mediation-r-stata/</guid>
+      <description>Traditional mediation analysis We summarized how to do traditional mediation analysis (Baron and Kenny, 1986) with R and Stata in my last blog about mediation.
+Traditionally mediation model can be represented in the following equations:
+\[ Y = a A + b M + \epsilon_1 \]
+\[ M = c A + \epsilon_2 \]
+There are three main variables, A (treatment, or exposure), M (mediator) and Y (outcome). There are two pathways from A to Y, a direct effect, and an indirect effect through A -&amp;gt; M -&amp;gt; Y.</description>
+    </item>
+    
+    <item>
+      <title>Chow test and more</title>
+      <link>/2022/04/06/chow/</link>
+      <pubDate>Wed, 06 Apr 2022 00:00:00 +0000</pubDate>
+      
+      <guid>/2022/04/06/chow/</guid>
+      <description>Chow test Comparing coefficients across regressions is common. Chow test is one of them. If you’d like to compare coefficients of regressions for two subsets, that’s the original Chow test.
+The idea is to interact the subset indicator with all the covariates or only the covariate you are interested (treatment). If you only interact the dummy with the treatment variable, then you are assuming all other covariates have the same effect across the two subsets.</description>
+    </item>
+    
+    <item>
+      <title>Recent causal inference tools</title>
+      <link>/2022/01/20/npcausal/</link>
+      <pubDate>Thu, 20 Jan 2022 00:00:00 +0000</pubDate>
+      
+      <guid>/2022/01/20/npcausal/</guid>
+      <description>In this post, I’ll use simulated data to see how a few recently developed causal inference packages work.
+In other posts, I have discussed some methods involving machine learning, such as TMLE, or causal forest. This time we’ll talk about nonparametric methods and double machine learning.
+Identification First suppose we have a “target” parameter in mind, which is some function of the some unknown distribution \(P^*\), called a functional, say \(\psi^*(P^*)\).</description>
+    </item>
+    
+    <item>
+      <title>When is OLS coefficient the ATE</title>
+      <link>/2021/11/03/r-stata/</link>
+      <pubDate>Wed, 03 Nov 2021 00:00:00 +0000</pubDate>
+      
+      <guid>/2021/11/03/r-stata/</guid>
+      <description>OLS cannot be ATE (most of the time) Tymon Słoczyński has this cool paper(https://people.brandeis.edu/~tslocz/Sloczynski_paper_regression.pdf) which helps me understand OLS better.
+A common setup in empirical studies:
+\[ y = \alpha + \tau d + X \beta \]
+\(d\) is the treatment dummy, \(X\) is the covariates. This model assumes homogeneous treatment effect. That is, \(\tau\) is the ATE if treatment effect is homogeneous. But, if not, then \(\tau\) is not ATE anymore, although most people treat it as ATE.</description>
+    </item>
+    
+    <item>
+      <title>Mundlak device in fixed effect models</title>
+      <link>/2021/10/23/r-stata/</link>
+      <pubDate>Sat, 23 Oct 2021 00:00:00 +0000</pubDate>
+      
+      <guid>/2021/10/23/r-stata/</guid>
+      <description>TWFE Two-way fixed effect model has been widely used, especially in difference-in-difference situation, when we have a panel data with pre and post data. The basic setup is:
+\[ y_{it} = X_{it} \beta + c_i + f_t + u_{it} \]
+with \(X\) has \(k\) variables, \(t\) has \(T\) periods, and \(i\) has \(N\) units.
+For a linear model, we know we can put in \(k\) unit dummies and \(T\) time dummies to estimate the model.</description>
+    </item>
+    
+    <item>
+      <title>Synthetic Control in R and Stata</title>
+      <link>/2021/09/12/synth-r-stata/</link>
+      <pubDate>Sun, 12 Sep 2021 00:00:00 +0000</pubDate>
+      
+      <guid>/2021/09/12/synth-r-stata/</guid>
+      <description>Synthetic control Abadie et al. have a few papers on synthetic control (https://economics.mit.edu/files/11859, https://economics.mit.edu/files/17847). The key idea is for a case study situation. A single unit, say a state/firm/country is exposed to a shock, and we are interested in the effect of that shock. For example, Card et al studied the effect of minimum wage increase for the state of New Jersey. They used diff-in-diff, with Pennsylvania as the control state.</description>
+    </item>
+    
+    <item>
+      <title>Mediation analysis in R and Stata</title>
+      <link>/2019/08/06/mediation-r-stata/</link>
+      <pubDate>Tue, 06 Aug 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/2019/08/06/mediation-r-stata/</guid>
+      <description>Mediation analysis Traditionally mediation model can be represented in the following equestions:
+\[ Y = a X + b M + \epsilon_1 \] \[ M = c X + \epsilon_2 \]
+That is, we’d like to study the effect of \(X\) on \(Y\), and we see the effect can be a direct effect, and an indirect effect, through \(M\).
+Baron and Kenny’s (http://davidakenny.net/cm/mediate.htm) method is done in four steps. Modern approach tends to use SEM (structural equation modeling) to model these two equations directly.</description>
+    </item>
+    
+    <item>
+      <title>Fixed or Random Effect, or Both?</title>
+      <link>/2019/05/23/fixed-effect-random-effect/</link>
+      <pubDate>Thu, 23 May 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/2019/05/23/fixed-effect-random-effect/</guid>
+      <description>Panel data When we have a panel data (repeated observations over time, or observations clustered at higher level), we usually think of two choices: random effect or fixed effect? Economists usually prefers fixed effect models, since it wipes out all within unit heterogeneity. Economists do not like random effect models since it has a big assumption: the random effects need to be uncorrelated to other covariates in the model. To see this, suppose we have</description>
+    </item>
+    
+    <item>
+      <title>Comparing Marginal effects with margins command</title>
+      <link>/2019/04/22/marginal-effects-in-margins/</link>
+      <pubDate>Mon, 22 Apr 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/2019/04/22/marginal-effects-in-margins/</guid>
+      <description>Comparing Marginal effects Stata’s margins command has been a powerful tool for many economists. It can calculate predicted means as well as predicted marginal effects. Sometimes we’d like to compare those marginal effects. People use margins and marginsplot to generate marginal effects; then draw conclusions on whether there is a difference between marginal effects, based on whether the confidence intervals overlap or not. However, that can actually be wrong.</description>
+    </item>
+    
+    <item>
+      <title>Marginal effects in models with fixed effects</title>
+      <link>/2019/01/25/marginal-effects-in-models-with-fixed-effects/</link>
+      <pubDate>Fri, 25 Jan 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/2019/01/25/marginal-effects-in-models-with-fixed-effects/</guid>
+      <description>Marginal effects in a linear model Stata’s margins command has been a powerful tool for many economists. It can calculate predicted means as well as predicted marginal effects. However, we do need to be careful when we use it when fixed effects are included. In a linear model, everything works out fine. However, in a non-linear model, you may not want to use margins, since it’s not calculating what you have in mind.</description>
+    </item>
+    
+    <item>
+      <title>Premier League Soccer</title>
+      <link>/2019/01/17/soccer-epl/</link>
+      <pubDate>Thu, 17 Jan 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/2019/01/17/soccer-epl/</guid>
+      <description>Do you have to win head-to-head matches against top contenders to win a championship? Recently Manchester City beat Liverpool 2-1 on Jan 3. I was pleased. My favorite team is Arsenal in English Premier League (EPL), City is the second favorite. My friend, who is a Liverpool fan, argued that championship was never decided by the head-to-head matches between title contenders. I was like, “Really?”. If a team wins consistently over weaker teams, theoretically they could win the title, even if they lost most of their head-to-head games against other top contenders.</description>
+    </item>
+    
+    <item>
+      <title>Treatment effects and matching</title>
+      <link>/2019/01/10/treatment-effects-with-matching/</link>
+      <pubDate>Thu, 10 Jan 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/2019/01/10/treatment-effects-with-matching/</guid>
+      <description>Treatment effects in observational studies Despite the popularity of randomized experiements in economics nowadays, most situations we have observational data in economic studies. One reason is experiemnts are expensive; the other reason is that sometimes it is simply not feasible to have experiments. If we have observational data, and we’d like to draw causal conclusions, then we have a few different situations. The worse situation is that we have an endogenous treatement.</description>
+    </item>
+    
+    <item>
+      <title>Interaction term in a non-linear model</title>
+      <link>/2017/12/07/interaction-term-in-a-non-linear-model/</link>
+      <pubDate>Thu, 07 Dec 2017 00:00:00 +0000</pubDate>
+      
+      <guid>/2017/12/07/interaction-term-in-a-non-linear-model/</guid>
+      <description>Interaction term in a non-linear model In a non-linear model (for example, logit or poisson model), the interpretation of the coefficient on the interaction term is tricky. Ai and Norton (2003) points out that the interaction term coefficient is not the same as people can interpret as in a linear model; that is, how much effect of \(x1\) changes with the value of \(x2\). They interpret this as a cross</description>
+    </item>
+    
+    <item>
+      <title>Interpreting interaction in a regression model</title>
+      <link>/2017/12/07/interpreting-interaction/</link>
+      <pubDate>Thu, 07 Dec 2017 00:00:00 +0000</pubDate>
+      
+      <guid>/2017/12/07/interpreting-interaction/</guid>
+      <description>Interaction with two binary variables In a regression model with interaction term, people tend to pay attention to only the coefficient of the interaction term.
+Let’s start with the simpliest situation: \(x_1\) and \(x_2\) are binary and coded 0/1.
+\[ E(y) = \beta_1 x_1 + \beta_2 x_2 + \beta_{12} x_1x_2 \]
+In this case, we have a saturated model; that is, we have three coefficients representing additive effects from the baseline situation (both \(x_1\) and \(x_2\) being 0).</description>
+    </item>
+    
+    <item>
+      <title>What model to use for rare events</title>
+      <link>/2017/10/26/rare-event/</link>
+      <pubDate>Thu, 26 Oct 2017 00:00:00 +0000</pubDate>
+      
+      <guid>/2017/10/26/rare-event/</guid>
+      <description>Introducation In empirical studies, people are worried about rare event situation. That is, when you have, for example, lots of 0’s and only a few 1’s, or vice versa. Do you run a logit model, or do you use a “rare event logit”? When should you use either approach? Or there is a third approach?
+Paul Allison said in his blog (https://statisticalhorizons.com/logistic-regression-for-rare-events):
+“Prompted by a 2001 article by King and Zeng, many researchers worry about whether they can legitimately use conventional logistic regression for data in which events are rare.</description>
+    </item>
+    
+    <item>
+      <title>Causal Forest in panel data </title>
+      <link>/2017/10/23/causal-forest-in-panel-data/</link>
+      <pubDate>Mon, 23 Oct 2017 00:00:00 +0000</pubDate>
+      
+      <guid>/2017/10/23/causal-forest-in-panel-data/</guid>
+      <description>Introduction In this simulation exercise, we use Causal Forest (Now is implemented in Generalized Random Forest) (https://github.com/swager/grf) to calculated conditional average treatment effect (or heterogenous treatment effect). We assume three different data generating processes. The first one is a linear interaction between a variable of interest and the treatment dummy. The second one assumes a nonlinear function (a step function) of a variable of interest, say \(X\), and the treatment dummy \(W\).</description>
+    </item>
+    
+    <item>
+      <title>Which count data model to use</title>
+      <link>/2017/10/10/poisson/</link>
+      <pubDate>Tue, 10 Oct 2017 00:00:00 +0000</pubDate>
+      
+      <guid>/2017/10/10/poisson/</guid>
+      <description>A comparison of various count data models with extra zeros In empirical studies, data sets with a lot of zeros are often hard to model. There are various models to deal with it: zero-inflated Poisson model, Negative Binomial (NB)model, hurdle model, etc.
+Here we are following a zero-inflated model’s thinking: model the data with two processes. One is a Bernoulli process, the other one is a count data process (Poisson or NB).</description>
+    </item>
+    
+    <item>
+      <title>Using machine learning for causal effect in observational study</title>
+      <link>/2017/09/21/tmle/</link>
+      <pubDate>Thu, 21 Sep 2017 00:00:00 +0000</pubDate>
+      
+      <guid>/2017/09/21/tmle/</guid>
+      <description>A simulation for an OLS model In an observational study, we need to assume we have the functional form to get causal effect estimated correctly, in addtion to the assumption of treatment being exogenous.
+library(MASS) library(ggplot2) library(dplyr) ## ## Attaching package: &amp;#39;dplyr&amp;#39; ## The following object is masked from &amp;#39;package:MASS&amp;#39;: ## ## select ## The following objects are masked from &amp;#39;package:stats&amp;#39;: ## ## filter, lag ## The following objects are masked from &amp;#39;package:base&amp;#39;: ## ## intersect, setdiff, setequal, union library(tmle) ## Loading required package: SuperLearner ## Loading required package: nnls ## Super Learner ## Version: 2.</description>
+    </item>
+    
+    <item>
+      <title>红楼梦 作者分析</title>
+      <link>/2017/09/19/red-chamber/</link>
+      <pubDate>Tue, 19 Sep 2017 00:00:00 +0000</pubDate>
+      
+      <guid>/2017/09/19/red-chamber/</guid>
+      <description>简介 在本文中我们用机器学习和统计的方法来分析红楼梦的作者。红楼梦是中国最著名的小说之一(https://en.wikipedia.org/wiki/Dream_of_the_Red_Chamber)。 大多数人认为前八十回为曹雪芹所作， 后四十回为后人续作。 除非我们从考古中发现证据，唯一能告诉我们的便是小说本身。我们可以从文章的用词风格来判断作者。 即使续作者尽量模仿原作者的风格，也很难不在字里行间露出自己固有的风格。（我们也许可以用同样的方法来鉴定真画和假画，但是需要有原作者的大量画作）。
+我是从这里下载的红楼梦原著120回版（具体哪个版本我也没仔细研究）: http://www.shuyaya.cc/book/2034/#download
+我用了R中的 “Rwordseg” 来做中文分词。 就是把一句话分成词和词组。 然后用了 “cleanNLP” 得到分词频率矩阵 （“term frenquency matrix”）。 然后在最后一个模型用到 “topicmodels”。
+ 读入文本进行分词 这一部分就是读入文本， 把它分为120回，每一回作为一个文本， 然后分词。
+# analysis starts here library(rticles) library(cleanNLP) library(readr) library(stringi) library(ggplot2) library(glmnet) library(ggrepel) library(viridis) library(magrittr) library(topicmodels) library(tidyverse) library(rJava) library(Rwordseg) library(RColorBrewer) library(tm) require(readtext) honglou1 &amp;lt;- readtext(&amp;quot;~/projects/honglongmeng/honglou1.txt&amp;quot;, text_field = &amp;quot;texts&amp;quot;) # here is to split into chapters using stringr&amp;#39;s splitting functions my_split &amp;lt;- function(text) { pattern &amp;lt;- &amp;#39;第.{1,3}回 &amp;#39; x &amp;lt;- str_split(text, pattern)[[1]] y &amp;lt;- str_extract_all(text, pattern)[[1]] data.</description>
+    </item>
+    
+    <item>
+      <title>About</title>
+      <link>/about/</link>
+      <pubDate>Thu, 05 May 2016 21:48:51 -0700</pubDate>
+      
+      <guid>/about/</guid>
+      <description>This is a &amp;ldquo;hello world&amp;rdquo; example website for the blogdown package. The theme was forked from @jrutheiser/hugo-lithium-theme and modified by Yihui Xie.</description>
+    </item>
+    
+  </channel>
+</rss>
