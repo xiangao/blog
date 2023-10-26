@@ -455,15 +455,51 @@ Warning: Convergence not achieved.</code></pre>
 <div id="r-2" class="section level2">
 <h2>R</h2>
 <p>As in stata, it has some convergence problem. So the results can differ somewhat between R and stata.</p>
-<pre class="r"><code>lme_growth1&lt;-lme(gsp ~ year, random = list(region=pdSymm(~year), state=pdIdent(~1)),data=data, method=&quot;ML&quot;)</code></pre>
-<pre><code>Error in lme(gsp ~ year, random = list(region = pdSymm(~year), state = pdIdent(~1)), : could not find function &quot;lme&quot;</code></pre>
-<pre class="r"><code>lme_growth2&lt;-update(lme_growth1,weights=varExp( form = ~ year), method=&quot;ML&quot;, control = lmeControl(opt = &quot;optim&quot;))</code></pre>
-<pre><code>Error in lme.formula(fixed = gsp ~ year, data = data, random = list(region = ~year, : could not find function &quot;lme.formula&quot;</code></pre>
-<pre class="r"><code>summary(lme_growth2)</code></pre>
-<pre><code>Error in eval(expr, envir, enclos): object &#39;lme_growth2&#39; not found</code></pre>
-<pre class="r"><code>delta1&lt;-lme_growth2$modelStruct$varStruct</code></pre>
-<pre><code>Error in eval(expr, envir, enclos): object &#39;lme_growth2&#39; not found</code></pre>
-<pre class="r"><code>delta1</code></pre>
-<pre><code>Error in eval(expr, envir, enclos): object &#39;delta1&#39; not found</code></pre>
+<pre class="r"><code>lme_growth1&lt;-lme(gsp ~ year, random = list(region=pdSymm(~year), state=pdIdent(~1)),data=data, method=&quot;ML&quot;)
+lme_growth2&lt;-update(lme_growth1,weights=varExp( form = ~ year), method=&quot;ML&quot;, control = lmeControl(opt = &quot;optim&quot;))
+summary(lme_growth2)</code></pre>
+<pre><code>Linear mixed-effects model fit by maximum likelihood
+  Data: data 
+        AIC       BIC   logLik
+  -1548.244 -1510.608 782.1218
+
+Random effects:
+ Formula: ~year | region
+ Structure: General positive-definite
+            StdDev       Corr  
+(Intercept) 0.2937615870 (Intr)
+year        0.0001436049 0.995 
+
+ Formula: ~1 | state %in% region
+        (Intercept)  Residual
+StdDev:   0.8046618 0.0736431
+
+Variance function:
+ Structure: Exponential of variance covariate
+ Formula: ~year 
+ Parameter estimates:
+        expon 
+-2.165027e-16 
+Fixed effects:  gsp ~ year 
+                Value Std.Error  DF   t-value p-value
+(Intercept) -43.80206 1.0533833 767 -41.58226       0
+year          0.02752 0.0005291 767  52.01290       0
+ Correlation: 
+     (Intr)
+year -0.976
+
+Standardized Within-Group Residuals:
+        Min          Q1         Med          Q3         Max 
+-3.24679735 -0.58919213  0.03104216  0.61843888  4.27977261 
+
+Number of Observations: 816
+Number of Groups: 
+           region state %in% region 
+                9                48 </code></pre>
+<pre class="r"><code>delta1&lt;-lme_growth2$modelStruct$varStruct
+delta1</code></pre>
+<pre><code>Variance function structure of class varExp representing
+        expon 
+-2.165027e-16 </code></pre>
 </div>
 </div>
