@@ -1,0 +1,88 @@
+---
+title: Policy learning by policytree
+author: Xiang Ao
+date: 2024-3-22
+tags: R
+categories:
+- R
+slug: "policytree-R-stata"
+---
+
+<script src="/rmarkdown-libs/htmlwidgets/htmlwidgets.js"></script>
+<script src="/rmarkdown-libs/viz/viz.js"></script>
+<link href="/rmarkdown-libs/DiagrammeR-styles/styles.css" rel="stylesheet" />
+<script src="/rmarkdown-libs/grViz-binding/grViz.js"></script>
+
+
+<div id="optimal-policy" class="section level1">
+<h1>Optimal policy</h1>
+<p>I have a few posts about estimating ATE or CATE. The target has been getting the treatment effect or conditional treatment effect accurately. However, sometimes after estimating the treatment effects, we may be interested in the optimal treatment assignment. For example, a doctor may be interested in how to assign treatment based on patient characteristics. OSHA might be interested in which firms to send inspector to, based on firm characteristics, or past history. We may think we can just assign the treatment to those who benefited most (largest CATE), or any patient who has a positive CATE. However, the objective function for policy is different from the CATE target.</p>
+<p>Suppose we have {Y(0), Y(1), X} and we have estimated the CATE as <span class="math inline">\(\tau(x)=E[Y(1)-Y(0)|X=x]\)</span>. The policy learning problem is to find a policy function that assigns treatment to maximize some utility function.</p>
+<p>Suppose that policy is
+<span class="math display">\[
+\pi \  :  \ X  \rightarrow \{0,1\}
+\]</span>
+This policy is to assign treatment or control based on <span class="math inline">\(X\)</span>.</p>
+<p>The natural objective function is a value function <span class="math inline">\(V(\pi) = E[Y_i(\pi(X_i))]\)</span>, which is the expected value of outcome with this policy. We’d like to maximize this function.</p>
+<p><span class="math display">\[
+V(\pi) = E[Y_i(\pi(X_i))] = E[Y_i(0)]  + E[\tau(X) \pi(X))]
+\]</span>
+We can see we can simply set <span class="math inline">\(\tau(X) &gt; c\)</span> to maximize the value function. For example, if <span class="math inline">\(c=0\)</span> it means assigning all patients of positive effect to treatment. However, estimating <span class="math inline">\(\tau(X)\)</span> is different from maximizing <span class="math inline">\(V\)</span>.</p>
+<p>First, we don’t have the true <span class="math inline">\(\tau\)</span>. The loss function in estimating <span class="math inline">\(\tau(X)\)</span> is different from the loss function in maximizing <span class="math inline">\(V\)</span>. The loss function in estimating <span class="math inline">\(\tau(X)\)</span> is the squared error loss. We’ll see maximizing <span class="math inline">\(V\)</span> is a different problem.</p>
+<p>Second, the <span class="math inline">\(X\)</span> we use to estimate <span class="math inline">\(\tau\)</span> is different from the ones we can use for policy. For example, we have some variables used in CATE estimation that we cannot use for policy, like gender, or age, for discrimination reasons. Or there are variables we have after the experiment that we cannot use for CATE estimation, but we’d like to use for policy learning.</p>
+</div>
+<div id="ipw-loss" class="section level1">
+<h1>IPW loss</h1>
+<p>Kitagawa and Tetenov (2020) proposed a loss function for policy learning. The loss function is based on the inverse propensity weighting.</p>
+<p><span class="math display">\[
+\hat \pi = argmax \{ \hat V(\pi) : \pi \in \Gamma \}
+\]</span>
+<span class="math display">\[
+\hat V(\pi) = \frac{1}{n} \sum_{i=1}^n \frac{1({W_i=\pi(X_i)})} {P[W_i=\pi(X_i) | X_i]} Y_i
+\]</span></p>
+<p>This is to say when we have <span class="math inline">\(W_i=\pi(X_i)\)</span>, we can use the outcome <span class="math inline">\(Y_i\)</span> to estimate the value function. That is, when we have a policy, we then select the observations that matches that policy then weight the outcome by the inverse propensity score. This is to adjust the fact the there is selection bias for that policy. Therefore we re-weight it by IPW.</p>
+<p>Obviously we don’t have the true propensity score of <span class="math inline">\(W_i=\pi(X_i)\)</span>, so we need to estimate it. We can estimate it by machine learning.</p>
+</div>
+<div id="aipw-loss" class="section level1">
+<h1>AIPW loss</h1>
+<p>The IPW loss can be not robust to model misspecification.</p>
+<pre class="r"><code>library(grf)
+library(policytree)
+library(DiagrammeR)
+n &lt;- 1000
+p &lt;- 10
+
+X &lt;- matrix(rnorm(n * p), n, p)
+ee &lt;- 1 / (1 + exp(X[, 3]))
+tt &lt;- 1 / (1 + exp((X[, 1] + X[, 2]) / 2)) - 0.5
+W &lt;- rbinom(n, 1, ee)
+Y &lt;- X[, 3] + W * tt + rnorm(n)
+
+cf &lt;- causal_forest(X, Y, W)
+
+plot(tt, predict(cf)$predictions)</code></pre>
+<p><img src="/post/2024_3_22_policytree_files/figure-html/unnamed-chunk-1-1.png" width="672" /></p>
+<pre class="r"><code>dr &lt;- double_robust_scores(cf)
+tree &lt;- policy_tree(X, dr, 2)
+tree</code></pre>
+<pre><code>## policy_tree object 
+## Tree depth:  2 
+## Actions:  1: control 2: treated 
+## Variable splits: 
+## (1) split_variable: X4  split_value: 0.597713 
+##   (2) split_variable: X6  split_value: 0.963164 
+##     (4) * action: 1 
+##     (5) * action: 2 
+##   (3) split_variable: X5  split_value: 0.140785 
+##     (6) * action: 2 
+##     (7) * action: 1</code></pre>
+<pre class="r"><code>pp &lt;- predict(tree, X)
+boxplot(tt ~ pp)</code></pre>
+<p><img src="/post/2024_3_22_policytree_files/figure-html/unnamed-chunk-1-2.png" width="672" /></p>
+<pre class="r"><code>plot(tree)</code></pre>
+<div class="grViz html-widget html-fill-item" id="htmlwidget-1" style="width:672px;height:480px;"></div>
+<script type="application/json" data-for="htmlwidget-1">{"x":{"diagram":"digraph nodes { \n node [shape=box] ;\n0 [label=\" X4 <= 0.6 \"] ;\n0 -> 1 [labeldistance=2.5, labelangle=45, headlabel=\"True\"];\n0 -> 2 [labeldistance=2.5, labelangle=-45, headlabel=\"False\"]\n1 [label=\" X6 <= 0.96 \"] ;\n1 -> 3  ;\n1 -> 4  ;\n3  [shape=box,style=filled,color=\".7 .3 1.0\" , label=\" leaf node\n action = 1 \"];\n4  [shape=box,style=filled,color=\".7 .3 1.0\" , label=\" leaf node\n action = 2 \"];\n2 [label=\" X5 <= 0.14 \"] ;\n2 -> 5  ;\n2 -> 6  ;\n5  [shape=box,style=filled,color=\".7 .3 1.0\" , label=\" leaf node\n action = 2 \"];\n6  [shape=box,style=filled,color=\".7 .3 1.0\" , label=\" leaf node\n action = 1 \"];\n}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script>
+<pre class="r"><code>plot(X[, 1], X[, 2], col = pp)
+abline(0, -1, lwd = 4, col = 4)</code></pre>
+<p><img src="/post/2024_3_22_policytree_files/figure-html/unnamed-chunk-1-4.png" width="672" /></p>
+</div>
