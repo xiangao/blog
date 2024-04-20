@@ -32,9 +32,9 @@ variation, since the treatment hardly varies.
 
 Caetano (2015)'s estimation can be done in a two step process: 
 
-(1) estimate $E[Y_i | T_i = \bar_T, X_i ]$ non-parametrically 
+(1) estimate $E[Y_i | T_i = \bar T, X_i ]$ non-parametrically 
 
-(2) do a local linear regression $E[Y_i | T_i = \bar_T, X_i ] -Y_i$  onto $T_i$ at $\bar T$, using only observations such that $T_i > \bar T$. 
+(2) do a local linear regression $E[Y_i | T_i = \bar T, X_i ] -Y_i$  onto $T_i$ at $\bar T$, using only observations such that $T_i > \bar T$. 
 
 The approach is known as the Discontinuity Test.
 
