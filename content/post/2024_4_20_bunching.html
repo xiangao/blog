@@ -1,0 +1,58 @@
+---
+title: Endogeneity with censored variable
+author: Xiang Ao
+date: 2024-04-20 
+tags: R
+categories:
+- R
+
+---
+
+
+
+<div id="bunching-for-the-outcome-variable" class="section level1">
+<h1>Bunching for the outcome variable</h1>
+<p>Recently I read this paper, Caetano et al (2020) <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3699644" class="uri">https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3699644</a>. It’s about bunching.</p>
+<p>Bunching is a phenomenon where we see a mass point in the distribution of some variable. For example, Saez (2010) studies a mass point in the distribution of earned income at the kink point of the tax schedule. This is because people bunch at the kink point to take advantage of the tax break.</p>
+<p>Bunching is similar to regression discontinuity. In this blog, <a href="https://blogs.worldbank.org/en/impactevaluations/ready-set-bunch" class="uri">https://blogs.worldbank.org/en/impactevaluations/ready-set-bunch</a>,
+“As noted by Kleven (2016), regression discontinuity (RD) is a close cousin of bunching estimators. In regression discontinuity, we maintain the assumption that there is no such “manipulation” as described above. Bunching relaxes this assumption — instead, we estimate the fraction of manipulators by estimating what densities of individuals would have been without manipulation, that is the “manipulation-free counterfactual”. With both the observed and manipulation-free counterfactual distributions of individuals estimated, it may be possible to compare the two distributions to recover the fraction of individuals who manipulated.”</p>
+<p>The main idea is to compare the bunching with the counterfactual distribution without bunching to estimate elasticities, for example, how people react to tax rate.</p>
+</div>
+<div id="bunching-for-the-treatment-variable" class="section level1">
+<h1>Bunching for the treatment variable</h1>
+<div id="a-test-of-endogeneity" class="section level2">
+<h2>A test of endogeneity</h2>
+<p>Caetano (2015) showed that, if the distribution of <span class="math inline">\(T_i\)</span> has bunching at <span class="math inline">\(T_i = \bar t\)</span>, it is
+possible to test the exogeneity of <span class="math inline">\(T_i\)</span> . When one compares the outcome of observations at
+the bunching point and those around it, the treatment itself is very similar. Therefore,
+there cannot be more than a marginal difference in the outcome that is due to treatment
+variation, since the treatment hardly varies.</p>
+<p>Caetano (2015)’s estimation can be done in a two step process:</p>
+<ol style="list-style-type: decimal">
+<li><p>estimate <span class="math inline">\(E[Y_i | T_i = \bar_T, X_i ]\)</span> non-parametrically</p></li>
+<li><p>do a local linear regression <span class="math inline">\(E[Y_i | T_i = \bar_T, X_i ] -Y_i\)</span> onto <span class="math inline">\(T_i\)</span> at <span class="math inline">\(\bar T\)</span>, using only observations such that <span class="math inline">\(T_i &gt; \bar T\)</span>.</p></li>
+</ol>
+<p>The approach is known as the Discontinuity Test.</p>
+</div>
+<div id="dummy-test" class="section level2">
+<h2>Dummy test</h2>
+<p>Caetano and Maheshri (2018) proposed a simpler test, which is simply regressring <span class="math inline">\(Y_i\)</span> on <span class="math inline">\(T_i\)</span> , <span class="math inline">\(X_i\)</span> and a dummy variable for <span class="math inline">\(T_i &gt; \bar T\)</span>. The coefficient of the dummy variable is the test statistic. If the coefficient is significant, which is to say there is a discontinuity on outcome, then <span class="math inline">\(T_i\)</span> is endogenous.</p>
+<p>This is simpler, but with linear functional form assumption.</p>
+<p>The logic of the endogeneity test is that around the bunching point, the treatment is very similar, so the outcome should be similar. If there is a discontinuity in the outcome, then it has to be one of two reasons. One is that treatment has discontinuous effect on outcome around the bunching point. Usually we can reasonably rule out that possibility. Second is that there is an unobserved variable that is causing both the treatment and the outcome. That unobserved variable has a discontinuous effect on the outcome. If that’s the case, then the treatment is endogenous.</p>
+</div>
+<div id="treatment-effect-estimation" class="section level2">
+<h2>Treatment effect estimation</h2>
+<p>Caetano et al (2020) proposed a method to estimate the treatment effect when there is bunching. It seems to me there is no reason that we cannot use it for the censoring situation. There are a lot of situations that we have censored treatment variable, when we study continuous treatment variable.</p>
+<p>Suppose we have
+<span class="math display">\[ Y = \beta T + Z \gamma + \delta \eta + \epsilon \]</span></p>
+<p>where <span class="math inline">\(T\)</span> is the treatment variable, <span class="math inline">\(\eta\)</span> is the unobserved variable that is causing both the treatment and the outcome, <span class="math inline">\(Z\)</span> is the control variables, and <span class="math inline">\(\epsilon\)</span> is the error term. We only observe <span class="math inline">\(Y, T, Z\)</span>.</p>
+<p>Supppose <span class="math inline">\(T*\)</span> is the latent variable that is censored at <span class="math inline">\(T* = 0\)</span>. We observe <span class="math inline">\(T = max(T*, 0)\)</span>. We assume that <span class="math inline">\(T*\)</span> is continuous over its support.</p>
+<p><span class="math display">\[ T^* = Z \pi + \eta \]</span></p>
+<p>From the two equations, we can derive:</p>
+<p><span class="math display">\[ E[Y | T, Z] = (\beta + \delta)T + Z (\gamma - \pi \delta)  + \delta E[T^*  | T^* \le 0, Z] 1(T=0) \]</span>
+or</p>
+<p><span class="math display">\[ E[Y | T, Z] = \beta T + Z (\gamma - \pi \delta)  + \delta (T + E[T^*  | T^* \le 0, Z] 1(T=0)) \]</span></p>
+<p>Therefore we can “correct” for endogeiety by simply including an additional term <span class="math inline">\(\delta (T + E[T^* | T^* \le 0, Z] 1(T=0))\)</span> in the regression.</p>
+<p>However, the prediction of <span class="math inline">\(\delta (T + E[T^* | T^* \le 0, Z] 1(T=0))\)</span> is out of sample. We have to make some additional assumptions for the distribution of <span class="math inline">\(T^*\)</span>. For example, we can assume that <span class="math inline">\(T^*\)</span> is normally distributed. Or, we can assume it is symmetric. Then we can use the right tail to estimate the left tail.</p>
+</div>
+</div>
