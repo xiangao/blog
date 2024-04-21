@@ -135,5 +135,10 @@ summary(lm4)
 
 It does not seem to get the answer right 100%.  But it's better than the model without the correction term. 
 
+# Conclusion
+
+We are making assumptions for the distribution of the continuous treatment variable.  Symmetry is the minimum assumption.  We can make other parametric assumptions on the distribution of $T^*$.  This is a trade-off between making distribution assumptions and ignoring endogeneity.  The good news is that we don't need an instrument.  We are using the censoring part of the treatment variable to deal with endogeneity.
+
+
 
 
