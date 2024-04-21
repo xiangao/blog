@@ -46,13 +46,137 @@ variation, since the treatment hardly varies.</p>
 <p>Suppose we have
 <span class="math display">\[ Y = \beta T + Z \gamma + \delta \eta + \epsilon \]</span></p>
 <p>where <span class="math inline">\(T\)</span> is the treatment variable, <span class="math inline">\(\eta\)</span> is the unobserved variable that is causing both the treatment and the outcome, <span class="math inline">\(Z\)</span> is the control variables, and <span class="math inline">\(\epsilon\)</span> is the error term. We only observe <span class="math inline">\(Y, T, Z\)</span>.</p>
-<p>Supppose <span class="math inline">\(T*\)</span> is the latent variable that is censored at <span class="math inline">\(T* = 0\)</span>. We observe <span class="math inline">\(T = max(T*, 0)\)</span>. We assume that <span class="math inline">\(T*\)</span> is continuous over its support.</p>
+<p>Supppose <span class="math inline">\(T^*\)</span> is the latent variable that is censored at <span class="math inline">\(T^* = 0\)</span>. We observe <span class="math inline">\(T = max(T**, 0)\)</span>. We assume that <span class="math inline">\(T^*\)</span> is continuous over its support.</p>
 <p><span class="math display">\[ T^* = Z \pi + \eta \]</span></p>
 <p>From the two equations, we can derive:</p>
 <p><span class="math display">\[ E[Y | T, Z] = (\beta + \delta)T + Z (\gamma - \pi \delta)  + \delta E[T^*  | T^* \le 0, Z] 1(T=0) \]</span>
 or</p>
 <p><span class="math display">\[ E[Y | T, Z] = \beta T + Z (\gamma - \pi \delta)  + \delta (T + E[T^*  | T^* \le 0, Z] 1(T=0)) \]</span></p>
-<p>Therefore we can “correct” for endogeiety by simply including an additional term <span class="math inline">\(\delta (T + E[T^* | T^* \le 0, Z] 1(T=0))\)</span> in the regression.</p>
+<p>Therefore we can “correct” for endogeneity by simply including an additional term <span class="math inline">\(\delta (T + E[T^* | T^* \le 0, Z] 1(T=0))\)</span> in the regression.</p>
 <p>However, the prediction of <span class="math inline">\(\delta (T + E[T^* | T^* \le 0, Z] 1(T=0))\)</span> is out of sample. We have to make some additional assumptions for the distribution of <span class="math inline">\(T^*\)</span>. For example, we can assume that <span class="math inline">\(T^*\)</span> is normally distributed. Or, we can assume it is symmetric. Then we can use the right tail to estimate the left tail.</p>
+</div>
+</div>
+<div id="simulation" class="section level1">
+<h1>Simulation</h1>
+<p>Let’s do a simulation to see how it works.</p>
+<pre class="r"><code>library(MASS)
+library(ggplot2)
+library(dplyr)</code></pre>
+<pre><code>## 
+## Attaching package: &#39;dplyr&#39;</code></pre>
+<pre><code>## The following object is masked from &#39;package:MASS&#39;:
+## 
+##     select</code></pre>
+<pre><code>## The following objects are masked from &#39;package:stats&#39;:
+## 
+##     filter, lag</code></pre>
+<pre><code>## The following objects are masked from &#39;package:base&#39;:
+## 
+##     intersect, setdiff, setequal, union</code></pre>
+<pre class="r"><code># set seed
+set.seed(123)
+# number of observations
+n=1000
+# generate Z and make it dataframe
+Z=as.data.frame(mvrnorm(n=n, mu=c(0,0), Sigma=matrix(c(1,0.5,0.5,1),2,2)))
+data &lt;- Z
+names(data) &lt;- c(&quot;Z1&quot;, &quot;Z2&quot;)
+# generate eta
+# eta is normally distributed
+data$eta=rnorm(n, 1,1)
+# generate T*
+# T* is normally distributed
+# Here I generate Y as a function of T*, we can also do a function of T.
+data &lt;- data %&gt;%
+  mutate(T_star=Z1 + 2*Z2 + 1.5*eta) %&gt;%
+  mutate(T=ifelse(T_star&gt;0, T_star, 0)) %&gt;%
+  mutate(Y=2*T_star + 0.5*Z1 + 0.5*Z2 + 2*eta + rnorm(n, 0, 1))
+
+# regress Y on T, Z1, Z2
+lm1 &lt;- lm(Y ~ T + Z1 + Z2, data=data)
+summary(lm1)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = Y ~ T + Z1 + Z2, data = data)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -19.3015  -1.5531   0.4095   2.1631   7.1942 
+## 
+## Coefficients:
+##             Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept) -1.04656    0.19279  -5.429 7.14e-08 ***
+## T            2.87428    0.07855  36.592  &lt; 2e-16 ***
+## Z1           0.50270    0.13406   3.750 0.000187 ***
+## Z2           0.41043    0.16207   2.532 0.011480 *  
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 3.295 on 996 degrees of freedom
+## Multiple R-squared:  0.8273,	Adjusted R-squared:  0.8268 
+## F-statistic:  1591 on 3 and 996 DF,  p-value: &lt; 2.2e-16</code></pre>
+<p>Without including <span class="math inline">\(eta\)</span>, the effect estimate is biased. Let’s do a dummy test.</p>
+<pre class="r"><code>lm2 &lt;- lm(Y ~ T + Z1 + Z2 + I(T&gt;0), data=data)
+summary(lm2)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = Y ~ T + Z1 + Z2 + I(T &gt; 0), data = data)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -18.8425  -1.1792   0.0749   1.5244   7.5902 
+## 
+## Coefficients:
+##              Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)  -4.02290    0.22946 -17.532  &lt; 2e-16 ***
+## T             2.66253    0.06848  38.880  &lt; 2e-16 ***
+## Z1           -0.03057    0.11874  -0.257  0.79688    
+## Z2           -0.39400    0.14581  -2.702  0.00701 ** 
+## I(T &gt; 0)TRUE  4.99664    0.26634  18.760  &lt; 2e-16 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 2.834 on 995 degrees of freedom
+## Multiple R-squared:  0.8724,	Adjusted R-squared:  0.8719 
+## F-statistic:  1701 on 4 and 995 DF,  p-value: &lt; 2.2e-16</code></pre>
+<p>It shows that the dummy variable is significant. It means that <span class="math inline">\(T\)</span> is endogenous.</p>
+<div id="correcting-for-endogeneity" class="section level2">
+<h2>Correcting for endogeneity</h2>
+<p>Now let’s assume <span class="math inline">\(T^*\)</span> is symmetrically distributed. It is left censored. We assume it is less than half censored. So the median remains the same for <span class="math inline">\(T^*\)</span> and <span class="math inline">\(T\)</span>. We can use the right tail to estimate the left tail. Suppose there is a point at left tail <span class="math inline">\(x\)</span>, then the corresponding point at the right tail is <span class="math inline">\(2 M -x\)</span>, where <span class="math inline">\(M\)</span> is the median of <span class="math inline">\(T^*\)</span>.</p>
+<pre class="r"><code>M &lt;- median(data$T)
+data2 &lt;- data %&gt;%
+  filter(T&gt;2*M)
+
+lm3 &lt;- lm(Y ~ T + Z1 + Z2, data=data2)
+
+# here I create an extra term for the correction
+# when T is 0, it is T, otherwise, it&#39;s 2M - the prediction from the right tail.
+data &lt;- data %&gt;%
+  mutate(extra=if_else(T&gt;0,T,2*M-predict(lm3, newdata=data %&gt;% mutate(T=2*M -T))))
+
+lm4 &lt;- lm(Y ~ T + Z1 + Z2 + extra, data=data)
+summary(lm4)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = Y ~ T + Z1 + Z2 + extra, data = data)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -17.6228  -1.0492  -0.0294   1.1924   8.3056 
+## 
+## Coefficients:
+##             Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)  0.94824    0.17624   5.380 9.26e-08 ***
+## T            2.20954    0.06901  32.020  &lt; 2e-16 ***
+## Z1          -0.31782    0.11298  -2.813    0.005 ** 
+## Z2          -1.14267    0.14570  -7.843 1.13e-14 ***
+## extra        0.64428    0.02735  23.553  &lt; 2e-16 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 2.642 on 995 degrees of freedom
+## Multiple R-squared:  0.8891,	Adjusted R-squared:  0.8887 
+## F-statistic:  1995 on 4 and 995 DF,  p-value: &lt; 2.2e-16</code></pre>
+<p>It does not seem to get the answer right 100%. But it’s better than the model without the correction term.</p>
 </div>
 </div>
