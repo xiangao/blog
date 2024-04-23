@@ -1,7 +1,7 @@
 ---
 title: g-estimation with time varying treatment
 author: Xiang Ao
-date: 2024-04-20 
+date: 2024-04-26 
 tags: R
 categories:
 - R
@@ -15,50 +15,13 @@ categories:
 <p>g-estimation is a method to estimate the causal effect of a time varying treatment. It is a generalization of the instrumental variable method. The idea is to use the treatment variable itself as an instrument for the treatment variable in the future. The method is developed by Robins (1986) and Robins and Rotnitzky (1992). The method is also known as the g-methods.</p>
 <p>We can imagine such a scenario. Suppose <span class="math inline">\(A0\)</span> and <span class="math inline">\(A1\)</span> are time 0 and time 1 treatment, can be binary or continuous. <span class="math inline">\(L1\)</span> is a time 1 covariate. It can be some intermediate outcome. Say HbA1c. HbA1c can be a result of treatment <span class="math inline">\(A0\)</span>. Then it can be a cause for the next period treatment <span class="math inline">\(A1\)</span>. <span class="math inline">\(Y\)</span> is the outcome. <span class="math inline">\(U\)</span> is the unmeasured confounder. The causal diagram is shown below. How do we estimate the effect of treatment?</p>
 <pre class="r"><code>library(dagitty)
-library(ggdag)</code></pre>
-<pre><code>## 
-## Attaching package: &#39;ggdag&#39;</code></pre>
-<pre><code>## The following object is masked from &#39;package:stats&#39;:
-## 
-##     filter</code></pre>
-<pre class="r"><code>library(ggplot2)
+library(ggdag)
+library(ggplot2)
 library(gfoRmula)
-library(gmethods)</code></pre>
-<pre><code>## Loading required package: data.table</code></pre>
-<pre><code>## Registered S3 method overwritten by &#39;gmethods&#39;:
-##   method           from    
-##   summary.gformula gfoRmula</code></pre>
-<pre><code>## 
-## Attaching package: &#39;gmethods&#39;</code></pre>
-<pre><code>## The following object is masked from &#39;package:gfoRmula&#39;:
-## 
-##     gformula</code></pre>
-<pre class="r"><code>library(tidyverse)</code></pre>
-<pre><code>## ── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
-## ✔ dplyr     1.1.4     ✔ readr     2.1.5
-## ✔ forcats   1.0.0     ✔ stringr   1.5.1
-## ✔ lubridate 1.9.3     ✔ tibble    3.2.1
-## ✔ purrr     1.0.2     ✔ tidyr     1.3.1</code></pre>
-<pre><code>## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
-## ✖ dplyr::between()     masks data.table::between()
-## ✖ dplyr::filter()      masks ggdag::filter(), stats::filter()
-## ✖ dplyr::first()       masks data.table::first()
-## ✖ lubridate::hour()    masks data.table::hour()
-## ✖ lubridate::isoweek() masks data.table::isoweek()
-## ✖ dplyr::lag()         masks stats::lag()
-## ✖ dplyr::last()        masks data.table::last()
-## ✖ lubridate::mday()    masks data.table::mday()
-## ✖ lubridate::minute()  masks data.table::minute()
-## ✖ lubridate::month()   masks data.table::month()
-## ✖ lubridate::quarter() masks data.table::quarter()
-## ✖ lubridate::second()  masks data.table::second()
-## ✖ purrr::transpose()   masks data.table::transpose()
-## ✖ lubridate::wday()    masks data.table::wday()
-## ✖ lubridate::week()    masks data.table::week()
-## ✖ lubridate::yday()    masks data.table::yday()
-## ✖ lubridate::year()    masks data.table::year()
-## ℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors</code></pre>
-<pre class="r"><code>dag &lt;- dagify(
+library(gmethods)
+library(tidyverse)
+
+dag &lt;- dagify(
   Y ~ A1 + A0 + L1 ,
   A1 ~ A0 + L1,
   L1 ~ A0 , 
@@ -193,7 +156,7 @@ new_dat_11$Ey &lt;- predict(Y_mod, newdata = new_dat_11, type = &quot;response&q
 
 # take mean across all simulations to get g-formula estimate!
 mean(new_dat_11$Ey)</code></pre>
-<pre><code>## [1] 148.5458</code></pre>
+<pre><code>## [1] 150.657</code></pre>
 <p>Then for <span class="math inline">\(E[Y^{0,0}]\)</span>.</p>
 <pre class="r"><code># for 0, 0
 new_dat_00 &lt;- baseline_pop %&gt;%
@@ -210,7 +173,7 @@ new_dat_00$Ey &lt;- predict(Y_mod, newdata = new_dat_00, type = &quot;response&q
 
 # take mean across all simulations to get g-formula estimate!
 mean(new_dat_00$Ey)</code></pre>
-<pre><code>## [1] 134.623</code></pre>
+<pre><code>## [1] 134.6698</code></pre>
 <p>Now with the gfoRmula package.</p>
 <pre class="r"><code># running the g-formula ---------------------------------------------------
 
@@ -268,11 +231,8 @@ gform_res &lt;- gfoRmula::gformula(
   histvars = histvars,
   sim_data_b = TRUE,
   seed = 345636
-)</code></pre>
-<pre><code>## Warning in error_catch(id = id, nsimul = nsimul, intvars = intvars,
-## interventions = interventions, : obs_data must be of class &#39;data.table&#39;.
-## obs_data was coerced to a data table</code></pre>
-<pre class="r"><code># Use the following code to explore the results. (You can ignore Intervention 0,
+)
+# Use the following code to explore the results. (You can ignore Intervention 0,
 # the natural course intervention, for now.) How many models were fit? How can
 # you tell which of the data in the `sim_data` object was simulated or predicted
 # from a model? Does these results match your answers to the earlier questions,
@@ -294,11 +254,11 @@ gform_res</code></pre>
 ## 
 ##      k Interv.  NP mean g-form mean Mean ratio Mean difference % Intervened On
 ##  &lt;num&gt;   &lt;num&gt;    &lt;num&gt;       &lt;num&gt;      &lt;num&gt;           &lt;num&gt;           &lt;num&gt;
-##      1       0 142.4538    143.0465   1.057261       7.7473005         0.00000
-##      1       1       NA    135.2991   1.000000       0.0000000        75.12188
-##      1       2       NA    135.4056   1.000787       0.1064571        74.87812
-##      1       3       NA    149.9565   1.108333      14.6573032        80.85625
-##      1       4       NA    150.0035   1.108680      14.7043073        69.14375
+##      1       0 142.4411    143.0339   1.057266        7.747306         0.00000
+##      1       1       NA    135.2866   1.000000        0.000000        75.12188
+##      1       2       NA    135.5298   1.001798        0.243191        74.87812
+##      1       3       NA    150.0048   1.108793       14.718196        80.85625
+##      1       4       NA    150.0192   1.108899       14.732548        69.14375
 ##  Aver % Intervened On
 ##                 &lt;num&gt;
 ##               0.00000
@@ -316,85 +276,85 @@ gform_res</code></pre>
 ## -1.098612e+00 -6.322990e-13  2.197225e+00  2.925534e-13 
 ## 
 ## $Y
-##  (Intercept)            A            L       lag1_A          A:L     A:lag1_A 
-##   59.9191549    0.1681286  150.0379318  180.0466408   -0.1227522   -0.6426796 
-##     L:lag1_A   A:L:lag1_A 
-## -270.2106193    0.8190875</code></pre>
+##   (Intercept)             A             L        lag1_A           A:L 
+##   59.81251171    0.36039695  150.22527728  180.09937469   -0.23328912 
+##      A:lag1_A      L:lag1_A    A:L:lag1_A 
+##   -0.11174272 -270.26140641   -0.07953104</code></pre>
 <pre class="r"><code>gform_res$sim_data</code></pre>
 <pre><code>## $`Natural course`
 ##           id  time     L     A eligible_pt intervened lag1_A        Ey
 ##        &lt;int&gt; &lt;num&gt; &lt;num&gt; &lt;num&gt;      &lt;lgcl&gt;      &lt;num&gt;  &lt;num&gt;     &lt;num&gt;
 ##     1:     1     0    NA     0        TRUE          0      0        NA
-##     2:     1     1     0     0        TRUE          0      0  59.91915
+##     2:     1     1     0     0        TRUE          0      0  59.81251
 ##     3:     2     0    NA     0        TRUE          0      0        NA
-##     4:     2     1     0     0        TRUE          0      0  59.91915
+##     4:     2     1     0     0        TRUE          0      0  59.81251
 ##     5:     3     0    NA     0        TRUE          0      0        NA
 ##    ---                                                                
-## 63996: 31998     1     1     1        TRUE          0      1 120.01489
+## 63996: 31998     1     1     1        TRUE          0      1 119.81159
 ## 63997: 31999     0    NA     1        TRUE          0      0        NA
-## 63998: 31999     1     1     1        TRUE          0      1 120.01489
+## 63998: 31999     1     1     1        TRUE          0      1 119.81159
 ## 63999: 32000     0    NA     1        TRUE          0      0        NA
-## 64000: 32000     1     1     1        TRUE          0      1 120.01489
+## 64000: 32000     1     1     1        TRUE          0      1 119.81159
 ## 
 ## $`0, 0`
 ##           id  time     L     A eligible_pt intervened lag1_A        Ey
 ##        &lt;int&gt; &lt;num&gt; &lt;num&gt; &lt;num&gt;      &lt;lgcl&gt;     &lt;lgcl&gt;  &lt;num&gt;     &lt;num&gt;
 ##     1:     1     0    NA     0        TRUE      FALSE      0        NA
-##     2:     1     1     0     0        TRUE      FALSE      0  59.91915
+##     2:     1     1     0     0        TRUE      FALSE      0  59.81251
 ##     3:     2     0    NA     0        TRUE      FALSE      0        NA
-##     4:     2     1     0     0        TRUE      FALSE      0  59.91915
+##     4:     2     1     0     0        TRUE      FALSE      0  59.81251
 ##     5:     3     0    NA     0        TRUE      FALSE      0        NA
 ##    ---                                                                
-## 63996: 31998     1     1     0        TRUE       TRUE      0 209.95709
+## 63996: 31998     1     1     0        TRUE       TRUE      0 210.03779
 ## 63997: 31999     0    NA     0        TRUE       TRUE      0        NA
-## 63998: 31999     1     1     0        TRUE       TRUE      0 209.95709
+## 63998: 31999     1     1     0        TRUE       TRUE      0 210.03779
 ## 63999: 32000     0    NA     0        TRUE       TRUE      0        NA
-## 64000: 32000     1     0     0        TRUE      FALSE      0  59.91915
+## 64000: 32000     1     0     0        TRUE      FALSE      0  59.81251
 ## 
 ## $`0, 1`
 ##           id  time     L     A eligible_pt intervened lag1_A        Ey
 ##        &lt;int&gt; &lt;num&gt; &lt;num&gt; &lt;num&gt;      &lt;lgcl&gt;     &lt;lgcl&gt;  &lt;num&gt;     &lt;num&gt;
 ##     1:     1     0    NA     0        TRUE      FALSE      0        NA
-##     2:     1     1     0     1        TRUE       TRUE      0  60.08728
+##     2:     1     1     0     1        TRUE       TRUE      0  60.17291
 ##     3:     2     0    NA     0        TRUE      FALSE      0        NA
-##     4:     2     1     0     1        TRUE       TRUE      0  60.08728
+##     4:     2     1     0     1        TRUE       TRUE      0  60.17291
 ##     5:     3     0    NA     0        TRUE      FALSE      0        NA
 ##    ---                                                                
-## 63996: 31998     1     1     1        TRUE      FALSE      0 210.00246
+## 63996: 31998     1     1     1        TRUE      FALSE      0 210.16490
 ## 63997: 31999     0    NA     0        TRUE       TRUE      0        NA
-## 63998: 31999     1     1     1        TRUE      FALSE      0 210.00246
+## 63998: 31999     1     1     1        TRUE      FALSE      0 210.16490
 ## 63999: 32000     0    NA     0        TRUE       TRUE      0        NA
-## 64000: 32000     1     0     1        TRUE       TRUE      0  60.08728
+## 64000: 32000     1     0     1        TRUE       TRUE      0  60.17291
 ## 
 ## $`1, 0`
 ##           id  time     L     A eligible_pt intervened lag1_A       Ey
 ##        &lt;int&gt; &lt;num&gt; &lt;num&gt; &lt;num&gt;      &lt;lgcl&gt;     &lt;lgcl&gt;  &lt;num&gt;    &lt;num&gt;
 ##     1:     1     0    NA     1        TRUE       TRUE      0       NA
-##     2:     1     1     1     0        TRUE       TRUE      1 119.7931
+##     2:     1     1     1     0        TRUE       TRUE      1 119.8758
 ##     3:     2     0    NA     1        TRUE       TRUE      0       NA
-##     4:     2     1     1     0        TRUE       TRUE      1 119.7931
+##     4:     2     1     1     0        TRUE       TRUE      1 119.8758
 ##     5:     3     0    NA     1        TRUE       TRUE      0       NA
 ##    ---                                                               
-## 63996: 31998     1     1     0        TRUE       TRUE      1 119.7931
+## 63996: 31998     1     1     0        TRUE       TRUE      1 119.8758
 ## 63997: 31999     0    NA     1        TRUE      FALSE      0       NA
-## 63998: 31999     1     1     0        TRUE       TRUE      1 119.7931
+## 63998: 31999     1     1     0        TRUE       TRUE      1 119.8758
 ## 63999: 32000     0    NA     1        TRUE      FALSE      0       NA
-## 64000: 32000     1     1     0        TRUE       TRUE      1 119.7931
+## 64000: 32000     1     1     0        TRUE       TRUE      1 119.8758
 ## 
 ## $`1, 1`
 ##           id  time     L     A eligible_pt intervened lag1_A       Ey
 ##        &lt;int&gt; &lt;num&gt; &lt;num&gt; &lt;num&gt;      &lt;lgcl&gt;     &lt;lgcl&gt;  &lt;num&gt;    &lt;num&gt;
 ##     1:     1     0    NA     1        TRUE       TRUE      0       NA
-##     2:     1     1     1     1        TRUE      FALSE      1 120.0149
+##     2:     1     1     1     1        TRUE      FALSE      1 119.8116
 ##     3:     2     0    NA     1        TRUE       TRUE      0       NA
-##     4:     2     1     1     1        TRUE      FALSE      1 120.0149
+##     4:     2     1     1     1        TRUE      FALSE      1 119.8116
 ##     5:     3     0    NA     1        TRUE       TRUE      0       NA
 ##    ---                                                               
-## 63996: 31998     1     1     1        TRUE      FALSE      1 120.0149
+## 63996: 31998     1     1     1        TRUE      FALSE      1 119.8116
 ## 63997: 31999     0    NA     1        TRUE      FALSE      0       NA
-## 63998: 31999     1     1     1        TRUE      FALSE      1 120.0149
+## 63998: 31999     1     1     1        TRUE      FALSE      1 119.8116
 ## 63999: 32000     0    NA     1        TRUE      FALSE      0       NA
-## 64000: 32000     1     1     1        TRUE      FALSE      1 120.0149</code></pre>
+## 64000: 32000     1     1     1        TRUE      FALSE      1 119.8116</code></pre>
 </div>
 <div id="a-second-example" class="section level1">
 <h1>A second example</h1>
@@ -543,6 +503,6 @@ s$results</code></pre>
 ## 2            1  1.221098       NA        NA
 ## 3            2 -0.242636       NA        NA</code></pre>
 <p>Note the results are very close. Also note that in the covariates and treatment models, there is a time variable t0. This is because these models are pooled regression with all time points. Therefore a time fixed effect is included. In the outcome model, there is only the last period data, so the time variable is not included.</p>
-<p>The standard errors can be calculated with bootstrapping.</p>
+<p>Standard errors can be calculated with bootstrapping.</p>
 </div>
 </div>

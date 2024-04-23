@@ -1,7 +1,7 @@
 ---
 title: g-estimation with time varying treatment
 author: Xiang Ao
-date: 2024-04-20 
+date: 2024-04-26 
 tags: R
 categories:
 - R
@@ -14,7 +14,7 @@ g-estimation is a method to estimate the causal effect of a time varying treatme
 
 We can imagine such a scenario.  Suppose $A0$ and $A1$ are time 0 and time 1 treatment, can be binary or continuous.  $L1$ is a time 1 covariate.  It can be some intermediate outcome.  Say HbA1c.  HbA1c can be a result of treatment $A0$.  Then it can be a cause for the next period treatment $A1$.   $Y$ is the outcome.  $U$ is the unmeasured confounder.  The causal diagram is shown below.  How do we estimate the effect of treatment?
 
-```{r}
+```{r, message=FALSE, warning=FALSE, cache=TRUE}
 library(dagitty)
 library(ggdag)
 library(ggplot2)
@@ -105,7 +105,7 @@ The first example is from his lab3 teaching page.
 
 First we set up a simulated data set.
 
-```{r}
+```{r, message=FALSE, warning=FALSE, cache=TRUE}
 # setting up the data -----------------------------------------------------
 
 # The code below creates the frequency table, and then turns it into long format
@@ -152,7 +152,7 @@ Then calculate the g-formula by hand.
 
 First for $E[Y^{1,1}]$.  
 
-```{r}
+```{r, message=FALSE, warning=FALSE, cache=TRUE}
 # fit models for covariate and outcome given past on t1
 L_mod <- glm(L ~ lag_A, data = t1, family = binomial())
 Y_mod <- glm(Y ~ A * lag_A * L, data = t1)
@@ -180,7 +180,7 @@ mean(new_dat_11$Ey)
 
 Then for $E[Y^{0,0}]$.  
 
-```{r}
+```{r, message=FALSE, warning=FALSE, cache=TRUE}
 # for 0, 0
 new_dat_00 <- baseline_pop %>%
   mutate(lag_A = 0, A = 0)
@@ -201,7 +201,7 @@ mean(new_dat_00$Ey)
 
 Now with the gfoRmula package.  
 
-```{r}
+```{r, message=FALSE, warning=FALSE, cache=TRUE}
 # running the g-formula ---------------------------------------------------
 
 # add your comments to the lines below
@@ -286,7 +286,7 @@ The goal is to estimate the mean outcome at time $K + 1 = 7$ under ‘‘never t
 
 The DAG would be something like:  
 
-```{r}
+```{r, message=FALSE, warning=FALSE, cache=TRUE}
 dag <- dagify(
   Y ~ A + L1 + L2 + L3 + lag1_A + lag1_L1 + lag1_L2 ,
   L1 ~ lag1_A + lag1_L1 + lag1_L2 + L3 ,
@@ -310,7 +310,7 @@ dag %>%
 First use the gFormula package.  
 
 
-```{r}
+```{r, message=FALSE, warning=FALSE, cache=TRUE}
 id <- 'id'
 time_name <- 't0'
 covnames <- c('L1', 'L2', 'A')
@@ -351,7 +351,7 @@ gform_cont_eof
 
 Now use the gmethods package.  
 
-```{r}
+```{r, message=FALSE, warning=FALSE, cache=TRUE}
 gf <- gmethods::gformula(
   outcome_model = list(
     formula = Y ~ A + L1 + L2 + lag1_A + lag1_L1 + lag1_L2 + L3,
@@ -394,4 +394,4 @@ s$results
 
 Note the results are very close.  Also note that in the covariates and treatment models, there is a time variable t0.  This is because these models are pooled regression with all time points.  Therefore a time fixed effect is included.  In the outcome model, there is only the last period data, so the time variable is not included.
 
-The standard errors can be calculated with bootstrapping.  
+Standard errors can be calculated with bootstrapping.  
