@@ -1,0 +1,548 @@
+---
+title: g-estimation with time varying treatment
+author: Xiang Ao
+date: 2024-04-20 
+tags: R
+categories:
+- R
+
+---
+
+
+
+<div id="the-problem" class="section level1">
+<h1>The problem</h1>
+<p>g-estimation is a method to estimate the causal effect of a time varying treatment. It is a generalization of the instrumental variable method. The idea is to use the treatment variable itself as an instrument for the treatment variable in the future. The method is developed by Robins (1986) and Robins and Rotnitzky (1992). The method is also known as the g-methods.</p>
+<p>We can imagine such a scenario. Suppose <span class="math inline">\(A0\)</span> and <span class="math inline">\(A1\)</span> are time 0 and time 1 treatment, can be binary or continuous. <span class="math inline">\(L1\)</span> is a time 1 covariate. It can be some intermediate outcome. Say HbA1c. HbA1c can be a result of treatment <span class="math inline">\(A0\)</span>. Then it can be a cause for the next period treatment <span class="math inline">\(A1\)</span>. <span class="math inline">\(Y\)</span> is the outcome. <span class="math inline">\(U\)</span> is the unmeasured confounder. The causal diagram is shown below. How do we estimate the effect of treatment?</p>
+<pre class="r"><code>library(dagitty)
+library(ggdag)</code></pre>
+<pre><code>## 
+## Attaching package: &#39;ggdag&#39;</code></pre>
+<pre><code>## The following object is masked from &#39;package:stats&#39;:
+## 
+##     filter</code></pre>
+<pre class="r"><code>library(ggplot2)
+library(gfoRmula)
+library(gmethods)</code></pre>
+<pre><code>## Loading required package: data.table</code></pre>
+<pre><code>## Registered S3 method overwritten by &#39;gmethods&#39;:
+##   method           from    
+##   summary.gformula gfoRmula</code></pre>
+<pre><code>## 
+## Attaching package: &#39;gmethods&#39;</code></pre>
+<pre><code>## The following object is masked from &#39;package:gfoRmula&#39;:
+## 
+##     gformula</code></pre>
+<pre class="r"><code>library(tidyverse)</code></pre>
+<pre><code>## ── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
+## ✔ dplyr     1.1.4     ✔ readr     2.1.5
+## ✔ forcats   1.0.0     ✔ stringr   1.5.1
+## ✔ lubridate 1.9.3     ✔ tibble    3.2.1
+## ✔ purrr     1.0.2     ✔ tidyr     1.3.1</code></pre>
+<pre><code>## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+## ✖ dplyr::between()     masks data.table::between()
+## ✖ dplyr::filter()      masks ggdag::filter(), stats::filter()
+## ✖ dplyr::first()       masks data.table::first()
+## ✖ lubridate::hour()    masks data.table::hour()
+## ✖ lubridate::isoweek() masks data.table::isoweek()
+## ✖ dplyr::lag()         masks stats::lag()
+## ✖ dplyr::last()        masks data.table::last()
+## ✖ lubridate::mday()    masks data.table::mday()
+## ✖ lubridate::minute()  masks data.table::minute()
+## ✖ lubridate::month()   masks data.table::month()
+## ✖ lubridate::quarter() masks data.table::quarter()
+## ✖ lubridate::second()  masks data.table::second()
+## ✖ purrr::transpose()   masks data.table::transpose()
+## ✖ lubridate::wday()    masks data.table::wday()
+## ✖ lubridate::week()    masks data.table::week()
+## ✖ lubridate::yday()    masks data.table::yday()
+## ✖ lubridate::year()    masks data.table::year()
+## ℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors</code></pre>
+<pre class="r"><code>dag &lt;- dagify(
+  Y ~ A1 + A0 + L1 ,
+  A1 ~ A0 + L1,
+  L1 ~ A0 , 
+  coords = time_ordered_coords()
+) 
+
+dag %&gt;%
+  ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_point() +
+  geom_dag_edges_arc() +
+  geom_dag_text() +
+  theme_dag()</code></pre>
+<p><img src="/post/2024_4_23_gmethods_files/figure-html/unnamed-chunk-1-1.png" width="672" /></p>
+</div>
+<div id="assumptions" class="section level1">
+<h1>Assumptions</h1>
+<p>There are four potential outcomes, with <span class="math inline">\(A_0\)</span> and <span class="math inline">\(A_1\)</span> can be 0 or 1. The causal estimand is
+<span class="math display">\[ \tau_{a_o,a_1,a_o&#39;,a_1&#39;} = E[Y^{a_0,a_1} - Y^{a_0&#39;,a_1&#39;}]\]</span></p>
+<p>To idenfity the effects, we need assumptions.</p>
+<ol style="list-style-type: decimal">
+<li>Sequential ignorability
+<span class="math display">\[ Y^{a_0,a_1} \perp A_0\]</span>
+<span class="math display">\[ Y^{a_0,a_1} \perp A_1^{a_0} | A_0, L_1^{a_0}\]</span></li>
+</ol>
+<p>In general, treatment at time t is randomized with probabilities depending on the observed past, including covariates,
+intermediate outcomes, that is, at any time t
+<span class="math display">\[ Y^{\bar a}_t ⊥ A_t | H_t \]</span>
+where <span class="math inline">\({\bar a}_t = (a_1, ..., a_t)\)</span>, and <span class="math inline">\(H_t\)</span> is the history of treatment and covariates up to time t <span class="math display">\[H_t=(A_0,  A_1, ..., A_{t-1}; L_1,..., L_{t-1})\]</span>.</p>
+<ol start="2" style="list-style-type: decimal">
+<li>Positivity</li>
+</ol>
+<p><span class="math display">\[ 0 &lt; P(A_0=1) &lt; 1\]</span>
+<span class="math display">\[ 0 &lt; P(A_1=1|A_0=1, L_1) &lt; 1\]</span></p>
+<p>In general,
+<span class="math display">\[ 0 &lt; P(A_t=1|H_t) &lt; 1\]</span></p>
+<ol start="3" style="list-style-type: decimal">
+<li>Consistency</li>
+</ol>
+<p><span class="math display">\[ Y^{a_0,a_1} = Y | (A_0=a_0,A_1=a_1)\]</span></p>
+</div>
+<div id="identifiability" class="section level1">
+<h1>Identifiability</h1>
+<p><span class="math display">\[ \begin{align}
+E[Y^{a_0,a_1} &amp;= E[Y^{a_0,a_1} | A_0=a_0] \\
+&amp;= E[Y^{A_0,a_1} | A_0=a_0] \\
+&amp;= \sum_{l=0,1}E[Y^{A_0,a_1} | A_0=a_0, L=l] P(L=l | A_0=a_0) \\
+&amp;= \sum_{l=0,1}E[Y^{A_0,a_1} | A_0=a_0, L=l, A_1=a_1] P(L=l | A_0=a_0) \\
+&amp;= \sum_{l=0,1}E[Y^{A_0,A_1} | A_0=a_0, L=l, A_1=a_1] P(L=l | A_0=a_0)
+\end{align} \]</span></p>
+<p>This can be expanded to the general case. Basically start from the first period, then the second, based on the first, and so on.</p>
+</div>
+<div id="estimation" class="section level1">
+<h1>Estimation</h1>
+<p>There are two types of componenets in the g-estimation. The first is the outcome model, then there are models for time-varying covariates, or intermediate outcomes (confounders).</p>
+</div>
+<div id="parametric-g-formula" class="section level1">
+<h1>Parametric g-formula</h1>
+<p>In this simple case, if <span class="math inline">\(Y\)</span> is continuous, we can use a linear model. If <span class="math inline">\(Y\)</span> is binary, we can use a logistic model.</p>
+<p><span class="math display">\[ E[Y | A_0, A_1, L_1] = \beta_0 + \beta_1 A_0 + \beta_2 L_1 + \beta_3 A_1\]</span></p>
+<p>Suppose <span class="math inline">\(L_1\)</span> is binary,</p>
+<p><span class="math display">\[P(L_1=1 | A_0) = logit^{-1}(\gamma_0 + \gamma_1 A_0)\]</span>
+<span class="math display">\[ L_1 | A_0 \sim Bernoulli(\gamma_0 + \gamma_1 A_0)\]</span></p>
+<p>We may need to simulate the distribution of the time-varying covariates for the expected value of the potential outcomes.</p>
+</div>
+<div id="an-example" class="section level1">
+<h1>an example</h1>
+<p>I am following Christopher Boyer’s example in his teaching page: <a href="https://christopherbboyer.com/about" class="uri">https://christopherbboyer.com/about</a>.</p>
+<p>The first example is from his lab3 teaching page.</p>
+<p>First we set up a simulated data set.</p>
+<pre class="r"><code># setting up the data -----------------------------------------------------
+
+# The code below creates the frequency table, and then turns it into long format
+# data. Read through the code carefully and run it.
+
+# re-create the frequency table for homework 3
+hw3_freq &lt;- tribble(
+  ~A_0, ~L_1, ~A_1, ~N, ~Y_1,
+  0, 0, 0, 6000, 60,
+  0, 0, 1, 2000, 60,
+  0, 1, 0, 2000, 210,
+  0, 1, 1, 6000, 210,
+  1, 0, 0, 3000, 240,
+  1, 0, 1, 1000, 240,
+  1, 1, 0, 3000, 120,
+  1, 1, 1, 9000, 120
+)
+
+# expand the frequency table to 1 row per person
+# (first just assign everyone the average Y value)
+dat &lt;- uncount(hw3_freq, N) %&gt;%
+  # give those rows an id number
+  rowid_to_column(var = &quot;id&quot;) %&gt;%
+  # for each of the variables except for id, split it into two
+  # rows, one for each time point
+  pivot_longer(-id,
+               names_to = c(&quot;.value&quot;, &quot;time&quot;),
+               names_sep = &quot;_&quot;
+  ) %&gt;%
+  # make sure that time is read as a number
+  mutate(time = parse_number(time),
+         # add some random error to Y 
+         # (nrow(.) means a different value for each row of the dataset in use
+         Y = Y + rnorm(nrow(.), 0, 10))
+
+
+# create lagged variables
+t1 &lt;- dat %&gt;%
+  mutate(lag_A = lag(A)) %&gt;%
+  filter(time == 1)</code></pre>
+<p>Then calculate the g-formula by hand.</p>
+<p>First for <span class="math inline">\(E[Y^{1,1}]\)</span>.</p>
+<pre class="r"><code># fit models for covariate and outcome given past on t1
+L_mod &lt;- glm(L ~ lag_A, data = t1, family = binomial())
+Y_mod &lt;- glm(Y ~ A * lag_A * L, data = t1)
+
+# create new data set with space for 10,000 simulated entries
+nsim &lt;- 10000
+baseline_pop &lt;- tibble(id = 1:nsim)
+
+# fix intervention values in the new data set to be consistent with the regime
+new_dat_11 &lt;- baseline_pop %&gt;%
+  mutate(lag_A = 1, A = 1)
+
+# predict covariate means at time 1
+new_dat_11$pL &lt;- predict(L_mod, newdata = new_dat_11, type = &quot;response&quot;)
+
+# simulate covariate values at time 1
+new_dat_11$L &lt;- rbinom(nsim, 1, new_dat_11$pL)
+
+# predict outcome at time 1 based on simulated covariates and fixed treatments
+new_dat_11$Ey &lt;- predict(Y_mod, newdata = new_dat_11, type = &quot;response&quot;)
+
+# take mean across all simulations to get g-formula estimate!
+mean(new_dat_11$Ey)</code></pre>
+<pre><code>## [1] 148.5458</code></pre>
+<p>Then for <span class="math inline">\(E[Y^{0,0}]\)</span>.</p>
+<pre class="r"><code># for 0, 0
+new_dat_00 &lt;- baseline_pop %&gt;%
+  mutate(lag_A = 0, A = 0)
+
+# predict covariate means at time 1
+new_dat_00$pL &lt;- predict(L_mod, newdata = new_dat_00, type = &quot;response&quot;)
+
+# simulate covariate values at time 1
+new_dat_00$L &lt;- rbinom(nsim, 1, new_dat_00$pL)
+
+# predict outcome at time 1 based on simulated covariates and fixed treatments
+new_dat_00$Ey &lt;- predict(Y_mod, newdata = new_dat_00, type = &quot;response&quot;)
+
+# take mean across all simulations to get g-formula estimate!
+mean(new_dat_00$Ey)</code></pre>
+<pre><code>## [1] 134.623</code></pre>
+<p>Now with the gfoRmula package.</p>
+<pre class="r"><code># running the g-formula ---------------------------------------------------
+
+# add your comments to the lines below
+id &lt;- &quot;id&quot;
+time_name &lt;- &quot;time&quot;
+covnames &lt;- c(&quot;L&quot;, &quot;A&quot;)
+outcome_name &lt;- &quot;Y&quot;
+# 
+outcome_type &lt;- &quot;continuous_eof&quot;
+#
+histories &lt;- c(lagged)
+#
+histvars &lt;- list(c(&quot;A&quot;))
+#
+covtypes &lt;- c(&quot;binary&quot;, &quot;binary&quot;)
+covparams &lt;- list(covmodels = c(
+  L ~ lag1_A,
+  A ~ lag1_A * L
+))
+ymodel &lt;- Y ~ A * L * lag1_A
+#
+intvars &lt;- list(&quot;A&quot;, &quot;A&quot;, &quot;A&quot;, &quot;A&quot;)
+#
+interventions &lt;- list(
+  list(c(static, c(0, 0))),
+  list(c(static, c(0, 1))),
+  list(c(static, c(1, 0))),
+  list(c(static, c(1, 1)))
+)
+int_descript &lt;- c(
+  &quot;0, 0&quot;,
+  &quot;0, 1&quot;,
+  &quot;1, 0&quot;,
+  &quot;1, 1&quot;
+)
+
+# put it all together
+# (the warning &quot;obs_data was coerced to a data table&quot; is fine!)
+gform_res &lt;- gfoRmula::gformula(
+  obs_data = dat,
+  id = id,
+  time_name = time_name,
+  covnames = covnames,
+  outcome_name = outcome_name,
+  outcome_type = outcome_type,
+  covtypes = covtypes,
+  covparams = covparams,
+  ymodel = ymodel,
+  intvars = intvars,
+  interventions = interventions,
+  int_descript = int_descript,
+  ref_int = 1,
+  histories = histories,
+  histvars = histvars,
+  sim_data_b = TRUE,
+  seed = 345636
+)</code></pre>
+<pre><code>## Warning in error_catch(id = id, nsimul = nsimul, intvars = intvars,
+## interventions = interventions, : obs_data must be of class &#39;data.table&#39;.
+## obs_data was coerced to a data table</code></pre>
+<pre class="r"><code># Use the following code to explore the results. (You can ignore Intervention 0,
+# the natural course intervention, for now.) How many models were fit? How can
+# you tell which of the data in the `sim_data` object was simulated or predicted
+# from a model? Does these results match your answers to the earlier questions,
+gform_res</code></pre>
+<pre><code>## PREDICTED RISK UNDER MULTIPLE INTERVENTIONS
+## 
+## Intervention 	 Description
+## 0 		 Natural course
+## 1		 0, 0
+## 2		 0, 1
+## 3		 1, 0
+## 4		 1, 1
+## 
+## Sample size = 32000, Monte Carlo sample size = 32000
+## Number of bootstrap samples = 0
+## Reference intervention = 1
+## 
+##  
+## 
+##      k Interv.  NP mean g-form mean Mean ratio Mean difference % Intervened On
+##  &lt;num&gt;   &lt;num&gt;    &lt;num&gt;       &lt;num&gt;      &lt;num&gt;           &lt;num&gt;           &lt;num&gt;
+##      1       0 142.4538    143.0465   1.057261       7.7473005         0.00000
+##      1       1       NA    135.2991   1.000000       0.0000000        75.12188
+##      1       2       NA    135.4056   1.000787       0.1064571        74.87812
+##      1       3       NA    149.9565   1.108333      14.6573032        80.85625
+##      1       4       NA    150.0035   1.108680      14.7043073        69.14375
+##  Aver % Intervened On
+##                 &lt;num&gt;
+##               0.00000
+##              50.25469
+##              49.74531
+##              55.99375
+##              44.00625</code></pre>
+<pre class="r"><code>gform_res$coeffs</code></pre>
+<pre><code>## $L
+##   (Intercept)        lag1_A 
+## -5.868391e-14  1.098612e+00 
+## 
+## $A
+##   (Intercept)        lag1_A             L      lag1_A:L 
+## -1.098612e+00 -6.322990e-13  2.197225e+00  2.925534e-13 
+## 
+## $Y
+##  (Intercept)            A            L       lag1_A          A:L     A:lag1_A 
+##   59.9191549    0.1681286  150.0379318  180.0466408   -0.1227522   -0.6426796 
+##     L:lag1_A   A:L:lag1_A 
+## -270.2106193    0.8190875</code></pre>
+<pre class="r"><code>gform_res$sim_data</code></pre>
+<pre><code>## $`Natural course`
+##           id  time     L     A eligible_pt intervened lag1_A        Ey
+##        &lt;int&gt; &lt;num&gt; &lt;num&gt; &lt;num&gt;      &lt;lgcl&gt;      &lt;num&gt;  &lt;num&gt;     &lt;num&gt;
+##     1:     1     0    NA     0        TRUE          0      0        NA
+##     2:     1     1     0     0        TRUE          0      0  59.91915
+##     3:     2     0    NA     0        TRUE          0      0        NA
+##     4:     2     1     0     0        TRUE          0      0  59.91915
+##     5:     3     0    NA     0        TRUE          0      0        NA
+##    ---                                                                
+## 63996: 31998     1     1     1        TRUE          0      1 120.01489
+## 63997: 31999     0    NA     1        TRUE          0      0        NA
+## 63998: 31999     1     1     1        TRUE          0      1 120.01489
+## 63999: 32000     0    NA     1        TRUE          0      0        NA
+## 64000: 32000     1     1     1        TRUE          0      1 120.01489
+## 
+## $`0, 0`
+##           id  time     L     A eligible_pt intervened lag1_A        Ey
+##        &lt;int&gt; &lt;num&gt; &lt;num&gt; &lt;num&gt;      &lt;lgcl&gt;     &lt;lgcl&gt;  &lt;num&gt;     &lt;num&gt;
+##     1:     1     0    NA     0        TRUE      FALSE      0        NA
+##     2:     1     1     0     0        TRUE      FALSE      0  59.91915
+##     3:     2     0    NA     0        TRUE      FALSE      0        NA
+##     4:     2     1     0     0        TRUE      FALSE      0  59.91915
+##     5:     3     0    NA     0        TRUE      FALSE      0        NA
+##    ---                                                                
+## 63996: 31998     1     1     0        TRUE       TRUE      0 209.95709
+## 63997: 31999     0    NA     0        TRUE       TRUE      0        NA
+## 63998: 31999     1     1     0        TRUE       TRUE      0 209.95709
+## 63999: 32000     0    NA     0        TRUE       TRUE      0        NA
+## 64000: 32000     1     0     0        TRUE      FALSE      0  59.91915
+## 
+## $`0, 1`
+##           id  time     L     A eligible_pt intervened lag1_A        Ey
+##        &lt;int&gt; &lt;num&gt; &lt;num&gt; &lt;num&gt;      &lt;lgcl&gt;     &lt;lgcl&gt;  &lt;num&gt;     &lt;num&gt;
+##     1:     1     0    NA     0        TRUE      FALSE      0        NA
+##     2:     1     1     0     1        TRUE       TRUE      0  60.08728
+##     3:     2     0    NA     0        TRUE      FALSE      0        NA
+##     4:     2     1     0     1        TRUE       TRUE      0  60.08728
+##     5:     3     0    NA     0        TRUE      FALSE      0        NA
+##    ---                                                                
+## 63996: 31998     1     1     1        TRUE      FALSE      0 210.00246
+## 63997: 31999     0    NA     0        TRUE       TRUE      0        NA
+## 63998: 31999     1     1     1        TRUE      FALSE      0 210.00246
+## 63999: 32000     0    NA     0        TRUE       TRUE      0        NA
+## 64000: 32000     1     0     1        TRUE       TRUE      0  60.08728
+## 
+## $`1, 0`
+##           id  time     L     A eligible_pt intervened lag1_A       Ey
+##        &lt;int&gt; &lt;num&gt; &lt;num&gt; &lt;num&gt;      &lt;lgcl&gt;     &lt;lgcl&gt;  &lt;num&gt;    &lt;num&gt;
+##     1:     1     0    NA     1        TRUE       TRUE      0       NA
+##     2:     1     1     1     0        TRUE       TRUE      1 119.7931
+##     3:     2     0    NA     1        TRUE       TRUE      0       NA
+##     4:     2     1     1     0        TRUE       TRUE      1 119.7931
+##     5:     3     0    NA     1        TRUE       TRUE      0       NA
+##    ---                                                               
+## 63996: 31998     1     1     0        TRUE       TRUE      1 119.7931
+## 63997: 31999     0    NA     1        TRUE      FALSE      0       NA
+## 63998: 31999     1     1     0        TRUE       TRUE      1 119.7931
+## 63999: 32000     0    NA     1        TRUE      FALSE      0       NA
+## 64000: 32000     1     1     0        TRUE       TRUE      1 119.7931
+## 
+## $`1, 1`
+##           id  time     L     A eligible_pt intervened lag1_A       Ey
+##        &lt;int&gt; &lt;num&gt; &lt;num&gt; &lt;num&gt;      &lt;lgcl&gt;     &lt;lgcl&gt;  &lt;num&gt;    &lt;num&gt;
+##     1:     1     0    NA     1        TRUE       TRUE      0       NA
+##     2:     1     1     1     1        TRUE      FALSE      1 120.0149
+##     3:     2     0    NA     1        TRUE       TRUE      0       NA
+##     4:     2     1     1     1        TRUE      FALSE      1 120.0149
+##     5:     3     0    NA     1        TRUE       TRUE      0       NA
+##    ---                                                               
+## 63996: 31998     1     1     1        TRUE      FALSE      1 120.0149
+## 63997: 31999     0    NA     1        TRUE      FALSE      0       NA
+## 63998: 31999     1     1     1        TRUE      FALSE      1 120.0149
+## 63999: 32000     0    NA     1        TRUE      FALSE      0       NA
+## 64000: 32000     1     1     1        TRUE      FALSE      1 120.0149</code></pre>
+</div>
+<div id="a-second-example" class="section level1">
+<h1>A second example</h1>
+<p>Chistopher Boyer has a package “gmethods” that can be used to estimate the g-formula. To me it’s a bit more intuitive than the gfoRmula package. Here is an example in the “gmethods” package, with the same model in the “gfoRmula” package.</p>
+<p>The example dataset continuous_eofdata again consists of 7,500 observations on 2,500 individuals with a maximum of 7 follow-up times, where the outcome corresponds to a characteristic only in the last interval (e.g., systolic blood pressure in interval 7). The variables in the dataset are:
+t0: The time index
+id: A unique identifier for each individual
+L1: A time-varying covariate; categorical
+L2: A time-varying covariate; continuous
+L3: A baseline covariate; continuous
+A: The treatment variable; binary
+Y: The outcome of interest; continuous</p>
+<p>The goal is to estimate the mean outcome at time <span class="math inline">\(K + 1 = 7\)</span> under ‘‘never treat’’ versus ‘‘always treat.’’</p>
+<p>The DAG would be something like:</p>
+<pre class="r"><code>dag &lt;- dagify(
+  Y ~ A + L1 + L2 + L3 + lag1_A + lag1_L1 + lag1_L2 ,
+  L1 ~ lag1_A + lag1_L1 + lag1_L2 + L3 ,
+  L2 ~ lag1_A + L1 + lag1_L1 + lag1_L2 + L3,
+  A ~ lag1_A + L1 + L2 + lag1_L1 + lag1_L2 + L3,
+  coords = time_ordered_coords()
+) 
+
+dag %&gt;%
+  ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_point() +
+  geom_dag_edges_arc() +
+  geom_dag_text() +
+  theme_dag()</code></pre>
+<p><img src="/post/2024_4_23_gmethods_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+<div id="gformula-results" class="section level2">
+<h2>gFormula results</h2>
+<p>First use the gFormula package.</p>
+<pre class="r"><code>id &lt;- &#39;id&#39;
+time_name &lt;- &#39;t0&#39;
+covnames &lt;- c(&#39;L1&#39;, &#39;L2&#39;, &#39;A&#39;)
+outcome_name &lt;- &#39;Y&#39;
+covtypes &lt;- c(&#39;categorical&#39;, &#39;normal&#39;, &#39;binary&#39;)
+histories &lt;- c(lagged)
+histvars &lt;- list(c(&#39;A&#39;, &#39;L1&#39;, &#39;L2&#39;))
+covparams &lt;- list(covmodels = c(L1 ~ lag1_A + lag1_L1 + L3 + t0 +
+                                 lag1_L2,
+                                L2 ~ lag1_A + L1 + lag1_L1 + lag1_L2 + L3 + t0,
+                                A ~ lag1_A + L1 + L2 + lag1_L1 + lag1_L2 + L3 + t0))
+ymodel &lt;- Y ~ A + L1 + L2 + lag1_A + lag1_L1 + lag1_L2 + L3
+intvars &lt;- list(&#39;A&#39;, &#39;A&#39;)
+interventions &lt;- list(list(c(static, rep(0, 7))),
+                      list(c(static, rep(1, 7))))
+int_descript &lt;- c(&#39;Never treat&#39;, &#39;Always treat&#39;)
+nsimul &lt;- 50000
+
+gform_cont_eof &lt;- gformula_continuous_eof(obs_data = continuous_eofdata,
+                                          id = id,
+                                          time_name = time_name,
+                                          covnames = covnames,
+                                          outcome_name = outcome_name,
+                                          covtypes = covtypes,
+                                          covparams = covparams, ymodel = ymodel,
+                                          intvars = intvars,
+                                          interventions = interventions,
+                                          int_descript = int_descript,
+                                          histories = histories,
+                                          histvars = histvars,
+                                          model_fits = TRUE,
+                                          basecovs = c(&quot;L3&quot;),
+                                          nsimul = nsimul, seed = 1234)
+gform_cont_eof</code></pre>
+<pre><code>## PREDICTED RISK UNDER MULTIPLE INTERVENTIONS
+## 
+## Intervention 	 Description
+## 0 		 Natural course
+## 1		 Never treat
+## 2		 Always treat
+## 
+## Sample size = 2500, Monte Carlo sample size = 50000
+## Number of bootstrap samples = 0
+## Reference intervention = natural course (0)
+##  
+## 
+##      k Interv.   NP mean g-form mean Mean ratio Mean difference % Intervened On
+##  &lt;num&gt;   &lt;num&gt;     &lt;num&gt;       &lt;num&gt;      &lt;num&gt;           &lt;num&gt;           &lt;num&gt;
+##      6       0 -4.414543   -4.363941  1.0000000       0.0000000           0.000
+##      6       1        NA   -3.140619  0.7196748       1.2233225         100.000
+##      6       2        NA   -4.603000  1.0547804      -0.2390586          73.818
+##  Aver % Intervened On
+##                 &lt;num&gt;
+##               0.00000
+##              82.43600
+##              17.46171</code></pre>
+</div>
+<div id="gmethods-results" class="section level2">
+<h2>gmethods results</h2>
+<p>Now use the gmethods package.</p>
+<pre class="r"><code>gf &lt;- gmethods::gformula(
+  outcome_model = list(
+    formula = Y ~ A + L1 + L2 + lag1_A + lag1_L1 + lag1_L2 + L3,
+    link = &quot;identity&quot;,
+    family = &quot;normal&quot;
+  ),
+  covariate_model = list(
+    &quot;L1&quot; = list(
+      formula = L1 ~ lag1_A + lag1_L1 + L3 + t0 + lag1_L2,
+      family = &quot;categorical&quot;
+    ),
+    &quot;L2&quot; = list(
+      formula = L2 ~ lag1_A + L1 + lag1_L1 + lag1_L2 + L3 + t0,
+      link = &quot;identity&quot;,
+      family = &quot;normal&quot;
+    ),
+    &quot;A&quot; = list(
+      formula = A ~ lag1_A + L1 + L2 + lag1_L1 + lag1_L2 + L3 + t0,
+      link = &quot;logit&quot;,
+      family = &quot;binomial&quot;
+    )
+  ),
+  data = continuous_eofdata,
+  survival = FALSE,
+  id = &#39;id&#39;,
+  time = &#39;t0&#39;
+)
+
+s &lt;- simulate(
+  gf,
+  interventions = list(
+    &quot;Never treat&quot; = function(data, time) set(data, j = &quot;A&quot;, value = 0),
+    &quot;Always treat&quot; = function(data, time) set(data, j = &quot;A&quot;, value = 1)
+  ),
+  n_samples = 50000
+)
+
+s$results</code></pre>
+<pre><code>## $means
+##   intervention  estimate conf.low conf.high
+## 1            0 -4.360358       NA        NA
+## 2            1 -3.139260       NA        NA
+## 3            2 -4.602994       NA        NA
+## 
+## $ratios
+##   intervention  estimate conf.low conf.high
+## 1            0        NA       NA        NA
+## 2            1 0.7199547       NA        NA
+## 3            2 1.0556459       NA        NA
+## 
+## $diffs
+##   intervention  estimate conf.low conf.high
+## 1            0        NA       NA        NA
+## 2            1  1.221098       NA        NA
+## 3            2 -0.242636       NA        NA</code></pre>
+<p>Note the results are very close. Also note that in the covariates and treatment models, there is a time variable t0. This is because these models are pooled regression with all time points. Therefore a time fixed effect is included. In the outcome model, there is only the last period data, so the time variable is not included.</p>
+<p>The standard errors can be calculated with bootstrapping.</p>
+</div>
+</div>
