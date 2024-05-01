@@ -1,5 +1,5 @@
 ---
-title: g-estimation with time varying treatment
+title: g-estimation with time varying covariates
 author: Xiang Ao
 date: 2024-04-20 
 tags: R
@@ -10,7 +10,7 @@ categories:
 
 # The problem
 
-g-estimation is a method to estimate the causal effect of a time varying treatment.  It is a generalization of the instrumental variable method.  The idea is to use the treatment variable itself as an instrument for the treatment variable in the future.  The method is developed by Robins (1986) and Robins and Rotnitzky (1992).  The method is also known as the g-methods.
+g-estimation is a method to estimate the causal effect of a time varying treatment or covariates. The method is developed by Robins (1986) and Robins and Rotnitzky (1992).  The method is also known as the g-methods.
 
 We can imagine such a scenario.  Suppose $A0$ and $A1$ are time 0 and time 1 treatment, can be binary or continuous.  $L1$ is a time 1 covariate.  It can be some intermediate outcome.  Say HbA1c.  HbA1c can be a result of treatment $A0$.  Then it can be a cause for the next period treatment $A1$.   $Y$ is the outcome.  $U$ is the unmeasured confounder.  The causal diagram is shown below.  How do we estimate the effect of treatment?
 
