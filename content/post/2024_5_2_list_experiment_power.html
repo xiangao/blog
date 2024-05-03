@@ -1,0 +1,79 @@
+---
+title: Power analysis with list experiment
+author: Xiang Ao
+date: 2024-04-20 
+tags: R
+categories:
+- R
+
+---
+
+
+
+<p>This post is based on Ulrich, et al 2012.</p>
+<div id="list-experiment" class="section level1">
+<h1>List experiment</h1>
+<p>List experiment is also called item count technique (ICT), which was developed by Miller 1984, also called unmatched count technique, the unmatched block design, or the block total response. This technique requires two groups of respondents. First, a control group with <span class="math inline">\(n_c\)</span> respondents receives a list of <span class="math inline">\(k\)</span> neutral questions. The probability of answering the neutral question <span class="math inline">\(N_i\)</span> with “yes” is <span class="math inline">\(\pi_i (i = 1, . . ., k)\)</span>. Second, an experimental group with <span class="math inline">\(n_e\)</span> respondents receives the same set of questions as the control group plus the sensitive question of interest. In each group, the respondent is asked to indicate the total count of “yes” responses. Because each item is a binary variable, the expected number of total “yes” responses is <span class="math inline">\(\mu_c=\sum_{i=1}^k \pi_i\)</span> for the control group and <span class="math inline">\(\mu_e=\sum_{i=1}^k \pi_i + \pi_S\)</span> for the experimental group. Therefore, the difference <span class="math inline">\(\hat \mu_e - \hat \mu_c\)</span> between the observed means of the two groups provides an estimate of <span class="math inline">\(\pi_S\)</span>, that is,
+<span class="math display">\[ \hat \pi_S = \hat \mu_e - \hat \mu_c .\]</span></p>
+</div>
+<div id="power-analysis" class="section level1">
+<h1>Power analysis</h1>
+<div id="define-power" class="section level2">
+<h2>Define power</h2>
+<p>Suppose <span class="math inline">\(\pi_s\)</span> is the proportion of the population that has the sensitive attribute, or the proportion of the population that would answer the sensitive question with “yes”, such as the proportion of people who have committed a crime. The null hypothesis <span class="math inline">\(H0\)</span> is that <span class="math inline">\(\pi_s=0\)</span>, and the alternative hypothesis <span class="math inline">\(H1\)</span> is that <span class="math inline">\(\pi_s&gt;0\)</span>.</p>
+<p>The expected mean and the sampling variance of <span class="math inline">\(\hat \pi_s\)</span> under the null hypothesis H0 are denoted <span class="math inline">\(\mu_0\)</span> and <span class="math inline">\(\sigma_0^2\)</span>, respectively. Likewise, let <span class="math inline">\(\mu_1\)</span> and <span class="math inline">\(\sigma_1^2\)</span> be the mean and the variance under the alternative hypothesis H1 that <span class="math inline">\(\pi_s\)</span> has a specific value that is greater than zero, for instance, <span class="math inline">\(H1 : \pi_s = 0.05\)</span></p>
+<p>statistical power P(“H1”|H1) of a test represents the probability of rejecting <span class="math inline">\(H0\)</span> in favor of <span class="math inline">\(H1\)</span> given that <span class="math inline">\(H1\)</span> is true.</p>
+<p>On a general level, this probability is computed as,
+<span class="math display">\[ \begin{align}
+P(“H_1”|H_1) &amp;= P(\hat \pi_s &gt; c_{1-\alpha}) \\
+&amp;= P(\frac{\hat \pi_s - \mu_1}{\sigma_1} &gt; \frac{c_{1-\alpha} - \mu_1}{\sigma_1})\\
+&amp;= P(Z &gt; \frac{c_{1-\alpha} - \mu_1}{\sigma_1}) \\
+&amp;= 1 - \Phi( \frac{c_{1-\alpha} - \mu_1}{\sigma_1}) \\
+&amp;= \Phi( \frac{\mu_1-c_{1-\alpha} }{\sigma_1}) \\
+&amp;= \Phi( \frac{\mu_1-\mu_0 + z_\alpha \sigma_0 }{\sigma_1}) \\
+\end{align} \]</span></p>
+<p>Consider a special case, <span class="math inline">\(\mu_0=0\)</span>, <span class="math inline">\(\mu_1=1\)</span>, <span class="math inline">\(\sigma_0=\sigma_1=1\)</span>, and <span class="math inline">\(z_\alpha=-1.64\)</span>, then the power is 0.26. This is the one side power. If we consider two sided power, then the power is .168, since <span class="math inline">\(z_{\alpha/2}=-1.96\)</span>.</p>
+</div>
+<div id="power-for-list-experiment" class="section level2">
+<h2>Power for list experiment</h2>
+<p>Under H1, the sampling variance of <span class="math inline">\(\hat \pi_s\)</span> is</p>
+<p><span class="math display">\[ \sigma_1^2 = \frac{\pi_s (1-\pi_s)}{n_c} + (\frac{1}{n_e} + \frac{1}{n_c}) \sum_{i=1}^k \pi_i (1-\pi_i) \]</span>
+where <span class="math inline">\(\pi_i\)</span> is the probability of answering the neutral question <span class="math inline">\(N_i\)</span> with “yes”.</p>
+<p>Under H0, the sampling variance of <span class="math inline">\(\hat \pi_s\)</span> is
+<span class="math display">\[ \sigma_0^2 = (\frac{1}{n_e} + \frac{1}{n_c}) \sum_{i=1}^k \pi_i (1-\pi_i) \]</span></p>
+<p>Assuming <span class="math inline">\(n_e=n_c=n\)</span>, then the power is</p>
+<p><span class="math display">\[ P(&quot;H_1&quot;|H_1) = \Phi( \frac{\pi_s + z_\alpha \sqrt{\frac{2}{n} \sum_{i=1}^k \pi_i (1-\pi_i)}}{\sqrt(\frac{\pi_s(1-\pi_s)}{n} + \frac{2}{n} \sum_{i=1}^k \pi_i (1-\pi_i))}) \]</span></p>
+<p>For example, when you have <span class="math inline">\(\pi_s=.1\)</span>, <span class="math inline">\(n=500\)</span>, <span class="math inline">\(k=4\)</span>, <span class="math inline">\(\pi_i=.1\)</span>, then the power is</p>
+<pre class="r"><code>num=.1+qnorm(.05)*sqrt((1/250)*(4*.1*.9))
+denom=sqrt((.1*.9/500+(1/250)*4*.1*.9))
+pnorm(num/denom)</code></pre>
+<pre><code>## [1] 0.8247802</code></pre>
+</div>
+<div id="sample-size-for-list-experiment" class="section level2">
+<h2>Sample size for list experiment</h2>
+<p>Assuming <span class="math inline">\(n_e=n_c\)</span>,</p>
+<p><span class="math display">\[ a_1 = \sqrt(2 \pi_s (1-\pi_s) + 4 \sum_{i=1}^k \pi_i (1-\pi_i)) \]</span></p>
+<p><span class="math display">\[ a_0 = 2 \sqrt( \sum_{i=1}^k \pi_i (1-\pi_i)) \]</span></p>
+<p>Sample size needed for a power of <span class="math inline">\(1-\beta\)</span> is
+<span class="math display">\[ n = (\frac{(z_{1-\beta}) a_1 - z_\alpha a_0}{\mu_1-\mu_0})^2\]</span></p>
+<p>where <span class="math inline">\(\beta\)</span> is type 2 error, <span class="math inline">\(\alpha\)</span> is type 1 error.</p>
+<p>Let’s look at an example: suppose the proportion of the population that would answer the sensitive question with “yes” is 0.1. The probability of answering the neutral question <span class="math inline">\(N_i\)</span> with “yes” is 0.1. The type 1 error is 0.05, and the type 2 error is 0.2. Suppose we have 4 neutral questions. What is the sample size needed?</p>
+<pre class="r"><code>a1=sqrt(2*.1*.9+4*4*.1*.9)
+a0=2*sqrt(4*.1*.9)
+n=((qnorm(.8)*a1-qnorm(.05)*a0)/.1)^2
+n</code></pre>
+<pre><code>## [1] 927.2228</code></pre>
+<p>Suppose probability of answering the neutral question <span class="math inline">\(N_i\)</span> with “yes” is .3.</p>
+<pre class="r"><code>a1=sqrt(2*.1*.9+4*4*.3*.7)
+a0=2*sqrt(4*.3*.7)
+n=((qnorm(.8)*a1-qnorm(.05)*a0)/.1)^2
+n</code></pre>
+<pre><code>## [1] 2114.682</code></pre>
+<p>Suppose the probability of answering the sensitive question with “yes” is .05.</p>
+<pre class="r"><code>a1=sqrt(2*.1*.9+4*4*.3*.7)
+a0=2*sqrt(4*.3*.7)
+n=((qnorm(.8)*a1-qnorm(.05)*a0)/.05)^2
+n</code></pre>
+<pre><code>## [1] 8458.729</code></pre>
+</div>
+</div>
