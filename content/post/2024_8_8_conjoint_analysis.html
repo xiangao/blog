@@ -13,7 +13,7 @@ categories:
 <p>This post is to illustrate how to use R to do basic conjoint analysis.</p>
 <div id="conjoint-analysis" class="section level1">
 <h1>Conjoint Analysis</h1>
-<p>Marking people used to use Sawtooth to do conjoint analysis.</p>
+<p>Marketing people used to use Sawtooth to do conjoint analysis.</p>
 <p>What is conjoint analysis? Here is the intro from Sawtooth:</p>
 <p>“Conjoint analysis methods use statistical analysis to compute mathematical representations of survey respondents’ preferences for product features, simulate how attribute changes affect demand, and even predict market acceptance of new products before they launch.</p>
 <p>This powerful research methodology has become very popular with market researchers and economists for the valuable insight that few other research methods can provide.”</p>
@@ -32,18 +32,8 @@ categories:
 <div id="example" class="section level1">
 <h1>Example</h1>
 <p>I am following the example here: <a href="https://bookdown.org/lien_lamey/R_tutorial/8-1-data-5.html" class="uri">https://bookdown.org/lien_lamey/R_tutorial/8-1-data-5.html</a></p>
-<pre class="r"><code>library(tidyverse)</code></pre>
-<pre><code>## ── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
-## ✔ dplyr     1.1.4     ✔ readr     2.1.5
-## ✔ forcats   1.0.0     ✔ stringr   1.5.1
-## ✔ ggplot2   3.5.1     ✔ tibble    3.2.1
-## ✔ lubridate 1.9.3     ✔ tidyr     1.3.1
-## ✔ purrr     1.0.2     
-## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
-## ✖ dplyr::filter() masks stats::filter()
-## ✖ dplyr::lag()    masks stats::lag()
-## ℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors</code></pre>
-<pre class="r"><code>library(openxlsx)
+<pre class="r"><code>library(tidyverse)
+library(openxlsx)
 
 url &lt;- &quot;https://feb.kuleuven.be/lien.lamey/public/rmodule/icecream.xlsx&quot;
 icecream &lt;- read.xlsx(url)
@@ -88,42 +78,9 @@ attributes</code></pre>
 <h1>Conjoint design of experiment</h1>
 <p>The first step in conjoint analysis is to create a design of experiment. This is to use a fraction of all possible combinations of attribute levels to estimate the effect of each level of each attribute. For example, instead of using all 60 icecream profiles, we use 10 profiles.</p>
 <p>We use “radiant” package’s “doe” function to create the design of experiment. The “doe” function takes the attributes as input and returns a data frame with the profiles. The “seed” argument is used to fix the random number generator. This is useful if you want to reproduce the same results.</p>
-<pre class="r"><code>library(radiant)</code></pre>
-<pre><code>## Loading required package: radiant.data</code></pre>
-<pre><code>## Loading required package: magrittr</code></pre>
-<pre><code>## 
-## Attaching package: &#39;magrittr&#39;</code></pre>
-<pre><code>## The following object is masked from &#39;package:purrr&#39;:
-## 
-##     set_names</code></pre>
-<pre><code>## The following object is masked from &#39;package:tidyr&#39;:
-## 
-##     extract</code></pre>
-<pre><code>## 
-## Attaching package: &#39;radiant.data&#39;</code></pre>
-<pre><code>## The following object is masked from &#39;package:magrittr&#39;:
-## 
-##     set_attr</code></pre>
-<pre><code>## The following objects are masked from &#39;package:lubridate&#39;:
-## 
-##     month, wday</code></pre>
-<pre><code>## The following object is masked from &#39;package:forcats&#39;:
-## 
-##     as_factor</code></pre>
-<pre><code>## The following object is masked from &#39;package:purrr&#39;:
-## 
-##     is_double</code></pre>
-<pre><code>## The following object is masked from &#39;package:ggplot2&#39;:
-## 
-##     diamonds</code></pre>
-<pre><code>## The following object is masked from &#39;package:base&#39;:
-## 
-##     date</code></pre>
-<pre><code>## Loading required package: radiant.design</code></pre>
-<pre><code>## Loading required package: radiant.basics</code></pre>
-<pre><code>## Loading required package: radiant.model</code></pre>
-<pre><code>## Loading required package: radiant.multivariate</code></pre>
-<pre class="r"><code>ice_doe &lt;- doe(attributes, seed = 123)
+<pre class="r"><code>library(radiant)
+
+ice_doe &lt;- doe(attributes, seed = 123)
 ice_doe$eff</code></pre>
 <pre><code>##    Trials D-efficiency Balanced
 ## 1       9        0.105    FALSE
@@ -179,15 +136,58 @@ ice_doe$eff</code></pre>
 ## 51     59        0.855    FALSE
 ## 52     60        1.000     TRUE</code></pre>
 <pre class="r"><code>#summary(doe(attributes, seed = 123, trials = 10))</code></pre>
-<p>This is a list of efficiency of different number of “trials”. Trials mean combinations of attribute levels. For example, with 10 trials, the effeciency is .389 and it’s unbalanced.</p>
+<p>This is a list of efficiency of different number of “trials”. Trials mean combinations of attribute levels. For example, with 10 trials, the efficiency is .389 and it’s unbalanced.</p>
 <p>We can see that the only two designs with balanced design are 30 and 60. That’s because 30 and 60 are the only two numbers that can be divided by 5, 3 and 2, all unique number of 5, 3, 3, 2. If the factors are, say, 3, 2, 3. Then the integers that can be divided by 3 and 2 are 6, 12, and 18.</p>
-<p>Efficiency is a measure of the information content a design can capture. Efficiencies are
+<p>Efficiency is a measure of the information content a design can capture. Efficiency are
 typically stated in relative terms, as in “design A is 80% as efficient as design B.” In
 practical terms this means you will need 25% more (the reciprocal of 80%) design A
 observations (respondents, choice sets per respondent or a combination of both) to get the
-same standard errors and significances as with the more efficient design B. We used a
+same standard errors and significance as with the more efficient design B. We used a
 measure of efficiency called D-Efficiency (Kuhfeld et al. 1994). In this case, the only orthogonal design is the full factorial design of 60 trials.</p>
 <p>For example, a trial of 30 has a efficiency of .984, that means it’s 98.4% as efficient as the full factorial design of 60 trials.</p>
+<pre class="r"><code>library(radiant)</code></pre>
+<pre><code>## Loading required package: radiant.data</code></pre>
+<pre><code>## Loading required package: magrittr</code></pre>
+<pre><code>## Loading required package: ggplot2</code></pre>
+<pre><code>## Loading required package: lubridate</code></pre>
+<pre><code>## 
+## Attaching package: &#39;lubridate&#39;</code></pre>
+<pre><code>## The following objects are masked from &#39;package:base&#39;:
+## 
+##     date, intersect, setdiff, union</code></pre>
+<pre><code>## Loading required package: tidyr</code></pre>
+<pre><code>## 
+## Attaching package: &#39;tidyr&#39;</code></pre>
+<pre><code>## The following object is masked from &#39;package:magrittr&#39;:
+## 
+##     extract</code></pre>
+<pre><code>## Loading required package: dplyr</code></pre>
+<pre><code>## 
+## Attaching package: &#39;dplyr&#39;</code></pre>
+<pre><code>## The following objects are masked from &#39;package:stats&#39;:
+## 
+##     filter, lag</code></pre>
+<pre><code>## The following objects are masked from &#39;package:base&#39;:
+## 
+##     intersect, setdiff, setequal, union</code></pre>
+<pre><code>## 
+## Attaching package: &#39;radiant.data&#39;</code></pre>
+<pre><code>## The following objects are masked from &#39;package:lubridate&#39;:
+## 
+##     month, wday</code></pre>
+<pre><code>## The following object is masked from &#39;package:ggplot2&#39;:
+## 
+##     diamonds</code></pre>
+<pre><code>## The following object is masked from &#39;package:magrittr&#39;:
+## 
+##     set_attr</code></pre>
+<pre><code>## The following object is masked from &#39;package:base&#39;:
+## 
+##     date</code></pre>
+<pre><code>## Loading required package: radiant.design</code></pre>
+<pre><code>## Loading required package: radiant.basics</code></pre>
+<pre><code>## Loading required package: radiant.model</code></pre>
+<pre><code>## Loading required package: radiant.multivariate</code></pre>
 <pre class="r"><code>ice_doe2 &lt;- doe(attributes, seed = 123, trials = 30)
 ice_doe2$cor_mat</code></pre>
 <pre><code>##                Flavor       Package         Light       Organic
