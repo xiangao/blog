@@ -114,7 +114,7 @@ measure of efficiency called D-Efficiency (Kuhfeld et al. 1994).  In this case, 
 For example, a trial of 30 has a efficiency of .984, that means it's 98.4% as efficient as the full factorial design of 60 trials.  
 
 
-```{r}
+```{r, message=FALSE, warning=FALSE, cache=TRUE}
 library(radiant)
 ice_doe2 <- doe(attributes, seed = 123, trials = 30)
 ice_doe2$cor_mat
