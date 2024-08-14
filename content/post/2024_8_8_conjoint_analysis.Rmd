@@ -160,5 +160,12 @@ summary(lm(rating ~ Flavor + Packaging + Light + Organic, data = icecream))
 
 The conjoint importance weights are the relative importance of each attribute.  First the range of partworths for each attribute is calculated.  Then the range of partworths for each attribute is divided by the sum of the ranges of all attributes.  In this example, Flavor is the most important attribute, with an importance weight of .597.  
 
-There is another package called "conjoint" which I have not played with.
+There is another package called "conjoint" which I have not played with.   
 
+In summary, we can use R packages to set up a conjoint experiment, in the sense that we can have partial (fractional) factorial design.  After collecting the data, we can use either the conjoint packages, or just run linear or logit models to analyze it.  The frequentist approach used in conjoint analysis seems nothing special.  Bayesian approach can also be used, but that's another topic.  
+
+# Causal effect in conjoint analysis
+
+Hainmueller, Hopkins, and Yamamoto (2014) defined ACME (average marginal component effect). The basic idea is that once all the assumptions are met (usual assumptions in causal inference), we can have the effect of changing one attribute level to another with a causal interpretation.  Fortunately it is usually just coefficients from a linear model, or linear combinations of the coefficients.  There is a package "cregg" for each calculation and plotting of ACME, but we can just do it manually.  
+
+ 
