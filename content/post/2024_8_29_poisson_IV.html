@@ -14,12 +14,12 @@ categories:
 <h1>Poisson regression with many fixed effects</h1>
 <p>I have a few posts about Poisson regression for non-negative outcomes, including continous variable, count variable, or corner solution (such as non-negative outcome with many zeros). The benefits include that we can use QMLE Poisson, which means we only need to have the mean of outcome specified correctly, as an exponetiated function of covariates. There is no assumption that the distribution needs to be a Poisson distribution. When we want to model non-negative outcome with fixed effects, fixed effect Poisson should be our first choice also, because fixed effect Poisson is shown to be consistent without the assumption of the distribution of the error term, and it does not have the “incidental parameter” problem.</p>
 <p>Stata has “xtpoisson” to do fixed effect Poisson. However, we would recommend “ppmlhdfe”. “ppmlhdfe is a Stata package that implements Poisson pseudo-maximum likelihood regressions (PPML) with multi-way fixed effects”. It is faster than xtpoisson. More importantly, it does report the predicted value correctly. I mentioned in past post that we need to be cautious when we need to use predicted values after “xtpoisson, fe”, or “xtreg, fe”. The reason is that these are models estimated after “absorbing” the fixed effects, meaning fixed effects are not actually estimated. Therefore the predicted values are without fixed effects. But in “ppmlhdfe” we get the correct predicted values with fixed effect.</p>
-<p>On a side note, the same author has “reghdfe” as a replacement for “areg” in Stata. “reghdfe” is faster than “areg”, or “xtreg, fe”. It also allows for many levels of fixed effects.</p>
+<p>On a side note, the same author has “reghdfe” as a replacement for “areg” in Stata. “reghdfe” is faster than “areg”, or “xtreg, fe”. It also allows for many levels of fixed effects. As “ppmlhdfe”, it also provides correct predicted values with fixed effects.</p>
 </div>
 <div id="iv-poisson-with-many-fixed-effects" class="section level1">
 <h1>IV poisson with many fixed effects</h1>
 <p>Stata has a “ivpoisson” function with handles IV in a Poisson regression setting. However, it does not have the option to include fixed effects.</p>
-<p>In the case that the endogenous variable is continous and we can use a linear model on the first stage, Wooldridge 2010 textbook (chapter 18) suggested using control function approach, which is very simple:</p>
+<p>In the case that the endogenous variable is continous and we can use a linear model for the first stage, Wooldridge 2010 textbook (chapter 18) suggested using control function approach, which is very simple:</p>
 <ol style="list-style-type: decimal">
 <li>Run the first stage regression (reduced from for the endogous variable), and get the predicted value of the residual. Sometimes called Mundlak residual. Note in the many fixed effects case, we need to include all fixed effects in the first stage regression. In the case of stata, we would use “reghdfe” here.</li>
 <li>Include both the endogenous variable and the Mundlak residual as additional regressors in the second stage, the original Poisson regression. Use “ppmlhdfe” here.</li>
@@ -112,7 +112,7 @@ Absorbed degrees of freedom:
       female |         2           1           1     |
 -----------------------------------------------------+</code></pre>
 <p>In this example, “time” is the endognous variable, and “phone” is the instrument. We first run the first stage regression with “reghdfe”, and get the Mundlak residual “u2h_fe”. Then we include “time” and “u2h_fe” in the second stage regression with “ppmlhdfe”. “ad” and “female” are two fixed effects. The standard errors are incorrect, we need to use bootstrap to get the correct standard errors.</p>
-<p>To verify our control function approach, we do the same with a linear model. By the way, linear model and Poisson model are the only two models that control functions work, as far as I understand it. There is a package “ivreghdfe” we use to verify our two step process.</p>
+<p>To verify our control function approach, we do the same with a linear model. By the way, for linear model and Poisson model, control function approach works, in the sense you can just put in predicted residual in the second stage and that takes care of the endogneity adjustment. There is a package “ivreghdfe” we use to verify our two step process.</p>
 <pre class="stata"><code>clear all
 webuse website
 ivreghdfe visits frfam (time=phone), absorb(ad female)
@@ -273,10 +273,10 @@ Bootstrap results                                          Number of obs = 499
 -------------+----------------------------------------------------------------
        _bs_1 |   .0448103   .0476634     0.94   0.347    -.0486083    .1382288
 ------------------------------------------------------------------------------</code></pre>
-<p>Somehow we need “xtset clear” for each regression. I think this is due to the fact that Stata generates a new id for the bootstrapped clusters, then somehow it sets the id, even if you don’t use it in the regression. Therefore we’ll need to clear it every time.</p>
+<p>Somehow we need “xtset clear” for each regression. I think this is due to the fact that Stata generates a new id for the bootstrapped clusters, then somehow it xtsets the id, even if you don’t use it in the regression. Therefore we’ll need to clear it every time.</p>
 </div>
-<div id="what-to-do-with-r" class="section level1">
-<h1>What to do with R</h1>
+<div id="how-to-do-it-with-r" class="section level1">
+<h1>How to do it with R</h1>
 <p>R has similar packages <a href="https://cran.r-project.org/web/packages/fixest/vignettes/fixest_walkthrough.html" class="uri">https://cran.r-project.org/web/packages/fixest/vignettes/fixest_walkthrough.html</a>.</p>
-<p>We can use “fixest” and “fepois” to do the same thing as “reghdfe” and “ppmlhdfe”.</p>
+<p>We can use “fixest” and “fepois” to do the same thing as “reghdfe” and “ppmlhdfe”. Again, at the moment, we need to manually bootstrap the two stages for correct standard errors.</p>
 </div>
