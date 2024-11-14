@@ -23,8 +23,8 @@ Let's see a simple example:
 
 ```{r setup, include=FALSE}
 library(Statamarkdown)
-stataexe <- find_stata()
-#stataexe <- "/usr/local/bin/stata"
+#stataexe <- find_stata()
+stataexe <- "/usr/local/bin/stata"
 knitr::opts_chunk$set(engine.path=list(stata=stataexe))
 ```
 
@@ -140,7 +140,7 @@ We can see same Chow kind of test works, with IV regression, if we have the righ
 
 # IV with fixed effects
 
-However, when doing with a fixed effet IV, I seem to have difficulties.  In this example, I use "reghdfe" to do an IV regression with fixed effect.  We can also use "xtivreg2", but "reghdfe" is supposed to be faster.
+However, when doing with a fixed effet IV, I seem to have difficulties.  In this example, I use "reghdfe" to do an IV regression with fixed effect.  We can also use "xtivreg2", but "ivreghdfe" is supposed to be faster.
 
 
 ```{stata stata5, echo = T, cache=T, collectcode=TRUE}
@@ -150,9 +150,9 @@ gen hours1=hours*(south==1)
 gen hours2=hours*(south==0)
 gen union1=union*(south==1)
 gen union2=union*(south==0)
-reghdfe wage (hours=union) if south, a(race) cluster(race) old
-reghdfe wage (hours=union) if !south, a(race) cluster(race) old
-reghdfe wage south (hours? = union?) , a(race) cluster(race) old
+ivreghdfe wage (hours=union) if south, a(race) cluster(race)
+ivreghdfe wage (hours=union) if !south, a(race) cluster(race)
+ivreghdfe wage south (hours? = union?) , a(race) cluster(race) 
 
 ```
 
@@ -174,8 +174,8 @@ gen race1=race*(south==1)
 gen race2=race*(south==0)
 
 
-reghdfe wage (hours=union) if south, a(race) cluster(race) old
-reghdfe wage (hours=union) if !south, a(race) cluster(race) old
+ivreghdfe wage (hours=union) if south, a(race) cluster(race) 
+ivreghdfe wage (hours=union) if !south, a(race) cluster(race)
 ivregress 2sls wage south (hours? = union?) i.race?, cluster(race) 
 
 ```
@@ -196,7 +196,55 @@ gen union2=union*(south==0)
 gen race1=race*(south==1)
 gen race2=race*(south==0)
 
-reghdfe wage south (hours? = union?) , a(race1 race2) cluster(race) old
-reghdfe, coeflegend
+ivreghdfe wage south (hours? = union?) , a(race1 race2) cluster(race)
 test _b[hours1]-_b[hours2]=0
 ```
+
+# Chow test with different covariates
+
+What if we want to compare coefficients across equations with different covariates?  We can still do Chow test.
+
+Say you have
+$$ Y_1 = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \epsilon_1$$
+$$ Y_2 = \gamma_0 + \gamma_1 X_1  + \epsilon_2$$
+
+The way you can think of the second equation is that you still have $X_2$ but it is just a constant, which means it will go into the constant term.
+$$ Y_2 = \gamma_0 + \gamma_1 X_1 + \gamma_2 C + \epsilon_2$$
+
+So we can just replace $X_2$ with a constant in the sample for $Y_2$ and still do Chow test.
+
+```{stata stata8, echo = T, cache=T, collectcode=TRUE}
+sysuse nlsw88, clear
+reg south wage hours tenure
+est sto south
+reg smsa wage hours
+est sto smsa
+suest south smsa
+est sto suest
+preserve
+gen Y1=south
+gen Y2=smsa
+gen id=_n
+reshape long Y, i(id) j(subsample)
+gen wage1=wage*(subsample==1)
+gen wage2=wage*(subsample==2)
+gen hours1=hours*(subsample==1)
+gen hours2=hours*(subsample==2)
+replace tenure=1 if subsample==2
+gen tenure1= tenure*(subsample==1)
+gen tenure2= tenure*(subsample==2)
+reg Y wage? hours? tenure? subsample
+est sto chow
+test _b[hours1]-_b[hours2]=0
+esttab  suest chow, nogaps mti
+```
+
+We can see Chow type of "stacking" method generates the same result as "suest" in terms of point estimates.  For standard errors you can use "robust" or "cluster" option in "reg" command.
+
+# Conclusion
+
+For testing cross equations hypotheses, we can use "suest" or Chow type "stacking" method.  Sometimes people use "sureg".  I prefer not use "sureg".  It is a GLS estimator for all the equations together.  It relies on assumptions of the error term of the whole system.  It assumes homoscedasticity for example.  If it's true, then GLS is more efficient; if not, then biased.  If the equations have the same covariates, then it returns the same coefficient estimates as the single equation estimates.  If different covariates, then different estimates as the single equation estimates.  
+
+The nice thing about Chow test is that it is very flexible, and it does not rely on Stata's internal functions.  You can do it with R or other programs.  And it works for complicated models too, usually, as long as the single equation works.   "suest" needs the results stored before hand, which may not be available even within stata.  
+
+

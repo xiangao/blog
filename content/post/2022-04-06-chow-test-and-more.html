@@ -1,13 +1,13 @@
 ---
-author: Xiang Ao
-categories:
-- R
-date: "2022-04-06"
-slug: chow
-tags:
-- regression
-- R
 title: Chow test and more
+author: Xiang Ao
+date: '2022-04-06'
+slug: chow
+categories:
+  - R
+tags:
+  - regression
+  - R
 ---
 
 
@@ -496,14 +496,14 @@ gen union1=union*(south==1)
 gen union2=union*(south==0)
 
 ivregress 2sls wage south (hours? = union?)</code></pre>
-<pre><code> already preserved
+<pre><code>already preserved
 r(621);
 
 
 (NLSW, 1988 extract)
 
 
-Instrumental variables 2SLS regression            Number of obs   =        798
+Instrumental-variables 2SLS regression            Number of obs   =        798
                                                   Wald chi2(1)    =       2.61
                                                   Prob &gt; chi2     =     0.1060
                                                   R-squared       =          .
@@ -515,11 +515,11 @@ Instrumental variables 2SLS regression            Number of obs   =        798
        hours |     .97819   .6050822     1.62   0.106    -.2077492    2.164129
        _cons |  -30.96026   23.32846    -1.33   0.184     -76.6832    14.76268
 ------------------------------------------------------------------------------
-Instrumented: hours
- Instruments: union
+Endogenous: hours
+Exogenous:  union
 
 
-Instrumental variables 2SLS regression            Number of obs   =      1,079
+Instrumental-variables 2SLS regression            Number of obs   =      1,079
                                                   Wald chi2(1)    =       6.03
                                                   Prob &gt; chi2     =     0.0140
                                                   R-squared       =          .
@@ -531,8 +531,8 @@ Instrumental variables 2SLS regression            Number of obs   =      1,079
        hours |   .6255843   .2546731     2.46   0.014     .1264342    1.124735
        _cons |   -14.9159   9.401508    -1.59   0.113    -33.34252    3.510714
 ------------------------------------------------------------------------------
-Instrumented: hours
- Instruments: union
+Endogenous: hours
+Exogenous:  union
 
 (4 missing values generated)
 
@@ -543,7 +543,7 @@ Instrumented: hours
 (368 missing values generated)
 
 
-Instrumental variables 2SLS regression            Number of obs   =      1,877
+Instrumental-variables 2SLS regression            Number of obs   =      1,877
                                                   Wald chi2(3)    =      21.75
                                                   Prob &gt; chi2     =     0.0001
                                                   R-squared       =          .
@@ -557,24 +557,24 @@ Instrumental variables 2SLS regression            Number of obs   =      1,877
        south |  -16.04435   22.81705    -0.70   0.482    -60.76495    28.67625
        _cons |   -14.9159   10.97553    -1.36   0.174    -36.42754    6.595735
 ------------------------------------------------------------------------------
-Instrumented: hours1 hours2
- Instruments: south union1 union2</code></pre>
+Endogenous: hours1 hours2
+Exogenous:  south union1 union2</code></pre>
 <p>We can see same Chow kind of test works, with IV regression, if we have the right interaction terms.</p>
 </div>
 <div id="iv-with-fixed-effects" class="section level1">
 <h1>IV with fixed effects</h1>
-<p>However, when doing with a fixed effet IV, I seem to have difficulties. In this example, I use “reghdfe” to do an IV regression with fixed effect. We can also use “xtivreg2”, but “reghdfe” is supposed to be faster.</p>
+<p>However, when doing with a fixed effet IV, I seem to have difficulties. In this example, I use “reghdfe” to do an IV regression with fixed effect. We can also use “xtivreg2”, but “ivreghdfe” is supposed to be faster.</p>
 <pre class="stata"><code>
 sysuse nlsw88, clear
 gen hours1=hours*(south==1)
 gen hours2=hours*(south==0)
 gen union1=union*(south==1)
 gen union2=union*(south==0)
-reghdfe wage (hours=union) if south, a(race) cluster(race) old
-reghdfe wage (hours=union) if !south, a(race) cluster(race) old
-reghdfe wage south (hours? = union?) , a(race) cluster(race) old
+ivreghdfe wage (hours=union) if south, a(race) cluster(race)
+ivreghdfe wage (hours=union) if !south, a(race) cluster(race)
+ivreghdfe wage south (hours? = union?) , a(race) cluster(race) 
 </code></pre>
-<pre><code> already preserved
+<pre><code>already preserved
 r(621);
 
 
@@ -588,33 +588,32 @@ r(621);
 
 (368 missing values generated)
 
-(running historical version of reghdfe)
-(converged in 1 iterations)
+(MWFE estimator converged in 1 iterations)
 
-HDFE IV (2SLS) estimation
--------------------------
+IV (2SLS) estimation
+--------------------
 
 Estimates efficient for homoskedasticity only
 Statistics robust to heteroskedasticity and clustering on race
 
 Number of clusters (race) =          3                Number of obs =      798
-                                                      F(  1,     2) =    69.36
+                                                      F(  1,     2) =    69.28
                                                       Prob &gt; F      =   0.0141
-Total (centered) SS     =   12186.8806                Centered R2   =  -6.2318
-Total (uncentered) SS   =   12186.8806                Uncentered R2 =        .
-Residual SS             =  90825.44631                Root MSE      =     10.7
+Total (centered) SS     =   12186.8806                Centered R2   =  -6.4527
+Total (uncentered) SS   =   12186.8806                Uncentered R2 =  -6.4527
+Residual SS             =  90825.44631                Root MSE      =    10.68
 
 ------------------------------------------------------------------------------
              |               Robust
         wage | Coefficient  std. err.      t    P&gt;|t|     [95% conf. interval]
 -------------+----------------------------------------------------------------
-       hours |   1.107099   .1329286     8.33   0.014     .5351539    1.679045
+       hours |   1.107099    .133012     8.32   0.014     .5347947    1.679404
 ------------------------------------------------------------------------------
 Underidentification test (Kleibergen-Paap rk LM statistic):              1.756
                                                    Chi-sq(1) P-val =    0.1852
 ------------------------------------------------------------------------------
-Weak identification test (Cragg-Donald Wald F statistic):                3.237
-                         (Kleibergen-Paap rk Wald F statistic):         13.995
+Weak identification test (Cragg-Donald Wald F statistic):                3.233
+                         (Kleibergen-Paap rk Wald F statistic):         13.977
 Stock-Yogo weak ID test critical values: 10% maximal IV size             16.38
                                          15% maximal IV size              8.96
                                          20% maximal IV size              6.66
@@ -627,44 +626,46 @@ Hansen J statistic (overidentification test of all instruments):         0.000
 ------------------------------------------------------------------------------
 Instrumented:         hours
 Excluded instruments: union
+Partialled-out:       _cons
+                      nb: total SS, model F and R2s are after partialling-out;
+                          any small-sample adjustments include partialled-out
+                          variables in regressor count K
 ------------------------------------------------------------------------------
 
 Absorbed degrees of freedom:
----------------------------------------------------------------+
- Absorbed FE |  Num. Coefs.  =   Categories  -   Redundant     | 
--------------+-------------------------------------------------|
-        race |            0               3              3 *   | 
----------------------------------------------------------------+
-* = fixed effect nested within cluster; treated as redundant for DoF computatio
-&gt; n
+-----------------------------------------------------+
+ Absorbed FE | Categories  - Redundant  = Num. Coefs |
+-------------+---------------------------------------|
+        race |         3           3           0    *|
+-----------------------------------------------------+
+* = FE nested within cluster; treated as redundant for DoF computation
 
-(running historical version of reghdfe)
-(converged in 1 iterations)
+(MWFE estimator converged in 1 iterations)
 
-HDFE IV (2SLS) estimation
--------------------------
+IV (2SLS) estimation
+--------------------
 
 Estimates efficient for homoskedasticity only
 Statistics robust to heteroskedasticity and clustering on race
 
 Number of clusters (race) =          3                Number of obs =     1079
-                                                      F(  1,     2) =     1.42
-                                                      Prob &gt; F      =   0.3562
-Total (centered) SS     =  19086.22115                Centered R2   =  -2.3252
-Total (uncentered) SS   =  19086.22115                Uncentered R2 =        .
-Residual SS             =  63560.97528                Root MSE      =    7.689
+                                                      F(  1,     2) =     1.41
+                                                      Prob &gt; F      =   0.3564
+Total (centered) SS     =  19086.22115                Centered R2   =  -2.3302
+Total (uncentered) SS   =  19086.22115                Uncentered R2 =  -2.3302
+Residual SS             =  63560.97528                Root MSE      =    7.682
 
 ------------------------------------------------------------------------------
              |               Robust
         wage | Coefficient  std. err.      t    P&gt;|t|     [95% conf. interval]
 -------------+----------------------------------------------------------------
-       hours |   .7023322   .5903032     1.19   0.356    -1.837538    3.242202
+       hours |   .7023322   .5905772     1.19   0.356    -1.838717    3.243381
 ------------------------------------------------------------------------------
 Underidentification test (Kleibergen-Paap rk LM statistic):              0.789
                                                    Chi-sq(1) P-val =    0.3745
 ------------------------------------------------------------------------------
-Weak identification test (Cragg-Donald Wald F statistic):                5.506
-                         (Kleibergen-Paap rk Wald F statistic):          3.775
+Weak identification test (Cragg-Donald Wald F statistic):                5.501
+                         (Kleibergen-Paap rk Wald F statistic):          3.772
 Stock-Yogo weak ID test critical values: 10% maximal IV size             16.38
                                          15% maximal IV size              8.96
                                          20% maximal IV size              6.66
@@ -677,53 +678,48 @@ Hansen J statistic (overidentification test of all instruments):         0.000
 ------------------------------------------------------------------------------
 Instrumented:         hours
 Excluded instruments: union
+Partialled-out:       _cons
+                      nb: total SS, model F and R2s are after partialling-out;
+                          any small-sample adjustments include partialled-out
+                          variables in regressor count K
 ------------------------------------------------------------------------------
 
 Absorbed degrees of freedom:
----------------------------------------------------------------+
- Absorbed FE |  Num. Coefs.  =   Categories  -   Redundant     | 
--------------+-------------------------------------------------|
-        race |            0               3              3 *   | 
----------------------------------------------------------------+
-* = fixed effect nested within cluster; treated as redundant for DoF computatio
-&gt; n
+-----------------------------------------------------+
+ Absorbed FE | Categories  - Redundant  = Num. Coefs |
+-------------+---------------------------------------|
+        race |         3           3           0    *|
+-----------------------------------------------------+
+* = FE nested within cluster; treated as redundant for DoF computation
 
-(running historical version of reghdfe)
-(converged in 1 iterations)
-Warning: estimated covariance matrix of moment conditions not of full rank.
-         overidentification statistic not reported, and standard errors and
-         model tests should be interpreted with caution.
-Possible causes:
-         number of clusters insufficient to calculate robust covariance matrix
-         singleton dummy variable (dummy with one 1 and N-1 0s or vice versa)
-partial option may address problem.
+(MWFE estimator converged in 1 iterations)
 
-HDFE IV (2SLS) estimation
--------------------------
+IV (2SLS) estimation
+--------------------
 
 Estimates efficient for homoskedasticity only
 Statistics robust to heteroskedasticity and clustering on race
 
 Number of clusters (race) =          3                Number of obs =     1877
-                                                      F(  3,     2) =  1036.79
+                                                      F(  3,     2) =  1036.24
                                                       Prob &gt; F      =   0.0010
-Total (centered) SS     =    32142.319                Centered R2   =  -3.8348
-Total (uncentered) SS   =    32142.319                Uncentered R2 =        .
-Residual SS             =  157627.5718                Root MSE      =    9.179
+Total (centered) SS     =    32142.319                Centered R2   =  -3.9041
+Total (uncentered) SS   =    32142.319                Uncentered R2 =  -3.9041
+Residual SS             =  157627.5718                Root MSE      =    9.174
 
 ------------------------------------------------------------------------------
              |               Robust
         wage | Coefficient  std. err.      t    P&gt;|t|     [95% conf. interval]
 -------------+----------------------------------------------------------------
-      hours1 |   1.142036   .0650334    17.56   0.003     .8622201    1.421852
-      hours2 |   .6880691    .526378     1.31   0.321    -1.576753    2.952891
-       south |  -19.74773   22.10221    -0.89   0.466    -114.8459    75.35039
+      hours1 |   1.142036   .0650507    17.56   0.003     .8621454    1.421927
+      hours2 |   .6880691   .5265185     1.31   0.321    -1.577357    2.953495
+       south |  -19.74773   22.10811    -0.89   0.466    -114.8712    75.37577
 ------------------------------------------------------------------------------
 Underidentification test (Kleibergen-Paap rk LM statistic):              1.793
                                                    Chi-sq(1) P-val =    0.1806
 ------------------------------------------------------------------------------
-Weak identification test (Cragg-Donald Wald F statistic):                3.586
-                         (Kleibergen-Paap rk Wald F statistic):          8.489
+Weak identification test (Cragg-Donald Wald F statistic):                3.584
+                         (Kleibergen-Paap rk Wald F statistic):          8.484
 Stock-Yogo weak ID test critical values: 10% maximal IV size              7.03
                                          15% maximal IV size              4.58
                                          20% maximal IV size              3.95
@@ -742,16 +738,19 @@ partial option may address problem.
 Instrumented:         hours1 hours2
 Included instruments: south
 Excluded instruments: union1 union2
+Partialled-out:       _cons
+                      nb: total SS, model F and R2s are after partialling-out;
+                          any small-sample adjustments include partialled-out
+                          variables in regressor count K
 ------------------------------------------------------------------------------
 
 Absorbed degrees of freedom:
----------------------------------------------------------------+
- Absorbed FE |  Num. Coefs.  =   Categories  -   Redundant     | 
--------------+-------------------------------------------------|
-        race |            0               3              3 *   | 
----------------------------------------------------------------+
-* = fixed effect nested within cluster; treated as redundant for DoF computatio
-&gt; n</code></pre>
+-----------------------------------------------------+
+ Absorbed FE | Categories  - Redundant  = Num. Coefs |
+-------------+---------------------------------------|
+        race |         3           3           0    *|
+-----------------------------------------------------+
+* = FE nested within cluster; treated as redundant for DoF computation</code></pre>
 <p>We can see I failed to replicate the first two regressions in the third regression. Why? Because we’ll need the fixed effect to be interacted with the subsample indicator to make it right.</p>
 <p>Here is another try:</p>
 <pre class="stata"><code>
@@ -765,11 +764,11 @@ gen race1=race*(south==1)
 gen race2=race*(south==0)
 
 
-reghdfe wage (hours=union) if south, a(race) cluster(race) old
-reghdfe wage (hours=union) if !south, a(race) cluster(race) old
+ivreghdfe wage (hours=union) if south, a(race) cluster(race) 
+ivreghdfe wage (hours=union) if !south, a(race) cluster(race)
 ivregress 2sls wage south (hours? = union?) i.race?, cluster(race) 
 </code></pre>
-<pre><code> already preserved
+<pre><code>already preserved
 r(621);
 
 
@@ -785,33 +784,32 @@ r(621);
 
 
 
-(running historical version of reghdfe)
-(converged in 1 iterations)
+(MWFE estimator converged in 1 iterations)
 
-HDFE IV (2SLS) estimation
--------------------------
+IV (2SLS) estimation
+--------------------
 
 Estimates efficient for homoskedasticity only
 Statistics robust to heteroskedasticity and clustering on race
 
 Number of clusters (race) =          3                Number of obs =      798
-                                                      F(  1,     2) =    69.36
+                                                      F(  1,     2) =    69.28
                                                       Prob &gt; F      =   0.0141
-Total (centered) SS     =   12186.8806                Centered R2   =  -6.2318
-Total (uncentered) SS   =   12186.8806                Uncentered R2 =        .
-Residual SS             =  90825.44631                Root MSE      =     10.7
+Total (centered) SS     =   12186.8806                Centered R2   =  -6.4527
+Total (uncentered) SS   =   12186.8806                Uncentered R2 =  -6.4527
+Residual SS             =  90825.44631                Root MSE      =    10.68
 
 ------------------------------------------------------------------------------
              |               Robust
         wage | Coefficient  std. err.      t    P&gt;|t|     [95% conf. interval]
 -------------+----------------------------------------------------------------
-       hours |   1.107099   .1329286     8.33   0.014     .5351539    1.679045
+       hours |   1.107099    .133012     8.32   0.014     .5347947    1.679404
 ------------------------------------------------------------------------------
 Underidentification test (Kleibergen-Paap rk LM statistic):              1.756
                                                    Chi-sq(1) P-val =    0.1852
 ------------------------------------------------------------------------------
-Weak identification test (Cragg-Donald Wald F statistic):                3.237
-                         (Kleibergen-Paap rk Wald F statistic):         13.995
+Weak identification test (Cragg-Donald Wald F statistic):                3.233
+                         (Kleibergen-Paap rk Wald F statistic):         13.977
 Stock-Yogo weak ID test critical values: 10% maximal IV size             16.38
                                          15% maximal IV size              8.96
                                          20% maximal IV size              6.66
@@ -824,44 +822,46 @@ Hansen J statistic (overidentification test of all instruments):         0.000
 ------------------------------------------------------------------------------
 Instrumented:         hours
 Excluded instruments: union
+Partialled-out:       _cons
+                      nb: total SS, model F and R2s are after partialling-out;
+                          any small-sample adjustments include partialled-out
+                          variables in regressor count K
 ------------------------------------------------------------------------------
 
 Absorbed degrees of freedom:
----------------------------------------------------------------+
- Absorbed FE |  Num. Coefs.  =   Categories  -   Redundant     | 
--------------+-------------------------------------------------|
-        race |            0               3              3 *   | 
----------------------------------------------------------------+
-* = fixed effect nested within cluster; treated as redundant for DoF computatio
-&gt; n
+-----------------------------------------------------+
+ Absorbed FE | Categories  - Redundant  = Num. Coefs |
+-------------+---------------------------------------|
+        race |         3           3           0    *|
+-----------------------------------------------------+
+* = FE nested within cluster; treated as redundant for DoF computation
 
-(running historical version of reghdfe)
-(converged in 1 iterations)
+(MWFE estimator converged in 1 iterations)
 
-HDFE IV (2SLS) estimation
--------------------------
+IV (2SLS) estimation
+--------------------
 
 Estimates efficient for homoskedasticity only
 Statistics robust to heteroskedasticity and clustering on race
 
 Number of clusters (race) =          3                Number of obs =     1079
-                                                      F(  1,     2) =     1.42
-                                                      Prob &gt; F      =   0.3562
-Total (centered) SS     =  19086.22115                Centered R2   =  -2.3252
-Total (uncentered) SS   =  19086.22115                Uncentered R2 =        .
-Residual SS             =  63560.97528                Root MSE      =    7.689
+                                                      F(  1,     2) =     1.41
+                                                      Prob &gt; F      =   0.3564
+Total (centered) SS     =  19086.22115                Centered R2   =  -2.3302
+Total (uncentered) SS   =  19086.22115                Uncentered R2 =  -2.3302
+Residual SS             =  63560.97528                Root MSE      =    7.682
 
 ------------------------------------------------------------------------------
              |               Robust
         wage | Coefficient  std. err.      t    P&gt;|t|     [95% conf. interval]
 -------------+----------------------------------------------------------------
-       hours |   .7023322   .5903032     1.19   0.356    -1.837538    3.242202
+       hours |   .7023322   .5905772     1.19   0.356    -1.838717    3.243381
 ------------------------------------------------------------------------------
 Underidentification test (Kleibergen-Paap rk LM statistic):              0.789
                                                    Chi-sq(1) P-val =    0.3745
 ------------------------------------------------------------------------------
-Weak identification test (Cragg-Donald Wald F statistic):                5.506
-                         (Kleibergen-Paap rk Wald F statistic):          3.775
+Weak identification test (Cragg-Donald Wald F statistic):                5.501
+                         (Kleibergen-Paap rk Wald F statistic):          3.772
 Stock-Yogo weak ID test critical values: 10% maximal IV size             16.38
                                          15% maximal IV size              8.96
                                          20% maximal IV size              6.66
@@ -874,21 +874,24 @@ Hansen J statistic (overidentification test of all instruments):         0.000
 ------------------------------------------------------------------------------
 Instrumented:         hours
 Excluded instruments: union
+Partialled-out:       _cons
+                      nb: total SS, model F and R2s are after partialling-out;
+                          any small-sample adjustments include partialled-out
+                          variables in regressor count K
 ------------------------------------------------------------------------------
 
 Absorbed degrees of freedom:
----------------------------------------------------------------+
- Absorbed FE |  Num. Coefs.  =   Categories  -   Redundant     | 
--------------+-------------------------------------------------|
-        race |            0               3              3 *   | 
----------------------------------------------------------------+
-* = fixed effect nested within cluster; treated as redundant for DoF computatio
-&gt; n
+-----------------------------------------------------+
+ Absorbed FE | Categories  - Redundant  = Num. Coefs |
+-------------+---------------------------------------|
+        race |         3           3           0    *|
+-----------------------------------------------------+
+* = FE nested within cluster; treated as redundant for DoF computation
 
 note: 3.race1 omitted because of collinearity.
 note: 3.race2 omitted because of collinearity.
 
-Instrumental variables 2SLS regression            Number of obs   =      1,877
+Instrumental-variables 2SLS regression            Number of obs   =      1,877
                                                   Wald chi2(7)    =  101696.08
                                                   Prob &gt; chi2     =     0.0000
                                                   R-squared       =          .
@@ -915,8 +918,8 @@ Instrumental variables 2SLS regression            Number of obs   =      1,877
              |
        _cons |  -17.01633   18.01689    -0.94   0.345    -52.32879    18.29614
 ------------------------------------------------------------------------------
-Instrumented: hours1 hours2
- Instruments: south 1.race1 2.race1 1.race2 2.race2 union1 union2</code></pre>
+Endogenous: hours1 hours2
+Exogenous:  south 1.race1 2.race1 1.race2 2.race2 union1 union2</code></pre>
 <p>This works. Basically we use dummies which are interactions of subsample indicator and the fixed effect dummies. This would not work if we have a lot of fixed effect units.</p>
 <p>But we can trick “reghdfe” to use a two way fixed effect option:</p>
 <p>This way we can do a test to see whether hours effect differs between these two samples.</p>
@@ -929,10 +932,9 @@ gen union2=union*(south==0)
 gen race1=race*(south==1)
 gen race2=race*(south==0)
 
-reghdfe wage south (hours? = union?) , a(race1 race2) cluster(race) old
-reghdfe, coeflegend
+ivreghdfe wage south (hours? = union?) , a(race1 race2) cluster(race)
 test _b[hours1]-_b[hours2]=0</code></pre>
-<pre><code> already preserved
+<pre><code>already preserved
 r(621);
 
 
@@ -948,17 +950,16 @@ r(621);
 
 
 
-(running historical version of reghdfe)
-(converged in 3 iterations)
+note: variable #4 is probably collinear with the fixed effects (all partialled-
+&gt; out values are close to zero; tol = 1.0e-09)
+(MWFE estimator converged in 2 iterations)
 warning: -ranktest- error in calculating underidentification test statistics;
          may be caused by collinearities
 warning: -ranktest- error in calculating weak identification test statistics;
          may be caused by collinearities
-Warning - collinearities detected
-Vars dropped:  south
 
-HDFE IV (2SLS) estimation
--------------------------
+IV (2SLS) estimation
+--------------------
 
 Estimates efficient for homoskedasticity only
 Statistics robust to heteroskedasticity and clustering on race
@@ -966,8 +967,8 @@ Statistics robust to heteroskedasticity and clustering on race
 Number of clusters (race) =          3                Number of obs =     1877
                                                       F(  2,     2) = 13010.62
                                                       Prob &gt; F      =   0.0001
-Total (centered) SS     =  31273.10174                Centered R2   =  -3.7353
-Total (uncentered) SS   =  31273.10174                Uncentered R2 =        .
+Total (centered) SS     =  31273.10174                Centered R2   =  -3.9367
+Total (uncentered) SS   =  31273.10174                Uncentered R2 =  -3.9367
 Residual SS             =  154386.4216                Root MSE      =    9.089
 
 ------------------------------------------------------------------------------
@@ -990,45 +991,30 @@ Stock-Yogo weak ID test critical values: 10% maximal IV size              7.03
 Source: Stock-Yogo (2005).  Reproduced by permission.
 NB: Critical values are for Cragg-Donald F statistic and i.i.d. errors.
 ------------------------------------------------------------------------------
-Hansen J statistic (overidentification test of all instruments):         0.000
-                                                 (equation exactly identified)
+Warning: estimated covariance matrix of moment conditions not of full rank.
+         overidentification statistic not reported, and standard errors and
+         model tests should be interpreted with caution.
+Possible causes:
+         number of clusters insufficient to calculate robust covariance matrix
+         singleton dummy variable (dummy with one 1 and N-1 0s or vice versa)
+partial option may address problem.
 ------------------------------------------------------------------------------
+Collinearities detected among instruments: 1 instrument(s) dropped
 Instrumented:         hours1 hours2
+Included instruments: south
 Excluded instruments: union1 union2
-Dropped collinear:    south
-------------------------------------------------------------------------------
-
-Absorbed degrees of freedom:
----------------------------------------------------------------+
- Absorbed FE |  Num. Coefs.  =   Categories  -   Redundant     | 
--------------+-------------------------------------------------|
-       race1 |            4               4              0     | 
-       race2 |            2               4              2     | 
----------------------------------------------------------------+
-
-
-HDFE IV (2SLS) estimation                         Number of obs   =      1,877
-Absorbing 2 HDFE groups                           F(   8,      2) =   13010.62
-Statistics robust to heteroskedasticity           Prob &gt; F        =     0.0001
-                                                  R-squared       =    -3.7353
-                                                  Adj R-squared   =    -3.7531
-                                                  Within R-sq.    =    -3.9367
-Number of clusters (race)    =          .         Root MSE        =     9.0887
-
-                                   (Std. err. adjusted for 3 clusters in race)
-------------------------------------------------------------------------------
-        wage | Coefficient  Legend
--------------+----------------------------------------------------------------
-      hours1 |   1.107099  _b[hours1]
-      hours2 |   .7023322  _b[hours2]
-       south |          0  _b[o.south]
+Partialled-out:       _cons
+                      nb: total SS, model F and R2s are after partialling-out;
+                          any small-sample adjustments include partialled-out
+                          variables in regressor count K
 ------------------------------------------------------------------------------
 
 Absorbed degrees of freedom:
 -----------------------------------------------------+
  Absorbed FE | Categories  - Redundant  = Num. Coefs |
 -------------+---------------------------------------|
-          r1 |         .           .           .     |
+       race1 |         4           0           4     |
+       race2 |         4           2           2     |
 -----------------------------------------------------+
 
 
@@ -1036,4 +1022,208 @@ Absorbed degrees of freedom:
 
        F(  1,     2) =    0.31
             Prob &gt; F =    0.6325</code></pre>
+</div>
+<div id="chow-test-with-different-covariates" class="section level1">
+<h1>Chow test with different covariates</h1>
+<p>What if we want to compare coefficients across equations with different covariates? We can still do Chow test.</p>
+<p>Say you have
+<span class="math display">\[ Y_1 = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \epsilon_1\]</span>
+<span class="math display">\[ Y_2 = \gamma_0 + \gamma_1 X_1  + \epsilon_2\]</span></p>
+<p>The way you can think of the second equation is that you still have <span class="math inline">\(X_2\)</span> but it is just a constant, which means it will go into the constant term.
+<span class="math display">\[ Y_2 = \gamma_0 + \gamma_1 X_1 + \gamma_2 C + \epsilon_2\]</span></p>
+<p>So we can just replace <span class="math inline">\(X_2\)</span> with a constant in the sample for <span class="math inline">\(Y_2\)</span> and still do Chow test.</p>
+<pre class="stata"><code>sysuse nlsw88, clear
+reg south wage hours tenure
+est sto south
+reg smsa wage hours
+est sto smsa
+suest south smsa
+est sto suest
+preserve
+gen Y1=south
+gen Y2=smsa
+gen id=_n
+reshape long Y, i(id) j(subsample)
+gen wage1=wage*(subsample==1)
+gen wage2=wage*(subsample==2)
+gen hours1=hours*(subsample==1)
+gen hours2=hours*(subsample==2)
+replace tenure=1 if subsample==2
+gen tenure1= tenure*(subsample==1)
+gen tenure2= tenure*(subsample==2)
+reg Y wage? hours? tenure? subsample
+est sto chow
+test _b[hours1]-_b[hours2]=0
+esttab  suest chow, nogaps mti</code></pre>
+<pre><code>(NLSW, 1988 extract)
+
+      Source |       SS           df       MS      Number of obs   =     2,227
+-------------+----------------------------------   F(3, 2223)      =     20.30
+       Model |  14.4507388         3  4.81691294   Prob &gt; F        =    0.0000
+    Residual |  527.507052     2,223   .23729512   R-squared       =    0.0267
+-------------+----------------------------------   Adj R-squared   =    0.0254
+       Total |  541.957791     2,226  .243467112   Root MSE        =    .48713
+
+------------------------------------------------------------------------------
+       south | Coefficient  Std. err.      t    P&gt;|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+        wage |  -.0119584   .0018359    -6.51   0.000    -.0155586   -.0083583
+       hours |    .004828   .0010072     4.79   0.000     .0028528    .0068031
+      tenure |  -.0024032   .0019221    -1.25   0.211    -.0061726    .0013661
+       _cons |    .346361   .0392121     8.83   0.000     .2694648    .4232573
+------------------------------------------------------------------------------
+
+      Source |       SS           df       MS      Number of obs   =     2,242
+-------------+----------------------------------   F(2, 2239)      =     36.17
+       Model |  14.6274602         2  7.31373012   Prob &gt; F        =    0.0000
+    Residual |  452.719551     2,239  .202197209   R-squared       =    0.0313
+-------------+----------------------------------   Adj R-squared   =    0.0304
+       Total |  467.347012     2,241  .208543959   Root MSE        =    .44966
+
+------------------------------------------------------------------------------
+        smsa | Coefficient  Std. err.      t    P&gt;|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+        wage |   .0139103   .0016711     8.32   0.000     .0106332    .0171873
+       hours |   .0003663   .0009155     0.40   0.689    -.0014291    .0021616
+       _cons |   .5820585   .0357648    16.27   0.000      .511923    .6521941
+------------------------------------------------------------------------------
+
+
+
+Simultaneous results for south, smsa                     Number of obs = 2,242
+
+------------------------------------------------------------------------------
+             |               Robust
+             | Coefficient  std. err.      z    P&gt;|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+south_mean   |
+        wage |  -.0119584    .001953    -6.12   0.000    -.0157862   -.0081307
+       hours |    .004828   .0009971     4.84   0.000     .0028737    .0067822
+      tenure |  -.0024032   .0018928    -1.27   0.204    -.0061131    .0013066
+       _cons |    .346361    .038473     9.00   0.000     .2709554    .4217667
+-------------+----------------------------------------------------------------
+south_lnvar  |
+       _cons |  -1.438451   .0096359  -149.28   0.000    -1.457337   -1.419565
+-------------+----------------------------------------------------------------
+smsa_mean    |
+        wage |   .0139103   .0018313     7.60   0.000      .010321    .0174996
+       hours |   .0003663   .0009099     0.40   0.687    -.0014172    .0021497
+       _cons |   .5820585   .0361037    16.12   0.000     .5112965    .6528205
+-------------+----------------------------------------------------------------
+smsa_lnvar   |
+       _cons |  -1.598512   .0195103   -81.93   0.000    -1.636751   -1.560272
+------------------------------------------------------------------------------
+
+
+
+
+
+
+(j = 1 2)
+
+Data                               Wide   -&gt;   Long
+-----------------------------------------------------------------------------
+Number of observations            2,246   -&gt;   4,492       
+Number of variables                  23   -&gt;   23          
+j variable (2 values)                     -&gt;   subsample
+xij variables:
+                                  Y1 Y2   -&gt;   Y
+-----------------------------------------------------------------------------
+
+
+
+(8 missing values generated)
+
+(8 missing values generated)
+
+(2,222 real changes made)
+
+(15 missing values generated)
+
+(15 missing values generated)
+
+note: subsample omitted because of collinearity.
+
+      Source |       SS           df       MS      Number of obs   =     4,469
+-------------+----------------------------------   F(6, 4462)      =     91.07
+       Model |  120.039676         6  20.0066126   Prob &gt; F        =    0.0000
+    Residual |  980.226603     4,462  .219683237   R-squared       =    0.1091
+-------------+----------------------------------   Adj R-squared   =    0.1079
+       Total |  1100.26628     4,468  .246254762   Root MSE        =     .4687
+
+------------------------------------------------------------------------------
+           Y | Coefficient  Std. err.      t    P&gt;|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+       wage1 |  -.0119584   .0017664    -6.77   0.000    -.0154215   -.0084954
+       wage2 |   .0139103   .0017418     7.99   0.000     .0104954    .0173252
+      hours1 |    .004828   .0009691     4.98   0.000      .002928    .0067279
+      hours2 |   .0003663   .0009543     0.38   0.701    -.0015046    .0022371
+     tenure1 |  -.0024032   .0018494    -1.30   0.194     -.006029    .0012225
+     tenure2 |   .2356975   .0530397     4.44   0.000     .1317134    .3396816
+   subsample |          0  (omitted)
+       _cons |    .346361   .0377289     9.18   0.000     .2723936    .4203285
+------------------------------------------------------------------------------
+
+
+
+ ( 1)  hours1 - hours2 = 0
+
+       F(  1,  4462) =   10.76
+            Prob &gt; F =    0.0010
+
+
+--------------------------------------------
+                      (1)             (2)   
+                    suest            chow   
+--------------------------------------------
+main                                        
+wage              -0.0120***                
+                  (-6.12)                   
+hours             0.00483***                
+                   (4.84)                   
+tenure           -0.00240                   
+                  (-1.27)                   
+wage1                             -0.0120***
+                                  (-6.77)   
+wage2                              0.0139***
+                                   (7.99)   
+hours1                            0.00483***
+                                   (4.98)   
+hours2                           0.000366   
+                                   (0.38)   
+tenure1                          -0.00240   
+                                  (-1.30)   
+tenure2                             0.236***
+                                   (4.44)   
+subsample                               0   
+                                      (.)   
+_cons               0.346***        0.346***
+                   (9.00)          (9.18)   
+--------------------------------------------
+south_lnvar                                 
+_cons              -1.438***                
+                (-149.28)                   
+--------------------------------------------
+smsa_mean                                   
+wage               0.0139***                
+                   (7.60)                   
+hours            0.000366                   
+                   (0.40)                   
+_cons               0.582***                
+                  (16.12)                   
+--------------------------------------------
+smsa_lnvar                                  
+_cons              -1.599***                
+                 (-81.93)                   
+--------------------------------------------
+N                    2242            4469   
+--------------------------------------------
+t statistics in parentheses
+* p&lt;0.05, ** p&lt;0.01, *** p&lt;0.001</code></pre>
+<p>We can see Chow type of “stacking” method generates the same result as “suest” in terms of point estimates. For standard errors you can use “robust” or “cluster” option in “reg” command.</p>
+</div>
+<div id="conclusion" class="section level1">
+<h1>Conclusion</h1>
+<p>For testing cross equations hypotheses, we can use “suest” or Chow type “stacking” method. Sometimes people use “sureg”. I prefer not use “sureg”. It is a GLS estimator for all the equations together. It relies on assumptions of the error term of the whole system. It assumes homoscedasticity for example. If it’s true, then GLS is more efficient; if not, then biased. If the equations have the same covariates, then it returns the same coefficient estimates as the single equation estimates. If different covariates, then different estimates as the single equation estimates.</p>
+<p>The nice thing about Chow test is that it is very flexible, and it does not rely on Stata’s internal functions. You can do it with R or other programs. And it works for complicated models too, usually, as long as the single equation works. “suest” needs the results stored before hand, which may not be available even within stata.</p>
 </div>
