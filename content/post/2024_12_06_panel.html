@@ -1,0 +1,547 @@
+---
+title: Extended TWFE and other DiD estimators
+author: Xiang Ao
+date: 2024-12-09
+tags: R
+categories:
+- R
+
+---
+
+
+
+<div id="staggered-did-without-treatment-reversal" class="section level1">
+<h1>Staggered DiD without treatment reversal</h1>
+<p>This blog is adopted from the tutorial of paneltools package.<br />
+<a href="https://yiqingxu.org/tutorials/panel.html#Installing_Packages" class="uri">https://yiqingxu.org/tutorials/panel.html#Installing_Packages</a></p>
+<p>I added Wooldridge’s ETWFE, which is my favorate estimator with staggered DiD. It is easy to understand and implement. It also works with nonlinear model such as logit and poisson.</p>
+<pre class="r"><code>#devtools:: install_github(&quot;xuyiqing/paneltools&quot;)
+library(paneltools)
+data(paneltools)
+library(tidyverse)
+hh2019 &lt;- as.tibble(hh2019)
+hh2019</code></pre>
+<pre><code>## # A tibble: 22,971 × 4
+##      bfs  year nat_rate_ord indirect
+##    &lt;dbl&gt; &lt;dbl&gt;        &lt;dbl&gt;    &lt;dbl&gt;
+##  1     1  1991         0           0
+##  2     1  1992         0           0
+##  3     1  1993         0           0
+##  4     1  1994         3.45        0
+##  5     1  1995         0           0
+##  6     1  1996         0           0
+##  7     1  1997         0           0
+##  8     1  1998         0           0
+##  9     1  1999         0           0
+## 10     1  2000         0           0
+## # ℹ 22,961 more rows</code></pre>
+<p>This data is from Hainmueller and Hopkins (2019), in which the authors investigate the effects of indirect democracy (versus direct democracy) on naturalization rates in Switzerland using municipality-year level panel data from 1991 to 2009. The study shows that a switch from direct to indirect democracy increased naturalization rates by an average of 1.22 percentage points (Model 1 of Table 1 in the paper).</p>
+<pre class="r"><code>#devtools:: install_github(&quot;xuyiqing/panelView&quot;)
+library(panelView)
+panelview(nat_rate_ord ~ indirect, data = hh2019, index = c(&quot;bfs&quot;,&quot;year&quot;), 
+  xlab = &quot;Year&quot;, ylab = &quot;Unit&quot;, display.all = T,
+  gridOff = TRUE, by.timing = TRUE)</code></pre>
+<p><img src="/post/2024_12_06_panel_files/figure-html/unnamed-chunk-2-1.png" width="672" /></p>
+<div id="twfe" class="section level2">
+<h2>TWFE</h2>
+<p>First we do a TWFE model on it.</p>
+<pre class="r"><code>library(fixest)
+model_twfe &lt;- feols(nat_rate_ord~indirect|bfs+year,
+                      data=hh2019, cluster = &quot;bfs&quot;)
+summary( model_twfe)</code></pre>
+<pre><code>## OLS estimation, Dep. Var.: nat_rate_ord
+## Observations: 22,971
+## Fixed-effects: bfs: 1,209,  year: 19
+## Standard-errors: Clustered (bfs) 
+##          Estimate Std. Error t value   Pr(&gt;|t|)    
+## indirect  1.33932   0.186525 7.18039 1.2117e-12 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## RMSE: 4.09541     Adj. R2: 0.152719
+##                 Within R2: 0.005173</code></pre>
+<p>TWFE has issues when there is staggered adoption and heterogeneous treatment effects.</p>
+<p>Goodman-Bacon (2021) demonstrates that the two-way fixed-effects (TWFE) estimator in a staggered adoption setting can be represented as a weighted average of all possible 2x2 difference-in-differences (DID) estimates between different cohorts. However, when treatment effects change over time heterogeneously across cohorts, the “forbidden” comparisons that use post-treatment data from early adopters as controls for late adopters may introduce bias in the TWFE estimator. We employ the procedure outlined in Goodman-Bacon (2021) and decompose the TWFE estimate using the command bacon in the bacondecomp package.</p>
+<p>“Negative weights” can be the other issue. Basically it is a weighted average of comparison between different cohorts. The weights can be negative in a TWFE model.</p>
+<pre class="r"><code>library(bacondecomp)
+df_bacon &lt;- bacon(nat_rate_ord~indirect,
+                  data = hh2019,
+                  id_var = &quot;bfs&quot;,
+                  time_var = &quot;year&quot;)</code></pre>
+<pre><code>##                       type  weight avg_est
+## 1 Earlier vs Later Treated 0.17605 1.97771
+## 2  Later vs Always Treated 0.31446 0.75233
+## 3 Later vs Earlier Treated 0.05170 0.32310
+## 4     Treated vs Untreated 0.45779 1.61180</code></pre>
+<pre class="r"><code>coef_bacon &lt;- sum(df_bacon$estimate * df_bacon$weight)
+coef_bacon</code></pre>
+<pre><code>## [1] 1.339325</code></pre>
+<pre class="r"><code>ggplot(df_bacon) +
+   aes(x = weight, y = estimate, shape = factor(type), color = factor(type)) +
+   labs(x = &quot;Weight&quot;, y = &quot;Estimate&quot;, shape = &quot;Type&quot;, color = &#39;Type&#39;) +
+   geom_point()</code></pre>
+<p><img src="/post/2024_12_06_panel_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+<p>The problem shown in Bacon decomposion here is the comparison between “Later” and “Earlier Treated”. It’s a “forbiden” comparison.</p>
+<p>TWFE with event history type of graph.</p>
+<pre class="r"><code>df.use &lt;- hh2019 |&gt; 
+  na.omit()
+
+df &lt;- as.data.frame(
+  hh2019 |&gt; 
+    group_by(bfs) |&gt; 
+    mutate(treatment_mean = mean(indirect,na.rm = TRUE))
+)
+df.use &lt;- df[which(df$treatment_mean&lt;1),]
+
+df.twfe &lt;- as.tibble(get.cohort(df.use,D=&quot;indirect&quot;,index=c(&quot;bfs&quot;,&quot;year&quot;),start0 = TRUE))
+
+# time_to_treatment is NA when the unit is always treated, or never treated.  It needs to be set to an arbitrary value for the twfe model.
+df.twfe$treat &lt;- as.numeric(df.twfe$treatment_mean&gt;0) # drop always treated units
+df.twfe[which(is.na(df.twfe$Time_to_Treatment)),&#39;Time_to_Treatment&#39;] &lt;- 0 # can be an arbitrary value
+twfe.est &lt;- feols(nat_rate_ord ~ i(Time_to_Treatment, treat, ref = -1)| bfs + year,  
+                  data = df.twfe, cluster = &quot;bfs&quot;)
+summary(twfe.est)</code></pre>
+<pre><code>## OLS estimation, Dep. Var.: nat_rate_ord
+## Observations: 17,594
+## Fixed-effects: bfs: 926,  year: 19
+## Standard-errors: Clustered (bfs) 
+##                               Estimate Std. Error   t value   Pr(&gt;|t|)    
+## Time_to_Treatment::-18:treat -0.320651   0.632702 -0.506796 6.1242e-01    
+## Time_to_Treatment::-17:treat -0.118540   0.391148 -0.303058 7.6191e-01    
+## Time_to_Treatment::-16:treat -0.395632   0.402921 -0.981910 3.2640e-01    
+## Time_to_Treatment::-15:treat -0.410976   0.343899 -1.195048 2.3237e-01    
+## Time_to_Treatment::-14:treat  0.244512   0.369127  0.662406 5.0788e-01    
+## Time_to_Treatment::-13:treat -0.044310   0.354017 -0.125164 9.0042e-01    
+## Time_to_Treatment::-12:treat -0.545891   0.315172 -1.732042 8.3600e-02 .  
+## Time_to_Treatment::-11:treat -0.293138   0.346835 -0.845180 3.9823e-01    
+## Time_to_Treatment::-10:treat -0.423981   0.319375 -1.327534 1.8466e-01    
+## Time_to_Treatment::-9:treat  -0.467114   0.301017 -1.551784 1.2106e-01    
+## Time_to_Treatment::-8:treat  -0.115633   0.333659 -0.346561 7.2900e-01    
+## Time_to_Treatment::-7:treat  -0.724290   0.305727 -2.369075 1.8037e-02 *  
+## Time_to_Treatment::-6:treat  -0.572950   0.317153 -1.806540 7.1159e-02 .  
+## Time_to_Treatment::-5:treat  -0.554993   0.309246 -1.794667 7.3033e-02 .  
+## Time_to_Treatment::-4:treat   0.066209   0.345103  0.191853 8.4790e-01    
+## Time_to_Treatment::-3:treat  -0.509530   0.316296 -1.610929 1.0754e-01    
+## Time_to_Treatment::-2:treat  -0.195091   0.330220 -0.590793 5.5480e-01    
+## Time_to_Treatment::0:treat    0.522715   0.359646  1.453415 1.4645e-01    
+## Time_to_Treatment::1:treat    1.668834   0.367919  4.535879 6.4907e-06 ***
+## Time_to_Treatment::2:treat    1.724230   0.471363  3.657968 2.6858e-04 ***
+## Time_to_Treatment::3:treat    1.178336   0.400559  2.941732 3.3452e-03 ** 
+## Time_to_Treatment::4:treat    0.756323   0.478697  1.579962 1.1446e-01    
+## Time_to_Treatment::5:treat    2.438229   0.705451  3.456269 5.7263e-04 ***
+## Time_to_Treatment::6:treat    2.848590   0.805315  3.537238 4.2442e-04 ***
+## Time_to_Treatment::7:treat    2.409359   0.783716  3.074275 2.1721e-03 ** 
+## Time_to_Treatment::8:treat    2.270428   0.797869  2.845617 4.5305e-03 ** 
+## Time_to_Treatment::9:treat    2.392678   0.863222  2.771799 5.6867e-03 ** 
+## Time_to_Treatment::10:treat   2.002836   0.953654  2.100170 3.5984e-02 *  
+## Time_to_Treatment::11:treat   0.842590   0.560248  1.503961 1.3293e-01    
+## Time_to_Treatment::12:treat   3.831918   2.300422  1.665745 9.6103e-02 .  
+## Time_to_Treatment::13:treat   4.436437   2.322318  1.910349 5.6397e-02 .  
+## Time_to_Treatment::14:treat   4.756977   3.485523  1.364781 1.7265e-01    
+## Time_to_Treatment::15:treat   1.541967   1.415284  1.089511 2.7621e-01    
+## Time_to_Treatment::16:treat   7.168943   4.844016  1.479959 1.3922e-01    
+## Time_to_Treatment::17:treat   6.490854   2.726526  2.380632 1.7485e-02 *  
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## RMSE: 4.42406     Adj. R2: 0.146601
+##                 Within R2: 0.012807</code></pre>
+<pre class="r"><code>twfe.output &lt;- as.matrix(twfe.est$coeftable)
+twfe.output &lt;- as.data.frame(twfe.output)
+twfe.output$Time &lt;- c(c(-18:-2),c(0:17))+1 
+p.twfe &lt;- esplot(twfe.output,Period = &#39;Time&#39;,Estimate = &#39;Estimate&#39;,
+                               SE = &#39;Std. Error&#39;, xlim = c(-12,10))
+p.twfe</code></pre>
+<p><img src="/post/2024_12_06_panel_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+</div>
+<div id="sun-and-abraham" class="section level2">
+<h2>Sun and Abraham</h2>
+<p>Sun and Abraham (2021) estimator is a weighted average of the average treatment effect (ATT) estimates for each cohort, obtained from a TWFE regression that includes cohort dummies fully interacted with indicators of relative time to the treatment’s onset. The iw estimator is robust to heterogeneous treatment effects (HTE) and can be implemented using the command sunab in the package fixest.</p>
+<pre class="r"><code>df.sa &lt;- df.twfe
+df.sa[which(is.na(df.sa$FirstTreat)),&quot;FirstTreat&quot;] &lt;- 1000 # replace NA with an arbitrary number 
+model.sa.1 &lt;- feols(nat_rate_ord~sunab(FirstTreat,year)|bfs+year,
+                    data = df.sa, cluster = &quot;bfs&quot;)
+summary(model.sa.1,agg = &quot;ATT&quot;)</code></pre>
+<pre><code>## OLS estimation, Dep. Var.: nat_rate_ord
+## Observations: 17,594
+## Fixed-effects: bfs: 926,  year: 19
+## Standard-errors: Clustered (bfs) 
+##     Estimate Std. Error t value   Pr(&gt;|t|)    
+## ATT   1.3309   0.287971 4.62163 4.3474e-06 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## RMSE: 4.34795     Adj. R2: 0.163888
+##                 Within R2: 0.046484</code></pre>
+<pre class="r"><code>sa.output &lt;- as.matrix(model.sa.1$coeftable)
+sa.output &lt;- as.data.frame(sa.output)
+sa.output$Time &lt;- c(c(-18:-2),c(0:17))+1
+p.sa &lt;- esplot(sa.output,Period = &#39;Time&#39;,Estimate = &#39;Estimate&#39;,
+                             SE = &#39;Std. Error&#39;, xlim = c(-12,10))
+p.sa</code></pre>
+<p><img src="/post/2024_12_06_panel_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+</div>
+</div>
+<div id="callaway-and-santanna" class="section level1">
+<h1>Callaway and Sant’Anna</h1>
+<p>Callaway and Sant’Anna (2021) estimator is a weighted average of the average treatment effect (ATT) estimates for each cohort, obtained from a TWFE regression that includes cohort dummies fully interacted with indicators of relative time to the treatment’s onset. The iw estimator is robust to heterogeneous treatment effects (HTE) and can be implemented using the command callaway in the package fixest.</p>
+<pre class="r"><code>library(did)
+df.cs &lt;- df.twfe
+df.cs[which(is.na(df.cs$FirstTreat)),&quot;FirstTreat&quot;] &lt;- 0 # replace NA with 0
+cs.est.1 &lt;- att_gt(yname = &quot;nat_rate_ord&quot;,
+                 gname = &quot;FirstTreat&quot;,
+                 idname = &quot;bfs&quot;,
+                 tname = &quot;year&quot;,
+                 xformla = ~1,
+                 control_group = &quot;nevertreated&quot;,
+                 allow_unbalanced_panel = TRUE,
+                 data = df.cs,
+                 est_method = &quot;reg&quot;)
+cs.est.att.1 &lt;- aggte(cs.est.1, type = &quot;simple&quot;, na.rm=T, bstrap = F)
+print(cs.est.att.1)</code></pre>
+<pre><code>## 
+## Call:
+## aggte(MP = cs.est.1, type = &quot;simple&quot;, na.rm = T, bstrap = F)
+## 
+## Reference: Callaway, Brantly and Pedro H.C. Sant&#39;Anna.  &quot;Difference-in-Differences with Multiple Time Periods.&quot; Journal of Econometrics, Vol. 225, No. 2, pp. 200-230, 2021. &lt;https://doi.org/10.1016/j.jeconom.2020.12.001&gt;, &lt;https://arxiv.org/abs/1803.09015&gt; 
+## 
+## 
+##     ATT    Std. Error     [ 95%  Conf. Int.]  
+##  1.3309        0.3019     0.7392      1.9226 *
+## 
+## 
+## ---
+## Signif. codes: `*&#39; confidence band does not cover 0
+## 
+## Control Group:  Never Treated,  Anticipation Periods:  0
+## Estimation Method:  Outcome Regression</code></pre>
+<pre class="r"><code>cs.att.1 &lt;- aggte(cs.est.1, type = &quot;dynamic&quot;,
+                  bstrap=FALSE, cband=FALSE, na.rm=T) 
+print(cs.att.1)</code></pre>
+<pre><code>## 
+## Call:
+## aggte(MP = cs.est.1, type = &quot;dynamic&quot;, na.rm = T, bstrap = FALSE, 
+##     cband = FALSE)
+## 
+## Reference: Callaway, Brantly and Pedro H.C. Sant&#39;Anna.  &quot;Difference-in-Differences with Multiple Time Periods.&quot; Journal of Econometrics, Vol. 225, No. 2, pp. 200-230, 2021. &lt;https://doi.org/10.1016/j.jeconom.2020.12.001&gt;, &lt;https://arxiv.org/abs/1803.09015&gt; 
+## 
+## 
+## Overall summary of ATT&#39;s based on event-study/dynamic aggregation:  
+##     ATT    Std. Error     [ 95%  Conf. Int.] 
+##  1.2205        0.6314    -0.0171       2.458 
+## 
+## 
+## Dynamic Effects:
+##  Event time Estimate Std. Error [95% Pointwise  Conf. Band]  
+##         -17   0.1350     0.6467         -1.1324      1.4025  
+##         -16  -0.0839     0.3583         -0.7861      0.6183  
+##         -15   0.1467     0.3964         -0.6303      0.9236  
+##         -14   0.7509     0.3219          0.1200      1.3818 *
+##         -13  -0.2318     0.3392         -0.8967      0.4331  
+##         -12  -0.5851     0.2814         -1.1367     -0.0335 *
+##         -11   0.2656     0.2705         -0.2647      0.7958  
+##         -10  -0.2386     0.2805         -0.7883      0.3111  
+##          -9   0.0576     0.2702         -0.4721      0.5872  
+##          -8   0.5244     0.3165         -0.0959      1.1448  
+##          -7  -0.6282     0.3132         -1.2420     -0.0144 *
+##          -6   0.1081     0.2565         -0.3946      0.6108  
+##          -5   0.1623     0.2890         -0.4041      0.7287  
+##          -4   0.6485     0.3380         -0.0139      1.3109  
+##          -3  -0.6161     0.3674         -1.3362      0.1040  
+##          -2   0.1505     0.3355         -0.5071      0.8081  
+##          -1   0.0279     0.3425         -0.6435      0.6992  
+##           0   0.7141     0.3754         -0.0217      1.4500  
+##           1   1.5846     0.3681          0.8632      2.3060 *
+##           2   1.6337     0.5118          0.6306      2.6369 *
+##           3   0.9090     0.4396          0.0473      1.7707 *
+##           4   0.4091     0.5725         -0.7130      1.5311  
+##           5   2.1106     0.7976          0.5473      3.6739 *
+##           6   2.4842     0.9078          0.7051      4.2634 *
+##           7   2.3802     0.8538          0.7068      4.0535 *
+##           8   2.5602     0.8723          0.8506      4.2699 *
+##           9   2.0100     0.9769          0.0953      3.9246 *
+##          10   1.6391     1.0257         -0.3712      3.6494  
+##          11   0.0298     0.6100         -1.1658      1.2253  
+##          12   0.6942     2.8043         -4.8021      6.1904  
+##          13   1.1355     2.3284         -3.4281      5.6991  
+##          14   1.3625     3.4131         -5.3270      8.0519  
+##          15  -2.0699     1.7160         -5.4331      1.2933  
+##          16   2.2743     3.6182         -4.8172      9.3658  
+##          17   0.1072     4.5338         -8.7789      8.9934  
+## ---
+## Signif. codes: `*&#39; confidence band does not cover 0
+## 
+## Control Group:  Never Treated,  Anticipation Periods:  0
+## Estimation Method:  Outcome Regression</code></pre>
+<pre class="r"><code>cs.output &lt;- cbind.data.frame(Estimate = cs.att.1$att.egt,
+                              SE = cs.att.1$se.egt,
+                              time = cs.att.1$egt + 1)
+p.cs.1 &lt;- esplot(cs.output,Period = &#39;time&#39;,Estimate = &#39;Estimate&#39;,
+                               SE = &#39;SE&#39;, xlim = c(-12,10))
+p.cs.1</code></pre>
+<p><img src="/post/2024_12_06_panel_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<div id="imai-kim-and-wang" class="section level2">
+<h2>Imai, Kim, and Wang</h2>
+<p>PanelMatch is an R package implementing a set of methodological tools proposed by Imai, Kim, and Wang (2021) that enables researchers to apply matching methods for causal inference on time-series cross-sectional data with binary treatments. The package includes implementations of matching methods based on propensity scores and Mahalanobis distance, as well as weighting methods. PanelMatch enables users to easily calculate a variety of possible quantities of interest, along with standard errors. The software is flexible, allowing users to tune the matching, refinement, and estimation procedures with a large number of parameters. The package also offers a variety of visualization and diagnostic tools for researchers to better understand their data and assess their results.</p>
+<pre class="r"><code>library(PanelMatch)
+df.pm &lt;- as.data.frame(df.twfe)
+# we need to convert the unit and time indicator to integer
+df.pm[,&quot;bfs&quot;] &lt;- as.integer(as.factor(df.pm[,&quot;bfs&quot;]))
+df.pm[,&quot;year&quot;] &lt;- as.integer(as.factor(df.pm[,&quot;year&quot;]))
+df.pm &lt;- df.pm[,c(&quot;bfs&quot;,&quot;year&quot;,&quot;nat_rate_ord&quot;,&quot;indirect&quot;)]
+
+PM.results &lt;- PanelMatch(lag=3, 
+                         time.id=&quot;year&quot;, 
+                         unit.id = &quot;bfs&quot;, 
+                         treatment = &#39;indirect&#39;, 
+                         refinement.method = &quot;none&quot;, 
+                         data = df.pm, 
+                         qoi = &quot;att&quot;, 
+                         lead = c(0:3), 
+                         outcome.var = &#39;nat_rate_ord&#39;, 
+                         match.missing = TRUE)
+
+## For pre-treatment dynamic effects
+PM.results.placebo &lt;- PanelMatch(lag=3, 
+                         time.id=&quot;year&quot;, 
+                         unit.id = &quot;bfs&quot;, 
+                         treatment = &#39;indirect&#39;, 
+                         refinement.method = &quot;none&quot;, 
+                         data = df.pm, 
+                         qoi = &quot;att&quot;, 
+                         lead = c(0:3), 
+                         outcome.var = &#39;nat_rate_ord&#39;, 
+                         match.missing = TRUE,
+                         placebo.test = TRUE)
+PE.results.pool &lt;- PanelEstimate(PM.results, data = df.pm, pooled = TRUE)
+summary(PE.results.pool)</code></pre>
+<pre><code>## Matches created with 3 lags
+## 
+## Standard errors computed with 1000 Weighted bootstrap samples
+## 
+## Estimate of Average Treatment Effect on the Treated (ATT) by Period:</code></pre>
+<pre><code>## $summary
+##      estimate std.error      2.5%    97.5%
+## [1,] 1.177674 0.3519984 0.4568761 1.859987
+## 
+## $lag
+## [1] 3
+## 
+## $iterations
+## [1] 1000
+## 
+## $qoi
+## [1] &quot;att&quot;</code></pre>
+<pre class="r"><code>PE.results &lt;- PanelEstimate(PM.results, data = df.pm)
+PE.results.placebo &lt;- placebo_test(PM.results.placebo, data = df.pm, plot = F)
+est_lead &lt;- as.vector(PE.results$estimates)
+est_lag &lt;- as.vector(PE.results.placebo$estimates)
+sd_lead &lt;- apply(PE.results$bootstrapped.estimates,2,sd)
+sd_lag &lt;- apply(PE.results.placebo$bootstrapped.estimates,2,sd)
+coef &lt;- c(est_lag, 0, est_lead)
+sd &lt;- c(sd_lag, 0, sd_lead)
+pm.output &lt;- cbind.data.frame(ATT=coef, se=sd, t=c(-2:4))
+p.pm &lt;- esplot(data = pm.output,Period = &#39;t&#39;,
+               Estimate = &#39;ATT&#39;,SE = &#39;se&#39;)
+p.pm</code></pre>
+<p><img src="/post/2024_12_06_panel_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
+</div>
+<div id="liu-wang-and-xu" class="section level2">
+<h2>Liu, Wang and Xu</h2>
+<p>Liu, Wang, and Xu (2022) proposes a method for estimating the fixed effect counterfactual model by utilizing the untreated observations. It is essentially an imputation method that uses the untreated observations to estimate the counterfactual outcome for the treated.</p>
+<pre class="r"><code>library(fect)
+out.fect &lt;- fect(nat_rate_ord~indirect, data = df, 
+                 index = c(&quot;bfs&quot;,&quot;year&quot;),
+                 method = &#39;fe&#39;, se = TRUE)
+print(out.fect$est.avg)</code></pre>
+<pre><code>##       ATT.avg      S.E. CI.lower CI.upper     p.value
+## [1,] 1.506416 0.2192345 1.076725 1.936108 6.36402e-12</code></pre>
+<pre class="r"><code>fect.output &lt;- as.matrix(out.fect$est.att)
+print(fect.output)</code></pre>
+<pre><code>##             ATT      S.E.     CI.lower    CI.upper      p.value count
+## -17 -0.01985591 0.5182295 -1.035567158  0.99585535 9.694366e-01    89
+## -16  0.07269638 0.2278219 -0.373826348  0.51921910 7.496560e-01   157
+## -15 -0.21365489 0.2564846 -0.716355386  0.28904561 4.048376e-01   162
+## -14 -0.13153052 0.1535598 -0.432502118  0.16944109 3.916976e-01   350
+## -13  0.46902947 0.2372559  0.004016446  0.93404250 4.805376e-02   371
+## -12  0.24357664 0.1958330 -0.140248976  0.62740226 2.135740e-01   398
+## -11 -0.24399485 0.1379684 -0.514407923  0.02641823 7.698008e-02   417
+## -10 -0.02765866 0.1890387 -0.398167732  0.34285041 8.836750e-01   434
+## -9  -0.09347047 0.1466517 -0.380902448  0.19396151 5.238879e-01   451
+## -8  -0.10638473 0.1576094 -0.415293437  0.20252399 4.996822e-01   464
+## -7   0.17476094 0.2107402 -0.238282213  0.58780409 4.069505e-01   468
+## -6  -0.40297604 0.1477828 -0.692625054 -0.11332702 6.394939e-03   503
+## -5  -0.24326436 0.1687388 -0.573986345  0.08745763 1.493977e-01   503
+## -4  -0.23687833 0.1667455 -0.563693420  0.08993675 1.554335e-01   503
+## -3   0.44244127 0.2085799  0.033632250  0.85125029 3.390430e-02   503
+## -2  -0.11927690 0.1838785 -0.479672046  0.24111824 5.165501e-01   508
+## -1   0.17612194 0.1828462 -0.182250051  0.53449393 3.354349e-01   512
+## 0    0.22491529 0.2212952 -0.208815309  0.65864588 3.094586e-01   514
+## 1    0.83813813 0.2991073  0.251898658  1.42437761 5.076605e-03   514
+## 2    1.81274486 0.3448241  1.136901992  2.48858772 1.464141e-07   425
+## 3    1.91941052 0.3942211  1.146751387  2.69206965 1.122392e-06   357
+## 4    1.19567464 0.3585608  0.492908476  1.89844080 8.540680e-04   352
+## 5    0.93520961 0.4746253  0.004961192  1.86545803 4.879062e-02   164
+## 6    2.52517848 0.6875116  1.177680457  3.87267649 2.397901e-04   143
+## 7    2.84129736 0.8290048  1.216477822  4.46611691 6.094819e-04   116
+## 8    2.32288547 0.7122874  0.926827891  3.71894305 1.109561e-03    97
+## 9    2.19105962 0.8642400  0.497180369  3.88493886 1.123689e-02    80
+## 10   1.71382906 0.8499164  0.048023488  3.37963462 4.375109e-02    63
+## 11   1.07651548 1.0414587 -0.964706032  3.11773699 3.012946e-01    50
+## 12  -0.30828629 0.6535080 -1.589138469  0.97256588 6.371119e-01    46
+## 13   0.35079211 2.2665303 -4.091525618  4.79310984 8.770022e-01    11
+## 14   0.81696815 2.6031439 -4.285100235  5.91903653 7.536433e-01    11
+## 15   0.97427612 3.9436128 -6.755062922  8.70361517 8.048682e-01    11
+## 16  -2.49173503 2.0574021 -6.524169070  1.54069900 2.258542e-01    11
+## 17   1.42334105 5.4308958 -9.221019066 12.06770117 7.932581e-01     6
+## 18  -0.01384226 4.7725506 -9.367869538  9.34018501 9.976858e-01     2</code></pre>
+<pre class="r"><code>fect.output &lt;- as.data.frame(fect.output)
+fect.output$Time &lt;- c(-17:18)
+p.fect &lt;- esplot(fect.output,Period = &#39;Time&#39;,Estimate = &#39;ATT&#39;,
+                   SE = &#39;S.E.&#39;,CI.lower = &quot;CI.lower&quot;, 
+                   CI.upper = &#39;CI.upper&#39;,xlim = c(-12,10))
+p.fect</code></pre>
+<p><img src="/post/2024_12_06_panel_files/figure-html/unnamed-chunk-9-1.png" width="672" />
+Borusyak, Jaravel, and Spiess (2021) with package didimputation almost gives the same result as Liu, Wang, and Xu (2022).</p>
+</div>
+<div id="wooldridge" class="section level2">
+<h2>Wooldridge</h2>
+<p>Wooldridge 2021, also called extended TWFE (ETWFE), is to allow more flexibiltiy to make TWFE work properly. The problems with TWFE is that we are not specify it flexibly enough. If we allow heterogeneous treatment effect, then we cannot expect the canonical TWFE to work properly.</p>
+<pre class="r"><code>df.wool &lt;- df.twfe
+df.wool[which(is.na(df.wool$FirstTreat)),&quot;FirstTreat&quot;] &lt;- 0 # replace NA with 0
+
+library(etwfe)
+
+model.wool = etwfe(
+  fml  = nat_rate_ord ~ 1, # outcome ~ controls
+  tvar = year,        # time variable
+  gvar = FirstTreat, # group variable
+  data = df.wool,       # dataset
+  vcov = ~bfs,  # vcov adjustment (here: clustered)
+  cgroup = &quot;never&quot;
+)
+model.wool</code></pre>
+<pre><code>## OLS estimation, Dep. Var.: nat_rate_ord
+## Observations: 17,594
+## Fixed-effects: FirstTreat: 16,  year: 19
+## Standard-errors: Clustered (bfs) 
+##                                     Estimate Std. Error  t value Pr(&gt;|t|)    
+## .Dtreat:FirstTreat::1992:year::1992  2.18863    1.36923  1.59844 0.110287    
+## .Dtreat:FirstTreat::1992:year::1993 -4.18925    3.10938 -1.34730 0.178214    
+## .Dtreat:FirstTreat::1992:year::1994 -2.50997    1.63352 -1.53654 0.124747    
+## .Dtreat:FirstTreat::1992:year::1995 -5.23221    3.11282 -1.68086 0.093129 .  
+## .Dtreat:FirstTreat::1992:year::1996 -5.42014    3.11207 -1.74165 0.081902 .  
+## .Dtreat:FirstTreat::1992:year::1997 -5.15575    3.11248 -1.65648 0.097965 .  
+## .Dtreat:FirstTreat::1992:year::1998 -5.08210    3.11345 -1.63231 0.102955    
+## .Dtreat:FirstTreat::1992:year::1999 -5.13290    3.11447 -1.64808 0.099676 .  
+## ... 262 coefficients remaining (display them with summary() or use argument n)
+## ... 15 variables were removed because of collinearity (.Dtreat:FirstTreat::1992:year::1991, .Dtreat:FirstTreat::1993:year::1992 and 13 others [full set in $collin.var])
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## RMSE: 4.6642     Adj. R2: 0.088474
+##                Within R2: 0.040642</code></pre>
+<pre class="r"><code>emfx(model.wool)</code></pre>
+<pre><code>## 
+##     Term .Dtreat Estimate Std. Error    z Pr(&gt;|z|)    S 2.5 % 97.5 %
+##  .Dtreat    TRUE     1.33      0.288 4.62   &lt;0.001 18.0 0.766    1.9
+## 
+## Type:  response 
+## Comparison: TRUE - FALSE
+## Columns: term, contrast, .Dtreat, estimate, std.error, statistic, p.value, s.value, conf.low, conf.high, predicted_lo, predicted_hi, predicted</code></pre>
+<pre class="r"><code>mod_es = emfx(model.wool, type = &quot;event&quot;, post_only=FALSE)
+mod_es</code></pre>
+<pre><code>## 
+##     Term event Estimate Std. Error       z Pr(&gt;|z|)   S  2.5 % 97.5 %
+##  .Dtreat   -18   -0.266      0.789 -0.3371    0.736 0.4 -1.812  1.280
+##  .Dtreat   -17    0.178      0.503  0.3538    0.723 0.5 -0.808  1.164
+##  .Dtreat   -16    0.114      0.519  0.2198    0.826 0.3 -0.903  1.131
+##  .Dtreat   -15   -0.104      0.408 -0.2550    0.799 0.3 -0.903  0.695
+##  .Dtreat   -14    0.410      0.413  0.9927    0.321 1.6 -0.400  1.220
+## --- 26 rows omitted. See ?print.marginaleffects --- 
+##  .Dtreat    13    1.135      1.998  0.5683    0.570 0.8 -2.781  5.052
+##  .Dtreat    14    1.362      3.129  0.4355    0.663 0.6 -4.770  7.495
+##  .Dtreat    15   -2.070      1.439 -1.4387    0.150 2.7 -4.890  0.750
+##  .Dtreat    16    2.274      3.080  0.7385    0.460 1.1 -3.762  8.311
+##  .Dtreat    17    0.107      4.576  0.0234    0.981 0.0 -8.861  9.076
+## Type:  response 
+## Comparison: TRUE - FALSE
+## Columns: term, contrast, event, estimate, std.error, statistic, p.value, s.value, conf.low, conf.high</code></pre>
+<pre class="r"><code>wool.output &lt;- mod_es |&gt; 
+  filter(event != -1) |&gt;
+  mutate(Time = event + 1) |&gt;
+  as.data.frame()
+
+p.wool &lt;- esplot(wool.output,Period = &#39;Time&#39;,Estimate = &#39;estimate&#39;,
+                 SE = &#39;std.error&#39;, xlim = c(-12,10))
+p.wool</code></pre>
+<p><img src="/post/2024_12_06_panel_files/figure-html/unnamed-chunk-10-1.png" width="672" /></p>
+<p>Note that in order to get pre-event estimates, we need to set “cgroup=never” in the etwfe function. Otherwise, ETWFE will only give us post-event estimates. Under the default setting, the control group comprises the “not-yet” treated units, therefore all pre-treatment effects are mechanistically set to zero. By setting “cgroup=never”, we only use never treated units as the control group. This way we can get pre-treatment estimates, but we are not using all available information for the control group, therefore the estimates may not be as efficient as the default setting.</p>
+<p>Also we don’t have control variable here. If we have, it is very easy to incorporate into ETWFE. Wooldridge used the Mundlak device to incorporate control variables, which is a very simple and intuitive way to do it.</p>
+<p>If we do the default setting and plot only post-event estimates:</p>
+<pre class="r"><code>model.wool2 = etwfe(
+  fml  = nat_rate_ord ~ 1, # outcome ~ controls
+  tvar = year,        # time variable
+  gvar = FirstTreat, # group variable
+  data = df.wool,       # dataset
+  vcov = ~bfs  # vcov adjustment (here: clustered)
+)
+model.wool2</code></pre>
+<pre><code>## OLS estimation, Dep. Var.: nat_rate_ord
+## Observations: 17,594
+## Fixed-effects: FirstTreat: 16,  year: 19
+## Standard-errors: Clustered (bfs) 
+##                                     Estimate Std. Error  t value Pr(&gt;|t|)    
+## .Dtreat:FirstTreat::1992:year::1992  1.99670    1.35883  1.46943 0.142057    
+## .Dtreat:FirstTreat::1992:year::1993 -4.52291    3.09436 -1.46166 0.144174    
+## .Dtreat:FirstTreat::1992:year::1994 -2.62350    1.61688 -1.62257 0.105022    
+## .Dtreat:FirstTreat::1992:year::1995 -5.17241    3.09454 -1.67146 0.094969 .  
+## .Dtreat:FirstTreat::1992:year::1996 -5.08905    3.09404 -1.64479 0.100353    
+## .Dtreat:FirstTreat::1992:year::1997 -5.17232    3.09482 -1.67128 0.095004 .  
+## .Dtreat:FirstTreat::1992:year::1998 -5.39134    3.09606 -1.74135 0.081954 .  
+## .Dtreat:FirstTreat::1992:year::1999 -5.09733    3.09495 -1.64698 0.099901 .  
+## ... 121 coefficients remaining (display them with summary() or use argument n)
+## ... 141 variables were removed because of collinearity (.Dtreat:FirstTreat::1993:year::1992, .Dtreat:FirstTreat::1994:year::1992 and 139 others [full set in $collin.var])
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## RMSE: 4.6999     Adj. R2: 0.081954
+##                Within R2: 0.0259</code></pre>
+<pre class="r"><code>emfx(model.wool2)</code></pre>
+<pre><code>## 
+##     Term .Dtreat Estimate Std. Error    z Pr(&gt;|z|)    S 2.5 % 97.5 %
+##  .Dtreat    TRUE     1.51      0.188 8.02   &lt;0.001 49.7  1.14   1.87
+## 
+## Type:  response 
+## Comparison: TRUE - FALSE
+## Columns: term, contrast, .Dtreat, estimate, std.error, statistic, p.value, s.value, conf.low, conf.high, predicted_lo, predicted_hi, predicted</code></pre>
+<pre class="r"><code>mod_es2 = emfx(model.wool, type = &quot;event&quot;)
+mod_es2</code></pre>
+<pre><code>## 
+##     Term event Estimate Std. Error       z Pr(&gt;|z|)   S  2.5 % 97.5 %
+##  .Dtreat   -18   -0.266      0.789 -0.3371    0.736 0.4 -1.812  1.280
+##  .Dtreat   -17    0.178      0.503  0.3538    0.723 0.5 -0.808  1.164
+##  .Dtreat   -16    0.114      0.519  0.2198    0.826 0.3 -0.903  1.131
+##  .Dtreat   -15   -0.104      0.408 -0.2550    0.799 0.3 -0.903  0.695
+##  .Dtreat   -14    0.410      0.413  0.9927    0.321 1.6 -0.400  1.220
+## --- 26 rows omitted. See ?print.marginaleffects --- 
+##  .Dtreat    13    1.135      1.998  0.5683    0.570 0.8 -2.781  5.052
+##  .Dtreat    14    1.362      3.129  0.4355    0.663 0.6 -4.770  7.495
+##  .Dtreat    15   -2.070      1.439 -1.4387    0.150 2.7 -4.890  0.750
+##  .Dtreat    16    2.274      3.080  0.7385    0.460 1.1 -3.762  8.311
+##  .Dtreat    17    0.107      4.576  0.0234    0.981 0.0 -8.861  9.076
+## Type:  response 
+## Comparison: TRUE - FALSE
+## Columns: term, contrast, event, estimate, std.error, statistic, p.value, s.value, conf.low, conf.high</code></pre>
+<pre class="r"><code>wool.output2 &lt;- mod_es2 |&gt; 
+  filter(event != -1) |&gt;
+  mutate(Time = event + 1) |&gt;
+  as.data.frame()
+
+p.wool2 &lt;- esplot(wool.output2, Period = &#39;Time&#39;,Estimate = &#39;estimate&#39;,
+                 SE = &#39;std.error&#39;, xlim = c(0,10))
+p.wool2</code></pre>
+<p><img src="/post/2024_12_06_panel_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
+</div>
+</div>
+<div id="staggered-did-with-treatment-reversal" class="section level1">
+<h1>Staggered DiD with treatment reversal</h1>
+<p>With treatment reversal (ie., the treated units go back to control), Wooldridge’s method still works. However, I don’t think package “etwfe” has it implemented.</p>
+<p>So far, packages “fect”, “PanelMatch” can handle treatment reversal.</p>
+<p>We can probably manually do ETWFE with treatment reversal. See Wooldridge’s dropbox for the code in Stata. The basic idea is to treat cohorts as different treatment beginning time and exit time combinations. Then do the same regression with interactions of cohort dummies with the time dummies. It is very flexible. The tricky part is to get the marginal effect and its standard error right.</p>
+</div>
