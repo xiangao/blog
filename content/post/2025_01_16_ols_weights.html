@@ -1,0 +1,73 @@
+---
+title: Weights in OLS in causal inference
+author: Xiang Ao
+date: 2025-01-16
+tags: R
+categories:
+- R
+
+---
+
+
+
+<div id="unit-level-weights-for-ols" class="section level1">
+<h1>Unit level weights for OLS</h1>
+<p>Chad Hazlett and Tanvi Shinkre’s paper “Demystifying and avoiding the OLS “weighting problem”:
+Unmodeled heterogeneity and straightforward solutions” has demystified OLS weights for me.</p>
+<p>When we have unconfoundedness, that is, we assume there is no unobserved confounders, we usually run a linear regression of <span class="math inline">\(Y\)</span> on <span class="math inline">\(D\)</span> and <span class="math inline">\(X\)</span>, where <span class="math inline">\(D\)</span> is the treatment variable and <span class="math inline">\(X\)</span> is the covariates. We know in fact the unconfoundedness acutally is only true for each level of <span class="math inline">\(X\)</span>. If <span class="math inline">\(X\)</span> is low dimentional and discrete, then it’s possible to stratify and basially calculate the ATE with g-formula. However, usually we just do a linear regression
+<span class="math display">\[ Y = \alpha + \beta D + \gamma X + \epsilon\]</span>
+and claim we have controlled for <span class="math inline">\(X\)</span>, especially when <span class="math inline">\(X\)</span> is high-dimentional or continuous. At least we claim it’s a linear approximation of the truth. But, how bad is it?</p>
+<p>Suppose we are interested in the ATE of <span class="math inline">\(D\)</span> on <span class="math inline">\(Y\)</span>. Say we have discrete variables <span class="math inline">\(X\)</span>. Under unconfoundedness, the ATE is</p>
+<p><span class="math display">\[
+\begin{align}
+\tau_{ATE} &amp;= \sum E[Y(1) - Y(0) | X = x] P(X = x) \\
+            &amp;= \sum (E[Y|D=1, X=x]- E[Y|D=0, X=x]) P(X=x) \\
+            &amp;= \sum DIM_x P(X=x) \\
+\end{align}
+\]</span></p>
+<p>This is basically the g-formula, or regression adjustment formula. We compute the DIM (difference in means) between treated and control for each strata <span class="math inline">\(X=x\)</span>, then the weighted average is the ATE, with <span class="math inline">\(\hat P(X=x)\)</span> as weights.</p>
+<p>If we have high dimentional <span class="math inline">\(X\)</span>, we usually do
+<span class="math display">\[ Y = \beta_0 + \beta_1 X + \delta_{reg} D + \epsilon \]</span></p>
+<p>We would hope <span class="math inline">\(\delta_{reg}\)</span> is close to <span class="math inline">\(\delta_{ATE}\)</span>, but we are not sure.</p>
+<p>OLS coefficients are:</p>
+<p><span class="math display">\[ \hat \beta = (Z&#39;Z)^{-1} Z&#39;y \]</span></p>
+<p>Here I use <span class="math inline">\(Z\)</span> to represent all regressors. Each coefficient is a weighted sum of the outcome,</p>
+<p><span class="math display">\[ \hat \tau_{reg} = \sum \omega_i Y_i \]</span></p>
+<p>By FWL theorem,</p>
+<p><span class="math display">\[ \hat \tau_{reg} = \frac{\sum Y_i (D_i - \hat d(X_i)) }{\sum (D_i - \hat d(X_i))^2} \]</span></p>
+<p>Here <span class="math inline">\(\hat d(X_i) = \hat p(D_i=1|X_i)\)</span> which is the predicted value of linear regression of <span class="math inline">\(D\)</span> on <span class="math inline">\(X\)</span>. The numerator is the covariance between <span class="math inline">\(Y\)</span> and residualized <span class="math inline">\(D\)</span>, the denominator is the variance of the residualized <span class="math inline">\(D\)</span>. Note that the original FWL would have residualized <span class="math inline">\(Y\)</span> here, but it turns out it works the same with the original <span class="math inline">\(Y\)</span>.</p>
+<p>Therefore the weights are</p>
+<p><span class="math display">\[
+\begin{align}
+\omega_i &amp;= \frac{D_i - \hat d(X_i)}{\sum (D_i - \hat d(X_i))^2} \\
+\end{align}
+\]</span></p>
+<p>Note for the denominator, it’s a constant, basically to scale the sum of weights to be 1. The numerator for treated units are <span class="math inline">\(1-\hat d(X_i)\)</span>, for control units it’s <span class="math inline">\(\hat d(X_i)\)</span>. It is similar to IPW weights, which are <span class="math inline">\(1/\hat d(X_i)\)</span> for treated and <span class="math inline">\(1/(1-\hat d(X_i))\)</span> for control. These two sets of weights go the same direction. For the treated, the higher probabilty of being treated, the lower weight; for the control, the higher probability of being treated, the higher weight.</p>
+<p>If these weights are the same as the IPW weights, then we’ll get <span class="math inline">\(\tau_{reg}=\tau_{ATE}\)</span>. However, they are usually different.</p>
+<p>Another way to write this as weighted difference in means:</p>
+<p><span class="math display">\[ \hat \tau_{wdim} = \sum \omega_i Y_i = \sum_{i:D=1} \tilde \omega_i Y_i + \sum_{i:D=0} \tilde \omega_i  Y_i \]</span></p>
+<p>where <span class="math inline">\(\tilde \omega_i = D_i \omega_i + (1-D_i) \omega_i\)</span></p>
+<p>Because <span class="math inline">\(\hat d(X_i)\)</span> is from a linear probability model, it’s possible that it’s not between 0 and 1. In that case, we can have negative weights. The negative weights could mean the observations do not have a match in the other group. For example, <span class="math inline">\(\hat d(X_i) &gt; 1\)</span> will cause the weight to be negative if it’s a treated unit. That means this unit is more like treated units than any control units. In other words, there is no match in the control group. Likewise for control units with <span class="math inline">\(\hat d(X_i) &lt; 0\)</span>.</p>
+<p>The worst thing is that we don’t know which observations have negative weights, unless we look further and actually run a regression of <span class="math inline">\(D\)</span> on <span class="math inline">\(X\)</span>. If we do that, we are doing similar things as in IPW or matching. If we simply do a linear regression, it’s like a black box. We have no idea how bad some negative weights are. We are relying on extrapolation with regression model like this. Even if there is no matched units, we are extrapolating based on linearity.</p>
+<p>Therefore, <span class="math inline">\(\hat \tau_{reg}\)</span> is another weighted average of the outcome, which is different from the <span class="math inline">\(\tau_{ATE}\)</span>, potentially. In addition, for <span class="math inline">\(\tau_{ATE}\)</span>, we can calculate the difference in means for that strata, given we have observations from both treated and controls. In the case of linear regression, we might have units that should not be included in the calculation and we don’t know about it.</p>
+</div>
+<div id="strata-level-weights" class="section level1">
+<h1>Strata level weights</h1>
+<p>Angrist 1998 has the strata-wise weights for OLS:</p>
+<p><span class="math display">\[ \hat \tau_{reg} = \frac{\sum_x \hat \tau_x \hat d(X_i) (1-\hat d(X_i)) \hat P(X_i=x)}{\sum_x  \hat d(X_i) (1-\hat d(X_i)) \hat P(X_i=x)} \]</span></p>
+<p>this shows that different from ATE, these weights are <span class="math inline">\(\hat d(X_i) (1-\hat d(X_i)) \hat P(X_i=x)\)</span>. The stratas are weighted not only by <span class="math inline">\(P(X_i=x)\)</span>, but also by the variance of treatment status. When <span class="math inline">\(\hat d(X_i)\)</span> is close to .5, the weight is the largest.</p>
+<p>If there is no treatment effect heterogeneity, then it does not matter how you weight. When there is treatment effect heterogeneity, this estimator could be very different from ATE.</p>
+<p>Hazlett and Shinkre show that Angrist’s estimator is a special case of a general case. It is only valid when the probability of treatment is linear in X. When you have discrete X and have a saturated model in X, then it’s linear in X. Hazlett and Shrikre showed a more general formula for the weights, but here we assume Angrist’s formula is correct, basically assuming linearity in modeling probability of treatment.</p>
+</div>
+<div id="recommended-estimation-approaches" class="section level1">
+<h1>Recommended estimation approaches</h1>
+<p>Under no effect heterogeneity and linearity of <span class="math inline">\(Y\)</span> on <span class="math inline">\(D\)</span> and <span class="math inline">\(X\)</span>, namely, <span class="math inline">\(E[Y|X, D]= \beta_0 + \beta_1 X + \beta_2 D\)</span>, there is no problem with a regression of <span class="math inline">\(Y\)</span> on <span class="math inline">\(D\)</span> and <span class="math inline">\(X\)</span>.</p>
+<p>If this is not true, then we’ll need to be more flexible on the specification to make OLS estimators close to ATE.</p>
+<p>Hazlett and Shinkre suggested relaxing the assumption to seperate linearity. Basically allowing different intercepts for <span class="math inline">\(Y(0)\)</span> and <span class="math inline">\(Y(1)\)</span>.</p>
+<p>If that is true, then the following estimators are unbiased: interaction, imputation, g-compuation, and stratification.</p>
+<p>Interaction estimator is the Lin (2013) estimator, basically running a regression of <span class="math inline">\(Y\)</span> on <span class="math inline">\(D\)</span>, <span class="math inline">\(\tilde X\)</span>, and <span class="math inline">\(D*\tilde X\)</span>. <span class="math inline">\(\tilde X\)</span> is the demeaned <span class="math inline">\(X\)</span>. The coefficient of <span class="math inline">\(D\)</span> is the ATE.</p>
+<p>Imputation is to run seperate regressions for treatment and control group, then use the results to predict outcomes for the other group. The ATE is the difference in the predicted outcomes. It turns out the imputation estimator is the same as the interaction estimator.</p>
+<p>Stratification and g-computation work when <span class="math inline">\(X\)</span> is discrete. Bascially get the difference in means for each strata and weight by the probability of strata.</p>
+<p>The above mentioned estimators all depend on the linearity assumption. If that is not the case, then we can use matching, such as “mean balancing” matching.</p>
+<p>Nonparametric estimation is another option if the linearity assumption fails.</p>
+</div>
