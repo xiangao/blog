@@ -1,0 +1,322 @@
+---
+title: Sensitivity analysis of OLS with sensemakr
+author: Xiang Ao
+date: 2025-04-03
+tags: R
+categories:
+- R
+
+---
+
+
+
+<div id="ovb" class="section level1">
+<h1>OVB</h1>
+<p>Suppose we have a true model,</p>
+<p><span class="math display">\[ Y = \delta D + X \beta + \gamma Z + \epsilon \]</span></p>
+<p>However, we only observe <span class="math inline">\(X\)</span>, not <span class="math inline">\(Z\)</span>. We estimate the model</p>
+<p><span class="math display">\[ Y = \delta D + X \beta + u \]</span></p>
+<p>In this case, we have omitted variable bias (OVB).</p>
+<p>Cinelli and Hazlett (2020) shows that</p>
+<p><span class="math display">\[ |\hat bias| = \sqrt{\frac{R^2_{Y \sim Z|D,X} R^2_{D \sim Z|X}}{1-R^2_{D \sim Z|X}}} (\frac{\hat \sigma_{y.dx}}{\hat \sigma_{d.x}})\]</span></p>
+<p>We can see that when we have high <span class="math inline">\(R^2\)</span> between <span class="math inline">\(Y\)</span> and <span class="math inline">\(Z\)</span>, bias is high. When we hvae high <span class="math inline">\(R^2\)</span> between <span class="math inline">\(D\)</span> and <span class="math inline">\(Z\)</span>, bias is high. In other words, the omitted variable needs to be somewhat highly correlated with both <span class="math inline">\(Y\)</span> and <span class="math inline">\(D\)</span> to have a high bias.</p>
+<p>Cinalli and Hazlett paper has many stats, but we focus on three things we can report:</p>
+</div>
+<div id="partial-r2-of-treatment-on-outcome" class="section level1">
+<h1>Partial <span class="math inline">\(R^2\)</span> of treatment on outcome</h1>
+<p>The original purpose of this stat is to see how much variation treatment explains outcome after partialling out the covariates.</p>
+<p>Also, this can be used for an extreme situation. Suppose the unobserved confounder <span class="math inline">\(Z\)</span> explains all residual variance of the outcome, that is, <span class="math inline">\(R^2_{Y \sim Z|D,X} = 1\)</span>. What kind of situation we would have 0 effect?</p>
+<p>It is shown if <span class="math inline">\(R^2_{Y \sim Z|D,X} = 1\)</span>, then <span class="math inline">\(R^2_{D \sim Z|X} \ge R^2_{Y \sim D|X}\)</span> to make the effect go to 0. Roughly speaking, the correlation between omitted variable and outcome needs to be higher than the correlation between treatment and outcome to make the treatment effect go to 0.</p>
+</div>
+<div id="robust-value" class="section level1">
+<h1>Robust value</h1>
+<p>The robustness value <span class="math inline">\(RV_{q,α}\)</span> quantifies the minimal strength of association that the confounder needs to have, both with the treatment and with the outcome, so that a confidence interval of level <span class="math inline">\(1 − \alpha\)</span> includes a change of <span class="math inline">\(q \%\)</span> of the current estimated value. <span class="math inline">\(q\)</span> is often 1. That is, for the effect to go to 0, that robust value is the mininum value of the correlation between the omitted variable and the treatment and the correlation between the omitted variable and the outcome. Note this is about both the correlation between <span class="math inline">\(Z\)</span> and <span class="math inline">\(D\)</span> and the correlation between <span class="math inline">\(Z\)</span> and <span class="math inline">\(Y\)</span>. They need to be both high to make the effect go to 0.</p>
+</div>
+<div id="bounds-using-observed-covariates" class="section level1">
+<h1>Bounds using observed covariate(s)</h1>
+<p>For the first two values, they are absolute values. You don’t know whether those are large or small, without context. They cannot be compared across studies.</p>
+<p>Suppose there is a covariate <span class="math inline">\(x\)</span> that you know from your domain knowledge that it is an important factor in explaining treatment or/and outcome. Then you can compare how bad the confounder needs to be compare to this covariate. This will give us some sense how much a confounder needs to be comparing to a strong covariate, in driving the effect to 0.</p>
+<p><span class="math display">\[ k_D := \frac{R^2_{D \sim Z|X_{-j}}}{R^2_{D \sim X_j|X_{-j}}} \]</span></p>
+<p>where <span class="math inline">\(X_{-j}\)</span> represents all covariates other than the <span class="math inline">\(j\)</span>th we pick as the benchmark covariate.</p>
+<p><span class="math display">\[ k_Y := \frac{R^2_{Y \sim Z|D,X_{-j}}}{R^2_{Y \sim X_j|D,X_{-j}}} \]</span></p>
+</div>
+<div id="example" class="section level1">
+<h1>Example</h1>
+<pre class="r"><code># loads package
+library(sensemakr)</code></pre>
+<pre><code>## See details in:</code></pre>
+<pre><code>## Carlos Cinelli and Chad Hazlett (2020). Making Sense of Sensitivity: Extending Omitted Variable Bias. Journal of the Royal Statistical Society, Series B (Statistical Methodology).</code></pre>
+<pre class="r"><code># loads dataset
+data(&quot;darfur&quot;)
+
+# runs regression model
+model &lt;- lm(peacefactor ~ directlyharmed + age + farmer_dar + herder_dar +
+                         pastvoted + hhsize_darfur + female + village, data = darfur)
+
+# runs sensemakr for sensitivity analysis
+sensitivity &lt;- sensemakr(model = model, 
+                         treatment = &quot;directlyharmed&quot;,
+                         benchmark_covariates = &quot;female&quot;,
+                         kd = 1:3)
+
+# short description of results
+sensitivity</code></pre>
+<pre><code>## Sensitivity Analysis to Unobserved Confounding
+## 
+## Model Formula: peacefactor ~ directlyharmed + age + farmer_dar + herder_dar + 
+##     pastvoted + hhsize_darfur + female + village
+## 
+## Null hypothesis: q = 1 and reduce = TRUE 
+## 
+## Observed Estimates of &#39; directlyharmed &#39;:
+##   Coef. estimate: 0.09732 
+##   Standard Error: 0.02326 
+##   t-value: 4.18445 
+## 
+## Sensitivity Statistics:
+##   Partial R2 of treatment with outcome: 0.02187 
+##   Robustness Value, q = 1 : 0.13878 
+##   Robustness Value, q = 1 alpha = 0.05 : 0.07626 
+## 
+## For more information, check summary.</code></pre>
+<pre class="r"><code># long description of results
+summary(sensitivity)</code></pre>
+<pre><code>## Sensitivity Analysis to Unobserved Confounding
+## 
+## Model Formula: peacefactor ~ directlyharmed + age + farmer_dar + herder_dar + 
+##     pastvoted + hhsize_darfur + female + village
+## 
+## Null hypothesis: q = 1 and reduce = TRUE 
+## -- This means we are considering biases that reduce the absolute value of the current estimate.
+## -- The null hypothesis deemed problematic is H0:tau = 0 
+## 
+## Observed Estimates of &#39;directlyharmed&#39;: 
+##   Coef. estimate: 0.0973 
+##   Standard Error: 0.0233 
+##   t-value (H0:tau = 0): 4.1844 
+## 
+## Sensitivity Statistics:
+##   Partial R2 of treatment with outcome: 0.0219 
+##   Robustness Value, q = 1: 0.1388 
+##   Robustness Value, q = 1, alpha = 0.05: 0.0763 
+## 
+## Verbal interpretation of sensitivity statistics:
+## 
+## -- Partial R2 of the treatment with the outcome: an extreme confounder (orthogonal to the covariates) that explains 100% of the residual variance of the outcome, would need to explain at least 2.19% of the residual variance of the treatment to fully account for the observed estimated effect.
+## 
+## -- Robustness Value, q = 1: unobserved confounders (orthogonal to the covariates) that explain more than 13.88% of the residual variance of both the treatment and the outcome are strong enough to bring the point estimate to 0 (a bias of 100% of the original estimate). Conversely, unobserved confounders that do not explain more than 13.88% of the residual variance of both the treatment and the outcome are not strong enough to bring the point estimate to 0.
+## 
+## -- Robustness Value, q = 1, alpha = 0.05: unobserved confounders (orthogonal to the covariates) that explain more than 7.63% of the residual variance of both the treatment and the outcome are strong enough to bring the estimate to a range where it is no longer &#39;statistically different&#39; from 0 (a bias of 100% of the original estimate), at the significance level of alpha = 0.05. Conversely, unobserved confounders that do not explain more than 7.63% of the residual variance of both the treatment and the outcome are not strong enough to bring the estimate to a range where it is no longer &#39;statistically different&#39; from 0, at the significance level of alpha = 0.05.
+## 
+## Bounds on omitted variable bias:
+## 
+## --The table below shows the maximum strength of unobserved confounders with association with the treatment and the outcome bounded by a multiple of the observed explanatory power of the chosen benchmark covariate(s).
+## 
+##  Bound Label R2dz.x R2yz.dx      Treatment Adjusted Estimate Adjusted Se
+##    1x female 0.0092  0.1246 directlyharmed            0.0752      0.0219
+##    2x female 0.0183  0.2493 directlyharmed            0.0529      0.0204
+##    3x female 0.0275  0.3741 directlyharmed            0.0304      0.0187
+##  Adjusted T Adjusted Lower CI Adjusted Upper CI
+##      3.4389            0.0323            0.1182
+##      2.6002            0.0130            0.0929
+##      1.6281           -0.0063            0.0670</code></pre>
+<pre class="r"><code># minimal reporting
+ovb_minimal_reporting(sensitivity, format = &quot;html&quot;)</code></pre>
+<table>
+<thead>
+<tr>
+<th style="text-align:left;border-bottom: 1px solid transparent;border-top: 1px solid black">
+</th>
+<th colspan="6" style="text-align:center;border-bottom: 1px solid black;border-top: 1px solid black">
+Outcome: peacefactor
+</th>
+</tr>
+<tr>
+<th style="text-align:left;border-top: 1px solid black">
+Treatment
+</th>
+<th style="text-align:right;border-top: 1px solid black">
+Est.
+</th>
+<th style="text-align:right;border-top: 1px solid black">
+S.E.
+</th>
+<th style="text-align:right;border-top: 1px solid black">
+t-value
+</th>
+<th style="text-align:right;border-top: 1px solid black">
+<span class="math inline">\(R^2_{Y \sim D |{\bf X}}\)</span>
+</th>
+<th style="text-align:right;border-top: 1px solid black">
+<span class="math inline">\(RV_{q = 1}\)</span>
+</th>
+<th style="text-align:right;border-top: 1px solid black">
+<span class="math inline">\(RV_{q = 1, \alpha = 0.05}\)</span>
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left; border-bottom: 1px solid black">
+<i>directlyharmed</i>
+</td>
+<td style="text-align:right;border-bottom: 1px solid black">
+0.097
+</td>
+<td style="text-align:right;border-bottom: 1px solid black">
+0.023
+</td>
+<td style="text-align:right;border-bottom: 1px solid black">
+4.184
+</td>
+<td style="text-align:right;border-bottom: 1px solid black">
+2.2%
+</td>
+<td style="text-align:right;border-bottom: 1px solid black">
+13.9%
+</td>
+<td style="text-align:right;border-bottom: 1px solid black">
+7.6%
+</td>
+</tr>
+</tbody>
+<tr>
+<td colspan="7" style="text-align:right;border-top: 1px solid black;border-bottom: 1px solid transparent;font-size:11px">
+Note: df = 783; Bound ( 1x female ): <span class="math inline">\(R^2_{Y\sim Z| {\bf X}, D}\)</span> = 12.5%, <span class="math inline">\(R^2_{D\sim Z| {\bf X} }\)</span> = 0.9%
+</td>
+</tr>
+</table>
+<p>Let’s see how to interpret this.</p>
+<p><span class="math inline">\(RV_{q=1} = 13.9 \%\)</span>. This means that unobserved confounders that explain 13.9% of the residual variance both of the treatment and of the outcome are sufficiently strong to explain away all the observed effect. On the other hand, unobserved confounders that do not explain at least 13.9% of the residual variance both of the treatment and of the outcome are not sufficiently strong to do so.</p>
+<p>The robustness value for testing the null hypothesis that the coefficient of “directlyharmed” is zero (<span class="math inline">\(RV_{q=1,\alpha=0.05}\)</span>) is 7.6%. This means that unobserved confounders that explain 7.6% of the residual variance both of the treatment and of the outcome are sufficiently strong to bring the lower bound of the confidence interval to zero (at the chosen significance level of 5%).</p>
+<p>The partial <span class="math inline">\(R^2\)</span> of directlyharmed with peacefactor means that, in an extreme scenario, in which we assume that unobserved confounders explain all of the left out variance of the outcome, these unobserved confounders would need to explain at least 2.2% of the residual variance of the treatment to fully explain away the observed effect.</p>
+<p>The above numbers are for the absolute strength the confounder needs to be to explain away the treatment effect. The authors believe in this context, “female” is an important factor. Suppose the confounder is as important as “female”, what the partial <span class="math inline">\(R^2\)</span> would be? It is shown that <span class="math inline">\(R^2_{Y \sim Z|X,D} = 12.5 \%\)</span> and <span class="math inline">\(R^2_{D \sim Z|X} = 0.9 \%\)</span>. These two are both below the <span class="math inline">\(RV\)</span> values. That means even if the confounder is as strong as “female”, it is not strong enough to explain away the treatment effect.</p>
+<pre class="r"><code># plot bias contour of point estimate
+plot(sensitivity)</code></pre>
+<p><img src="/post/2025_04_03_sensemakr_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
+<p>This plot shows that even 3 times as strong as “female”, the confounder is not strong enough to explain away the treatment effect.</p>
+</div>
+<div id="sensitivity-analysis-for-iv" class="section level1">
+<h1>sensitivity analysis for IV</h1>
+<p>Even with an IV model, we need sensititvity analysis. The worry would be there could be an unobserved confounder that affects both the instrument and the outcome.</p>
+<p>Cinelli and Hazlett have a package “iv.sensemakr” for this. The usage is similar to “sensemakr”.</p>
+<pre class="r"><code># loads package
+library(iv.sensemakr)
+
+# loads dataset
+data(&quot;card&quot;)
+
+# prepares data
+y &lt;- card$lwage  # outcome
+d &lt;- card$educ   # treatment
+z &lt;- card$nearc4 # instrument
+x &lt;- model.matrix( ~ exper + expersq + black + south + smsa + reg661 + reg662 +
+                     reg663 + reg664 + reg665+ reg666 + reg667 + reg668 + smsa66,
+                   data = card) # covariates
+# fits IV model
+card.fit &lt;- iv_fit(y,d,z,x)
+
+# see results
+card.fit</code></pre>
+<pre><code>## 
+## Instrumental Variable Estimation
+## (Anderson-Rubin Approach)
+## =============================================
+## IV Estimates:
+##   Coef. Estimate: 0.132
+##   t-value: 2.33
+##   p-value: 0.02
+##   Conf. Interval: [0.025, 0.285]
+## Note: H0 = 0, alpha = 0.05, df = 2994.
+## =============================================
+## See summary for first stage and reduced form.</code></pre>
+<pre class="r"><code># runs sensitivity analysis
+card.sens &lt;- sensemakr(card.fit, benchmark_covariates = c(&quot;black&quot;, &quot;smsa&quot;))
+
+# see results
+card.sens</code></pre>
+<pre><code>## 
+## Sensitivity Analysis for Instrumental Variables
+## (Anderson-Rubin Approach)
+## =============================================================
+## IV Estimates:
+##   Coef. Estimate: 0.132
+##   t-value: 2.33
+##   p-value: 0.02
+##   Conf. Interval: [0.025, 0.285]
+## 
+## Sensitivity Statistics:
+##   Extreme Robustness Value: 0.000523
+##   Robustness Value: 0.00667
+## 
+## Bounds on Omitted Variable Bias:
+##  Bound Label  R2zw.x R2y0w.zx Lower CI Upper CI Crit. Thr.
+##     1x black 0.00221   0.0750  -0.0212    0.402       2.59
+##      1x smsa 0.00639   0.0202  -0.0192    0.396       2.57
+## 
+## Note: H0 = 0, q &gt;= 1, alpha = 0.05, df = 2994.
+## =============================================================
+## See summary for first stage and reduced form.</code></pre>
+<pre class="r"><code>summary(card.sens)</code></pre>
+<pre><code>## 
+## Sensitivity Analysis for Instrumental Variables
+## (Anderson-Rubin Approach)
+## =============================================================
+## IV Estimates:
+##   Coef. Estimate: 0.132
+##   t-value: 2.33
+##   p-value: 0.02
+##   Conf. Interval: [0.025, 0.285]
+## 
+## Sensitivity Statistics:
+##   Extreme Robustness Value: 0.000523
+##   Robustness Value: 0.00667
+## 
+## Bounds on Omitted Variable Bias:
+##  Bound Label  R2zw.x r2y0w.zx Lower CI Upper CI Crit. Thr.
+##     1x black 0.00221   0.0750  -0.0212    0.402       2.59
+##      1x smsa 0.00639   0.0202  -0.0192    0.396       2.57
+## 
+## Note: H0 = 0, q &gt;= 1, alpha = 0.05, df = 2994.
+## -------------------------------------------------------------
+## FS Estimates:
+##   Coef. Estimate: 0.32
+##   Standard Error: 0.0879
+##   t-value: 3.64
+##   p-value: 0.000276
+##   Conf. Interval: [0.148, 0.492]
+## 
+## Sensitivity Statistics:
+##   Extreme Robustness Value: 0.00313
+##   Robustness Value: 0.0302
+## 
+## Bounds on Omitted Variable Bias:
+##  Bound Label  R2zw.x R2dw.zx Lower CI Upper CI Crit. Thr.
+##     1x black 0.00221 0.03342    0.109    0.531       2.40
+##      1x smsa 0.00639 0.00498    0.120    0.520       2.27
+## 
+## Note: H0 = 0, q = 1, alpha = 0.05, df = 2994.
+## -------------------------------------------------------------
+## RF Estimates:
+##   Coef. Estimate: 0.0421
+##   Standard Error: 0.0181
+##   t-value: 2.33
+##   p-value: 0.02
+##   Conf. Interval: [0.007, 0.078]
+## 
+## Sensitivity Statistics:
+##   Extreme Robustness Value: 0.000523
+##   Robustness Value: 0.00667
+## 
+## Bounds on Omitted Variable Bias:
+##  Bound Label  R2zw.x R2dw.zx Lower CI Upper CI Crit. Thr.
+##     1x black 0.00221  0.0657 -0.00418   0.0883       2.56
+##      1x smsa 0.00639  0.0197 -0.00429   0.0884       2.56
+## 
+## Note: H0 = 0, q = 1, alpha = 0.05, df = 2994.
+## =============================================================</code></pre>
+<p>The basic idea is to run an IV regression, then apply sensmakr to that model. In this case, the authors use “black” and “smsa” as benchmark covariates. The authors believe these are important factors. A quick look at the result we can see that a confounder as strong as “black” or “smsa” is not strong enough to explain away the treatment effect. We can also plot a contour plot to see how strong the confounder needs to be to explain away the treatment effect.</p>
+<pre class="r"><code>plot(card.sens, parm = &quot;rf&quot;, sensitivity.of = &quot;t-value&quot;, lim = 0.08, kz = 1, ky = 1)</code></pre>
+<p><img src="/post/2025_04_03_sensemakr_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<p>Unfortunately the package currently only allows for one instrument. Should not be too hard to modify it to be more general.</p>
+</div>
