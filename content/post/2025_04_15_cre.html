@@ -1,0 +1,171 @@
+---
+title: "Correlated Random Effect"
+author: Xiang Ao
+date: '2025-04-15'
+
+---
+
+
+
+<div id="panel-data" class="section level1">
+<h1>Panel data</h1>
+<p>For panel data, the usual set up is:</p>
+<p><span class="math display">\[y_{it} = \alpha + X_{it} \beta + v_i + \epsilon_{it} \]</span></p>
+</div>
+<div id="fixed-effect" class="section level1">
+<h1>Fixed effect</h1>
+<p>A fixed effect model can be done with OLS on</p>
+<p><span class="math display">\[ (y_{it} - \bar y_i + \bar {\bar y}) = \alpha + (X_{it} - \bar X
++ \bar {\bar X}) \beta + (\epsilon_{it} - \bar \epsilon_i + \bar v) + \bar {\bar \epsilon}\]</span>
+This is basically OLS on de-meaned <span class="math inline">\(Y\)</span> and <span class="math inline">\(X\)</span>.</p>
+</div>
+<div id="random-effect" class="section level1">
+<h1>Random effect</h1>
+<p>The random effect looks at this at different angle: it treated <span class="math inline">\(v_i + \epsilon_{it}\)</span> as the error term. There are two components of the error term. Suppose they are estimated as <span class="math inline">\(\hat \sigma^2_e\)</span> (idiosyncratic component), and <span class="math inline">\(\hat \sigma^2_u\)</span> (individual component). Then we can do GLS transformation:</p>
+<p><span class="math inline">\(z^*_{it} = z_{it} - \hat \theta_i \bar z_i\)</span></p>
+<p>and <span class="math inline">\(\hat \theta_i = 1 - \sqrt{\frac{\hat \sigma^2_e}{T_i \hat \sigma^2_u + \hat \sigma^2_e}}\)</span></p>
+<p>where <span class="math inline">\(T_i\)</span> is the number of observations for individual <span class="math inline">\(i\)</span>.</p>
+<p>Given estimates of <span class="math inline">\(\hat \sigma^2_e\)</span> and <span class="math inline">\(\hat \sigma^2_u\)</span>, we can run OLS on transformed variables (including <span class="math inline">\(y\)</span> and all <span class="math inline">\(X\)</span>’s). We can iterate the process.</p>
+</div>
+<div id="correlated-random-effect" class="section level1">
+<h1>Correlated random effect</h1>
+<p>Correlated random effect (CRE) can be done by running a random effect model of <span class="math inline">\(y_{it}\)</span> on <span class="math inline">\(X_{it}\)</span>, <span class="math inline">\(\bar X_i\)</span>, <span class="math inline">\(z_i\)</span> and a constant.</p>
+<p>The shortcoming of RE model is that it has to assume <span class="math inline">\(v_i\)</span> and <span class="math inline">\(X_{it}\)</span> are uncorrelated to have a consistent estimator. If that is not true (most eocnomists don’t think it is), then we have an inconsistent estimator. Meanwhile, FE estimator is consistent, because <span class="math inline">\(v_i\)</span> is not in the error term, it gets cancelled out.</p>
+<p>The disadvantage of FE model is that it cannot include any time-invariant covariate, such as race, gender, etc.</p>
+<p>The benefit of CRE is that it can include <span class="math inline">\(z_i\)</span>’s which are time-invariant, while remain consistent. In fact, Mundlak and Wooldridge pointed out that CRE estimates on <span class="math inline">\(X_{it}\)</span> are the same as FE estimates.</p>
+<p>There is also a Mundlak test to choose between RE or CRE.</p>
+</div>
+<div id="example" class="section level1">
+<h1>Example</h1>
+<p>Stata 19 implemented CRE in the <code>xtreg</code> command, with “cre” option. The following example is from Stata’s website, using the <code>nlswork</code> dataset.</p>
+<pre class="stata"><code>webuse nlswork
+
+xtreg ln_wage tenure age i.race, cre vce(cluster idcode)</code></pre>
+<pre><code>(National Longitudinal Survey of Young Women, 14-24 years old in 1968)
+
+note: 2.race omitted from xt_means because of collinearity.
+note: 3.race omitted from xt_means because of collinearity.
+
+Correlated random-effects regression            Number of obs     =     28,101
+Group variable: idcode                          Number of groups  =      4,699
+
+R-squared:                                      Obs per group:
+     Within  = 0.1296                                         min =          1
+     Between = 0.2346                                         avg =        6.0
+     Overall = 0.1890                                         max =         15
+
+                                                Wald chi2(4)      =    1685.18
+corr(xit_vars*b, xt_means*γ) = 0.5474           Prob &gt; chi2       =     0.0000
+
+                             (Std. err. adjusted for 4,699 clusters in idcode)
+------------------------------------------------------------------------------
+             |               Robust
+     ln_wage | Coefficient  std. err.      z    P&gt;|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+xit_vars     |
+      tenure |   .0211313   .0012113    17.44   0.000     .0187572    .0235055
+         age |   .0121949   .0007414    16.45   0.000     .0107417     .013648
+             |
+        race |
+      Black  |  -.1312068   .0117856   -11.13   0.000    -.1543061   -.1081075
+      Other  |   .1059379   .0593177     1.79   0.074    -.0103225    .2221984
+             |
+       _cons |     1.2159   .0306965    39.61   0.000     1.155736    1.276064
+-------------+----------------------------------------------------------------
+xt_means     |
+      tenure |   .0376991    .002281    16.53   0.000     .0332283    .0421698
+         age |  -.0011984   .0013313    -0.90   0.368    -.0038077    .0014109
+             |
+        race |
+      Black  |          0  (omitted)
+      Other  |          0  (omitted)
+-------------+----------------------------------------------------------------
+     sigma_u |  .33334407
+     sigma_e |  .29808194
+         rho |  .55567161   (fraction of variance due to u_i)
+------------------------------------------------------------------------------
+Mundlak test (xt_means = 0): chi2(2) = 331.5144           Prob &gt; chi2 = 0.0000</code></pre>
+<p>To compare with a fixed effect model:</p>
+<pre class="stata"><code>webuse nlswork
+
+xtreg ln_wage tenure age i.race, fe vce(cluster idcode)</code></pre>
+<pre><code>(National Longitudinal Survey of Young Women, 14-24 years old in 1968)
+
+note: 2.race omitted because of collinearity.
+note: 3.race omitted because of collinearity.
+
+Fixed-effects (within) regression               Number of obs     =     28,101
+Group variable: idcode                          Number of groups  =      4,699
+
+R-squared:                                      Obs per group:
+     Within  = 0.1296                                         min =          1
+     Between = 0.1916                                         avg =        6.0
+     Overall = 0.1456                                         max =         15
+
+                                                F(2, 4698)        =     766.79
+corr(u_i, Xb) = 0.1302                          Prob &gt; F          =     0.0000
+
+                             (Std. err. adjusted for 4,699 clusters in idcode)
+------------------------------------------------------------------------------
+             |               Robust
+     ln_wage | Coefficient  std. err.      t    P&gt;|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+      tenure |   .0211313   .0012112    17.45   0.000     .0187568    .0235059
+         age |   .0121949   .0007414    16.45   0.000     .0107414    .0136483
+             |
+        race |
+      Black  |          0  (omitted)
+      Other  |          0  (omitted)
+             |
+       _cons |   1.256467   .0194187    64.70   0.000     1.218397    1.294537
+-------------+----------------------------------------------------------------
+     sigma_u |  .39034493
+     sigma_e |  .29808194
+         rho |  .63165531   (fraction of variance due to u_i)
+------------------------------------------------------------------------------</code></pre>
+<p>We see the coefficient estimates are the same for “tenure” and “age”, but CRE model allows you to estimate the effect of “race”.</p>
+<p>We can also manually do it by using a RE model on <span class="math inline">\(X\)</span>, <span class="math inline">\(\bar X\)</span> and <span class="math inline">\(z\)</span>:</p>
+<pre class="stata"><code>webuse nlswork
+egen age_mean = mean(age), by(idcode)
+egen tenure_mean = mean(tenure), by(idcode)
+xtreg ln_wage tenure tenure_mean age age_mean i.race, vce(cluster idcode)</code></pre>
+<pre><code>(National Longitudinal Survey of Young Women, 14-24 years old in 1968)
+
+(1 missing value generated)
+
+(12 missing values generated)
+
+
+Random-effects GLS regression                   Number of obs     =     28,101
+Group variable: idcode                          Number of groups  =      4,699
+
+R-squared:                                      Obs per group:
+     Within  = 0.1296                                         min =          1
+     Between = 0.2346                                         avg =        6.0
+     Overall = 0.1890                                         max =         15
+
+                                                Wald chi2(6)      =    2688.49
+corr(u_i, X) = 0 (assumed)                      Prob &gt; chi2       =     0.0000
+
+                             (Std. err. adjusted for 4,699 clusters in idcode)
+------------------------------------------------------------------------------
+             |               Robust
+     ln_wage | Coefficient  std. err.      z    P&gt;|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+      tenure |   .0211328    .001211    17.45   0.000     .0187592    .0235064
+ tenure_mean |   .0376962   .0022835    16.51   0.000     .0332207    .0421718
+         age |   .0121935   .0007412    16.45   0.000     .0107409    .0136462
+    age_mean |  -.0011922   .0013353    -0.89   0.372    -.0038094     .001425
+             |
+        race |
+      Black  |  -.1312062    .011785   -11.13   0.000    -.1543044    -.108108
+      Other  |   .1059734   .0593175     1.79   0.074    -.0102868    .2222337
+             |
+       _cons |   1.215738   .0307699    39.51   0.000      1.15543    1.276046
+-------------+----------------------------------------------------------------
+     sigma_u |  .33338665
+     sigma_e |  .29808194
+         rho |  .55573468   (fraction of variance due to u_i)
+------------------------------------------------------------------------------</code></pre>
+<p>This is what stata’s “cre” option is doing behind the scene.</p>
+</div>

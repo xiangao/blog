@@ -1,0 +1,85 @@
+---
+title: "Matching and Weighting - Part 2: weighting"
+author: Xiang Ao
+date: '2025-05-31'
+
+---
+
+
+
+<p>This is based on R’s MatchIt and WeightIt packages and their documentations. All credits go to Noal Greifer and coauthors. I write to summarize what I have learned.</p>
+<div id="assumptions" class="section level1">
+<h1>Assumptions</h1>
+<p>Matching or weighting is usually used in observational studies. We have the following assumptions before using matching or weighting to make a causal claim:</p>
+<ol style="list-style-type: decimal">
+<li>SUTVA</li>
+<li>ignorability (unconfoundedness, or no unobserved confounders)</li>
+<li>overlap (common support, or positivity)</li>
+</ol>
+<p>With these assmptions, we can try to identify the treatment effect in an observational study.</p>
+</div>
+<div id="problem" class="section level1">
+<h1>Problem</h1>
+<p>The second assumption is saying controlling for <span class="math inline">\(X\)</span>, the treatment assignment <span class="math inline">\(D\)</span> is independent of the potential outcomes <span class="math inline">\(Y(0)\)</span> and <span class="math inline">\(Y(1)\)</span>, i.e., we have a pseudo-randomized experiment.</p>
+<p>In reality, it’s rare we have a balanced distribution of <span class="math inline">\(X\)</span> for treated and control. That’s when we need to use matching or weighting to balance the distribution of <span class="math inline">\(X\)</span> between treatment and control groups.</p>
+</div>
+<div id="weighting-methods" class="section level1">
+<h1>weighting methods</h1>
+<p>The idea of weighting is to use weights to creat a pseudo population which has a balanced distribution of <span class="math inline">\(X\)</span> for treated and control groups. The most popular weighting method is inverse probability of treatment weighting (IPTW). IPTW uses the propensity score to create weights.</p>
+<p>There are a few other weighting methods that are gaining popularity.</p>
+<div id="inverse-probability-of-treatment-weighting-iptw" class="section level2">
+<h2>Inverse probability of treatment weighting (IPTW)</h2>
+<p>IPTW is the most common weighting method. It uses the inverse of the propensity score as weights. The idea is to weight each treated unit by <span class="math inline">\(1/p\)</span> and each control unit by <span class="math inline">\(1/(1-p)\)</span>, where <span class="math inline">\(p\)</span> is the propensity score. This way, we can create a pseudo population where the distribution of <span class="math inline">\(X\)</span> is balanced between treatment and control groups.</p>
+</div>
+<div id="covariate-balancing-propensity-score-cbps" class="section level2">
+<h2>Covariate balancing propensity score (CBPS)</h2>
+<p>The same idea, but with a different way to estimate the propensity score. CBPS is a form of logistic regression where balance constraints are incorporated to a generalized method of moments estimation of the model coefficients.</p>
+</div>
+<div id="entropy-balancing" class="section level2">
+<h2>Entropy balancing</h2>
+<p>Entropy balancing involves the specification of an optimization problem, the solution to which is then used to compute the weights. The constraints of the primal optimization problem correspond to covariate balance on the means (for binary and multi-category treatments) or treatment-covariate covariances (for continuous treatments), positivity of the weights, and that the weights sum to a certain value. Entropy balancing is doubly robust (for the ATT) in the sense that it is consistent either when the true propensity score model is a logistic regression of the treatment on the covariates or when the true outcome model for the control units is a linear regression of the outcome on the covariates, and it attains a semi-parametric efficiency bound when both are true. Entropy balancing will always yield exact mean balance on the included terms (not necessarity on the distribution of the covariates)</p>
+</div>
+<div id="energy-balancing" class="section level2">
+<h2>Energy balancing</h2>
+<p>Energy balancing is a method of estimating weights using optimization without a propensity score.</p>
+<p>The primary benefit of energy balancing is that all features of the covariate distribution are balanced, not just means, as with other optimization-based methods like entropy balancing.</p>
+</div>
+<div id="superlearner" class="section level2">
+<h2>SuperLearner</h2>
+<p>SuperLearner works by fitting several machine learning models to the treatment and covariates and then taking a weighted combination of the generated predicted values to use as the propensity scores, which are then used to construct weights.</p>
+</div>
+</div>
+<div id="example" class="section level1">
+<h1>Example</h1>
+<p>Here is an example with Lalonde data, we are interested in the effect of treatment on “rep78”.</p>
+<div id="ipw" class="section level2">
+<h2>IPW</h2>
+</div>
+<div id="entropy-balancing-1" class="section level2">
+<h2>entropy balancing</h2>
+<p>Suppose we are sastisfied with the balance, we can use the weights to estimate the treatment effect. We can use the “marginaleffects” package to do that.</p>
+<pre class="r"><code># Fit outcome model
+fit &lt;- lm_weightit(re78 ~ treat * (age + educ + race + married +
+                                     nodegree + re74 + re75),
+                   data = lalonde, weightit = w.out2)
+# G-computation for the treatment effect
+library(&quot;marginaleffects&quot;)
+avg_comparisons(fit, variables = &quot;treat&quot;,
+                newdata = subset(treat == 1))</code></pre>
+<pre><code>## 
+##  Estimate Std. Error    z Pr(&gt;|z|)   S 2.5 % 97.5 %
+##      1273        770 1.65   0.0983 3.3  -236   2783
+## 
+## Term: treat
+## Type: probs
+## Comparison: 1 - 0</code></pre>
+</div>
+<div id="energy-balancing-1" class="section level2">
+<h2>energy balancing</h2>
+</div>
+</div>
+<div id="comparing-matching-and-weighting" class="section level1">
+<h1>comparing matching and weighting</h1>
+<p>Matching and weighting are popular in different fields. We used to say matching involves discarding data therefore changing the estimand, but now with full matching and other methods, matching can be done without losing data. We used to believe weighting can be unstable, as weights can be highly variable, but with CBPS, entropy balancing and energy balancing, weighting can perform much better.</p>
+<p>So, in practice, we can try different methods, either matching or weighting, and see which one gives us better balance. Then use “marginaleffects” to get the treatment effect.</p>
+</div>
