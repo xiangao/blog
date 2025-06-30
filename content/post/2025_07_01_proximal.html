@@ -1,0 +1,140 @@
+---
+title: "Intro to promimal causal inference"
+author: Xiang Ao
+date: '2025-07-01'
+tags: R; 
+categories:
+- R
+---
+
+
+
+<p>This is based on papers of Tchetgen Tchetgen and co-authors, mostly based on Xu Shi’s talk on proximal causal inference.</p>
+<div id="unobserved-confounder" class="section level1">
+<h1>Unobserved confounder</h1>
+<p>Unobserved confounder is the problem for observational studies. Assuming controlling for all relevant confounders (<span class="math inline">\(X\)</span>), we have an unobserved confounder <span class="math inline">\(U\)</span> that affects both treatment <span class="math inline">\(A\)</span> and outcome <span class="math inline">\(Y\)</span>. The causal diagram is as follows:</p>
+<p><img src="/post/2025_07_01_proximal_files/figure-html/dag1-1.png" width="672" /></p>
+<p>In this case, we have biased estimates of the treatment effect, regressing <span class="math inline">\(Y\)</span> on <span class="math inline">\(A\)</span> controlling for <span class="math inline">\(X\)</span>.</p>
+</div>
+<div id="proximal-causal-inference" class="section level1">
+<h1>Proximal causal inference</h1>
+<p>Proximal causal inference (also called negative controls) is a framework that allows us to estimate the causal effect of treatment <span class="math inline">\(A\)</span> on outcome <span class="math inline">\(Y\)</span> while accounting for unobserved confounders.</p>
+<p>We’ll need a DAG like this:</p>
+<p><img src="/post/2025_07_01_proximal_files/figure-html/dag2-1.png" width="672" /></p>
+<p>Basically we need two proxies for <span class="math inline">\(U\)</span> to control for confounding. <span class="math inline">\(Z\)</span> is called Negative Control for Exposure (NCE) and <span class="math inline">\(W\)</span> is called Negative Control for Outcome (NCO). There is no link form <span class="math inline">\(Z\)</span> to <span class="math inline">\(Y\)</span>, and no link from <span class="math inline">\(W\)</span> to <span class="math inline">\(A\)</span> or <span class="math inline">\(Z\)</span>.</p>
+<p><span class="math inline">\(Z\)</span> is an NCE if <span class="math inline">\(Y(a,z) = Y(a)\)</span> and <span class="math inline">\(Z \perp Y(a) | U\)</span>, meaning that <span class="math inline">\(Z\)</span> satisfies the exclusion restriction that there is no direct link from <span class="math inline">\(Z\)</span> to <span class="math inline">\(Y\)</span>, and that <span class="math inline">\(Z\)</span> is independent of <span class="math inline">\(Y\)</span> given <span class="math inline">\(U\)</span>. This means <span class="math inline">\(Z\)</span> is an instrument for <span class="math inline">\(A\)</span>.</p>
+<p><span class="math inline">\(W\)</span> is an NCO if <span class="math inline">\(W(a,z) = W\)</span> and <span class="math inline">\(W \perp (A,Z) | U\)</span>, meaning that <span class="math inline">\(A\)</span> and <span class="math inline">\(Z\)</span> have no direct link to <span class="math inline">\(W\)</span>.</p>
+<div id="why-this-works" class="section level2">
+<h2>Why this works</h2>
+<p><img src="/post/2025_07_01_proximal_files/figure-html/dag3-1.png" width="672" /></p>
+<p>If we regress <span class="math inline">\(Y\)</span> on <span class="math inline">\(A\)</span>, then we get <span class="math inline">\(\beta_{ay} + \beta_{uy} \beta_{ua}\)</span>, which is biased. How do we recover <span class="math inline">\(\beta_{ay}\)</span>?</p>
+<p><img src="/post/2025_07_01_proximal_files/figure-html/dag4-1.png" width="672" /></p>
+<p>Suppose we have <span class="math inline">\(W\)</span> as proxy of <span class="math inline">\(U\)</span> and <span class="math inline">\(\beta_{uw} = \beta{uy}\)</span>, then we can get the true effect. We can do regression of <span class="math inline">\(Y\)</span> on <span class="math inline">\(A\)</span>, and then <span class="math inline">\(W\)</span> on <span class="math inline">\(A\)</span>. The first regression gives us <span class="math inline">\(\beta_{ay} + \beta_{uy} \beta_{ua}\)</span>, and the second regression gives us <span class="math inline">\(\beta_{uw} \beta_{ua}\)</span>. We can then get <span class="math inline">\(\beta_{ay}\)</span> from the difference of the two coefficients. This is similar to a DiD setting. Say <span class="math inline">\(W\)</span> is <span class="math inline">\(Y_{t-1}\)</span>, and assume the effect of <span class="math inline">\(U\)</span> is the same on <span class="math inline">\(Y\)</span> and <span class="math inline">\(Y_{t-1}\)</span>, then effect of <span class="math inline">\(A\)</span> on <span class="math inline">\(Y\)</span> by the difference of regressing <span class="math inline">\(Y\)</span> on <span class="math inline">\(A\)</span> and <span class="math inline">\(Y_{t-1}\)</span> on <span class="math inline">\(A\)</span>.</p>
+<p>However, most likely <span class="math inline">\(\beta_{uw} \neq \beta_{uy}\)</span>. Then we need another proxy <span class="math inline">\(Z\)</span> of <span class="math inline">\(U\)</span> to recover the true effect. This is also called “double proxy”, or “double negative control”.</p>
+<p><img src="/post/2025_07_01_proximal_files/figure-html/dag5-1.png" width="672" /></p>
+</div>
+<div id="a-linear-model" class="section level2">
+<h2>A linear model</h2>
+<p>Suppose we have the following linear model:</p>
+<p><span class="math display">\[ E[Y | A,Z,U] = \beta_0 + \beta_a A + \beta_u U \]</span>
+<span class="math display">\[ E[W | A,Z,U] = \gamma_0 +  \gamma_u U \]</span></p>
+<p>We can replace <span class="math inline">\(U\)</span> with the predicted value of <span class="math inline">\(W\)</span> from the second equation:</p>
+<p><span class="math display">\[ E[Y | A,Z] = \beta_0 + \beta_a A + \beta_u E[W | A,Z]\]</span></p>
+<p>This can be done by a two-stage least squares (2SLS) regression, where we first regress <span class="math inline">\(W\)</span> on <span class="math inline">\(A\)</span> and <span class="math inline">\(Z\)</span>, and then regress <span class="math inline">\(Y\)</span> on <span class="math inline">\(A\)</span> and the predicted value of <span class="math inline">\(W\)</span>.</p>
+<p>In other words, if we do the following regressions,
+<span class="math display">\[ E[Y | A,Z] = \beta_0 + \beta_{ay} A + \beta_{zy} Z \]</span>
+and
+<span class="math display">\[ E[W | A,Z] = \gamma_0 + \beta_{aw} A + \gamma_{zw} Z \]</span></p>
+<p>Then we can get the bias-adjusted ATE by
+<span class="math display">\[ \beta_{ay} - \frac{\beta_{zy}}{\beta_{zw}} \beta_{aw}\]</span></p>
+</div>
+<div id="a-nonparametric-model" class="section level2">
+<h2>A nonparametric model</h2>
+<p>We don’t have to have a linear model, this can be done with a nonparametric model as well.</p>
+<p><span class="math display">\[ E[Y(a)] = E[h(a,W)]  \]</span>
+where <span class="math inline">\(E[Y | A,Z] = E[h(A,W) | A, Z]\)</span>.</p>
+<p>That is, we can estimate <span class="math inline">\(W\)</span> as a function of <span class="math inline">\(A\)</span> and <span class="math inline">\(W\)</span>, and <span class="math inline">\(Z\)</span> nonparametrically. This <span class="math inline">\(h\)</span> function is called outcome bridge function. In the linear case, it is <span class="math inline">\(h(A, W) =  \beta_0 + \beta_a A + \beta_w W\)</span>.</p>
+</div>
+<div id="how-to-find-proximal-variables" class="section level2">
+<h2>How to find proximal variables</h2>
+<p>Tchetgen Tchetgen and co-authors come up with a Data-driven Automated Negative Control Estimation (DANCE) algorithm to find negative controls. The idea is to use a machine learning algorithm to find the variables that are correlated with the treatment and the outcome, but not with the treatment and the outcome together. This is similar to the idea of finding instrumental variables.</p>
+</div>
+</div>
+<div id="example" class="section level1">
+<h1>example</h1>
+<p>Let’s generated data based on this DAG:
+<img src="/post/2025_07_01_proximal_files/figure-html/dag6-1.png" width="672" /></p>
+<pre class="r"><code>set.seed(123)
+n &lt;- 5000
+# Set coefficients
+b_uw &lt;- 0.5 # effect of U on W
+b_uy &lt;- 0.5 # effect of U on Y
+b_ay &lt;- 0.5 # effect of A on Y
+b_uz &lt;- 0.5 # effect of U on Z
+b_ua &lt;- 0.5 # effect of U on A
+b_za &lt;- 0.5 # effect of Z on A
+
+U &lt;- rnorm(n)
+W &lt;- b_uw * U + rnorm(n) # W is a function of U
+Z &lt;- b_uz * U + rnorm(n) # Z is a function of U
+A &lt;- b_ua * U + b_za * Z + rnorm(n) # A is a function of U and Z
+Y &lt;- b_uy * U + b_ay * A + rnorm(n) # Y is a function of U and A
+# A &lt;- rbinom(n, 1, plogis(-1 + U / 2)) # A is a binary treatment
+
+
+# Create a data frame with the generated variables
+
+data &lt;- data.frame(W = W, Z = Z, A = A, Y = Y)</code></pre>
+<p>If we run regression of <span class="math inline">\(Y\)</span> on <span class="math inline">\(A\)</span>, <span class="math inline">\(Z\)</span>, <span class="math inline">\(W\)</span>,</p>
+<pre class="r"><code>m1 &lt;- lm(Y ~ A + Z + W, data = data)
+summary(m1)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = Y ~ A + Z + W, data = data)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -4.5836 -0.7167  0.0005  0.7305  4.4866 
+## 
+## Coefficients:
+##              Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept) -0.006347   0.015279  -0.415    0.678    
+## A            0.660021   0.014123  46.734  &lt; 2e-16 ***
+## Z            0.085004   0.016650   5.105 3.43e-07 ***
+## W            0.132798   0.014165   9.375  &lt; 2e-16 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 1.08 on 4996 degrees of freedom
+## Multiple R-squared:  0.4556,	Adjusted R-squared:  0.4553 
+## F-statistic:  1394 on 3 and 4996 DF,  p-value: &lt; 2.2e-16</code></pre>
+<p>We don’t get the true effect of <span class="math inline">\(A\)</span> on <span class="math inline">\(Y\)</span>.</p>
+<p>If we do the 2sls using <span class="math inline">\(W\)</span> and <span class="math inline">\(Z\)</span>, then we get the true effect.</p>
+<pre class="r"><code># Linear (Y, W) Case
+# Perform the first-stage linear regression W ~ A + Z
+m1 &lt;- lm(W ~ A + Z, data = data)
+# Compute the estimated E[W|A,Z]
+S &lt;- m1$fitted.values
+# Perform the second-stage linear regression Y ~ A + E[W|A,Z]
+m2 &lt;- lm(Y ~ A + S, data = data)
+summary(m2)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = Y ~ A + S, data = data)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -4.5477 -0.7309  0.0059  0.7395  4.3715 
+## 
+## Coefficients:
+##              Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept) -0.005049   0.015408  -0.328    0.743    
+## A            0.489342   0.043210  11.325  &lt; 2e-16 ***
+## S            1.143480   0.199171   5.741 9.96e-09 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 1.089 on 4997 degrees of freedom
+## Multiple R-squared:  0.446,	Adjusted R-squared:  0.4458 
+## F-statistic:  2012 on 2 and 4997 DF,  p-value: &lt; 2.2e-16</code></pre>
+</div>
