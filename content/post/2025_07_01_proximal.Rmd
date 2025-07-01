@@ -69,7 +69,7 @@ theme_dag()
 
 Basically we need two proxies for $U$ to control for confounding. $Z$ is called Negative Control for Exposure (NCE) and $W$ is called Negative Control for Outcome (NCO). There is no link form $Z$ to $Y$, and no link from $W$ to $A$ or $Z$.
 
-$Z$ is an NCE if $Y(a,z) = Y(a)$ and $Z \perp Y(a) | U$, meaning that $Z$ satisfies the exclusion restriction that there is no direct link from $Z$ to $Y$, and that $Z$ is independent of $Y$ given $U$.  This means $Z$ is an instrument for $A$.
+$Z$ is an NCE if $Y(a,z) = Y(a)$ and $Z \perp Y(a) | U$, meaning that $Z$ satisfies the exclusion restriction that there is no direct link from $Z$ to $Y$, and that $Z$ is independent of $Y$ given $U$.  
 
 $W$ is an NCO if $W(a,z) = W$ and $W \perp (A,Z) | U$, meaning that $A$ and $Z$ have no direct link to $W$.
 
@@ -133,7 +133,7 @@ ggdag(g) +
 
 ```
 
-Suppose we have $W$ as proxy of $U$ and $\beta_{uw} = \beta{uy}$, then we can get the true effect.  We can do regression of $Y$ on $A$, and then $W$ on $A$.  The first regression gives us $\beta_{ay} + \beta_{uy} \beta_{ua}$, and the second regression gives us $\beta_{uw} \beta_{ua}$.  We can then get $\beta_{ay}$ from the difference of the two coefficients.  This is similar to a DiD setting.  Say $W$ is $Y_{t-1}$, and assume the effect of $U$ is the same on $Y$ and $Y_{t-1}$, then effect of $A$ on $Y$ by the difference of regressing $Y$ on $A$ and $Y_{t-1}$ on $A$.
+Suppose we have $W$ as proxy of $U$ and $\beta_{uw} = \beta_{uy}$, then we can get the true effect.  We can do regression of $Y$ on $A$, and then $W$ on $A$.  The first regression gives us $\beta_{ay} + \beta_{uy} \beta_{ua}$, and the second regression gives us $\beta_{uw} \beta_{ua}$.  We can then get $\beta_{ay}$ from the difference of the two coefficients.  This is similar to a DiD setting.  Say $W$ is $Y_{t-1}$, and assume the effect of $U$ is the same on $Y$ and $Y_{t-1}$, then effect of $A$ on $Y$ by the difference of regressing $Y$ on $A$ and $Y_{t-1}$ on $A$.
 
 However, most likely $\beta_{uw} \neq \beta_{uy}$.  Then we need another proxy $Z$ of $U$ to recover the true effect.  This is also called "double proxy", or "double negative control".  
 
