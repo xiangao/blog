@@ -185,7 +185,7 @@ If we define $\delta_{a}^y = \beta_{ay} + \beta_{uy} \beta_{au}$ (regression coe
 
 
 
-$$ \beta_{ay} = \delta_{a}^y - \delta_{a}^w  \frac{\delta_z^y}{\beta_z^w} $$
+$$ \beta_{ay} = \delta_{a}^y - \delta_{a}^w  \frac{\delta_z^y}{\delta_z^w} $$
 
 Or, we can look at this as a two-stage least squares (2SLS) regression.  
 We can replace $U$ with the predicted value of $W$ from the second equation:

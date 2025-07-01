@@ -44,10 +44,10 @@ categories:
 <p><span class="math display">\[ E[W | A,Z] = \beta_{w0} +  \beta_{uw} (\beta_{u0} + \beta_{zu} Z + \beta_{au} A) \]</span></p>
 <p>From the last two regressions we can recover <span class="math inline">\(\beta_{ay}\)</span>:</p>
 <p>If we define <span class="math inline">\(\delta_{a}^y = \beta_{ay} + \beta_{uy} \beta_{au}\)</span> (regression coefficient of <span class="math inline">\(A\)</span> on the <span class="math inline">\(Y\)</span> regression) and <span class="math inline">\(\delta_{a}^w = \beta_{uw} \beta_{au}\)</span>, (regression coefficient of <span class="math inline">\(A\)</span> on the <span class="math inline">\(W\)</span> regression), similarly for <span class="math inline">\(\delta_z^y\)</span> and <span class="math inline">\(\delta_z^w\)</span>, then we have</p>
-<p>We can replace <span class="math inline">\(U\)</span> with the predicted value of <span class="math inline">\(W\)</span> from the second equation:</p>
-<p><span class="math display">\[ \beta_{ay} = \delta_{a}^y - \delta_{a}^w  \frac{\delta_z^y}{\beta_z^w} \]</span></p>
-<p>Or, we can look at this as a two-stage least squares (2SLS) regression,
-<span class="math display">\[ E[Y | A,Z] = \beta_0 + \beta_a A + \beta_u E[W | A,Z]\]</span></p>
+<p><span class="math display">\[ \beta_{ay} = \delta_{a}^y - \delta_{a}^w  \frac{\delta_z^y}{\delta_z^w} \]</span></p>
+<p>Or, we can look at this as a two-stage least squares (2SLS) regression.<br />
+We can replace <span class="math inline">\(U\)</span> with the predicted value of <span class="math inline">\(W\)</span> from the second equation:</p>
+<p><span class="math display">\[ E[Y | A,Z] = \beta_{y0} + \beta_{ay} A + \beta_{uy} E[W | A,Z]\]</span></p>
 <p>We first regress <span class="math inline">\(W\)</span> on <span class="math inline">\(A\)</span> and <span class="math inline">\(Z\)</span>, and then regress <span class="math inline">\(Y\)</span> on <span class="math inline">\(A\)</span> and the predicted value of <span class="math inline">\(W\)</span>.</p>
 </div>
 <div id="a-nonparametric-model" class="section level2">
