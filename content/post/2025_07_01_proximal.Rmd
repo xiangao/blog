@@ -169,22 +169,30 @@ ggdag(g) +
 
 Suppose we have the following linear model:
 
-$$ E[Y | A,Z,U] = \beta_0 + \beta_a A + \beta_u U $$
-$$ E[W | A,Z,U] = \gamma_0 +  \gamma_u U $$
+$$ E[Y | A,Z,U] = \beta_{y0} + \beta_{ay} A + \beta_{uy} U $$
+$$ E[W | A,Z,U] = \beta_{w0} +  \beta_{uw} U $$
+$$ E[U | A,Z] = \beta_{u0} + \beta_{zu} Z + \beta_{au} A $$
 
+$\beta_{ay}$ is the true effect of $A$ on $Y$.
+
+$$ E[Y | A,Z] = \beta_{y0} + \beta_{ay} A + \beta_{uy} (\beta_{u0} + \beta_{zu} Z + \beta_{au} A) $$
+
+$$ E[W | A,Z] = \beta_{w0} +  \beta_{uw} (\beta_{u0} + \beta_{zu} Z + \beta_{au} A) $$
+
+From the last two regressions we can recover $\beta_{ay}$:
+
+If we define $\delta_{a}^y = \beta_{ay} + \beta_{uy} \beta_{au}$ (regression coefficient of $A$ on the $Y$ regression) and $\delta_{a}^w = \beta_{uw} \beta_{au}$, (regression coefficient of $A$ on the $W$ regression),  similarly for $\delta_z^y$ and $\delta_z^w$, then we have
+
+
+
+$$ \beta_{ay} = \delta_{a}^y - \delta_{a}^w  \frac{\delta_z^y}{\beta_z^w} $$
+
+Or, we can look at this as a two-stage least squares (2SLS) regression.  
 We can replace $U$ with the predicted value of $W$ from the second equation:
 
-$$ E[Y | A,Z] = \beta_0 + \beta_a A + \beta_u E[W | A,Z]$$
+$$ E[Y | A,Z] = \beta_{y0} + \beta_{ay} A + \beta_{uy} E[W | A,Z]$$
 
-This can be done by a two-stage least squares (2SLS) regression, where we first regress $W$ on $A$ and $Z$, and then regress $Y$ on $A$ and the predicted value of $W$.
-
-In other words, if we do the following regressions,
-$$ E[Y | A,Z] = \beta_0 + \beta_{ay} A + \beta_{zy} Z $$
-and
-$$ E[W | A,Z] = \gamma_0 + \beta_{aw} A + \gamma_{zw} Z $$
-
-Then we can get the bias-adjusted ATE by
-$$ \beta_{ay} - \frac{\beta_{zy}}{\beta_{zw}} \beta_{aw}$$
+We first regress $W$ on $A$ and $Z$, and then regress $Y$ on $A$ and the predicted value of $W$.
 
 
 
