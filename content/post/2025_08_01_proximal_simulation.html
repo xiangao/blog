@@ -1,0 +1,141 @@
+---
+title: "Simulation on promimal causal inference with panel data"
+author: Xiang Ao
+date: '2025-08-01'
+tags: R; 
+categories:
+- R
+---
+
+
+
+<p>This is to continue the discussion on proximal causal inference. The idea is to use negative controls to estimate the causal effect of treatment on outcome while accounting for unobserved confounders. This is a follow-up of the previous post on <a href="https://xiangao.github.io/2024/07/01/proximal-causal-inference.html">proximal causal inference</a>.</p>
+<p>In this post, I am trying to see whether we can use lagged <span class="math inline">\(D\)</span> and lagged <span class="math inline">\(Y\)</span> as NCE and NCO, in a panel data setting. The idea is to use the lagged treatment as a negative control exposure (NCE) and the lagged outcome as a negative control outcome (NCO).</p>
+<p>Let’s see a two period DAG:</p>
+<p><img src="/post/2025_08_01_proximal_simulation_files/figure-html/dag1-1.png" width="672" /></p>
+<p>Suppose that’s the case for the causal structure, then I can reasonably combine U1 and U2 into a single unobserved confounder <span class="math inline">\(U\)</span>:</p>
+<p><img src="/post/2025_08_01_proximal_simulation_files/figure-html/dag2-1.png" width="672" /></p>
+<p>That would fit into the double negative control framework. The problem is that we have to assume there is no link from A1 to Y1, which is odd. Can we assume in period 1 there is no effect, but in period 2, there is an effect?</p>
+<div id="a-simulation-with-panel-data" class="section level1">
+<h1>A simulation with panel data</h1>
+<p>I generate two period data based on the DAG above.</p>
+<pre class="r"><code>library(dplyr)
+library(rootSolve)
+library(tidyverse)
+
+gen_data &lt;- function(seed, n, t){
+  set.seed(seed)
+  u &lt;- rnorm(n, mean = 0, sd = 1)  # unobserved confounder
+  x1 &lt;- rnorm(n, mean = 0, sd = 1)  # observed confounder
+  x2 &lt;- rnorm(n, mean = 0, sd = 1)  # observed confounder
+  a1 &lt;- rbinom(n, 1, plogis(u + x1))  # treatment at time 1
+  a2 &lt;- rbinom(n, 1, plogis(u + a1 +  x1))  # treatment at time 2
+  y1 &lt;-  u + x1  +  rnorm(n, mean = 0, sd = 1)  # outcome at time 1
+  y2 &lt;-  y1 + u + x1 + 2*a2 + rnorm(n, mean = 0, sd = 1)  # outcome at time 2
+  data &lt;- data.frame(u=u, x1=x1, x2=x2, a1=a1, a2=a2, y1=y1, y2=y2)
+  return(data)
+}
+data &lt;- gen_data(333, 100000, 2)  </code></pre>
+<pre class="r"><code>data_sim &lt;- data |&gt; 
+  select(a1, a2, y2,  x1, x2, y1) |&gt; 
+  rename(a = a2, y = y2,  x = x1, w = y1, z=a1)</code></pre>
+<p>We can use the simple 2sls:</p>
+<pre class="r"><code>lm1 &lt;- lm(w ~ a + x + z, data = data_sim)
+data_sim$what &lt;- lm1$fitted.values
+lm2 &lt;- lm(y ~ a + x +  what, data = data_sim)
+summary(lm2)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = y ~ a + x + what, data = data_sim)
+## 
+## Residuals:
+##    Min     1Q Median     3Q    Max 
+## -9.290 -1.504 -0.003  1.510 11.902 
+## 
+## Coefficients:
+##             Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept) -0.01191    0.01858  -0.641    0.522    
+## a            2.01582    0.02951  68.315   &lt;2e-16 ***
+## x            0.01156    0.02373   0.487    0.626    
+## what         1.99213    0.02733  72.886   &lt;2e-16 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 2.241 on 99996 degrees of freedom
+## Multiple R-squared:  0.6419,	Adjusted R-squared:  0.6419 
+## F-statistic: 5.974e+04 on 3 and 99996 DF,  p-value: &lt; 2.2e-16</code></pre>
+<p>Or we can use more sophisticated methods. Here I use the m-estimation code by Paul Zivich: <a href="https://github.com/pzivich/publications-code/blob/master/ProximalCI/proximal_sims_r.R" class="uri">https://github.com/pzivich/publications-code/blob/master/ProximalCI/proximal_sims_r.R</a></p>
+<pre class="r"><code>pcl_m2 &lt;- function(theta, mydata, out = &quot;ef&quot;){
+  # read in variables
+  a &lt;- mydata$a
+  x &lt;- mydata$x
+  w &lt;- mydata$w
+  z &lt;- mydata$z
+  y &lt;- mydata$y
+  # model for what
+  what &lt;- theta[1] + theta[2] * a + theta[3] * x + theta[4] * z 
+
+  # matrix of covars in model for what
+  wmat &lt;- as.matrix(cbind(rep(1, nrow(mydata)), a, x, z), ncol = 4, 
+                    nrow = nrow(mydata))
+
+  # estimating function for what
+  ef1 &lt;- (t(wmat)  %*% (w - what))            # gives px1 vector (summed over units)
+  ef1_b &lt;- wmat * (w - what)                  # gives nxp matrix (rows are units)
+  
+  # model for yhat
+  yhat &lt;- theta[5] + theta[6]*a + theta[7]*x + theta[8] * what  
+
+  # matrix of covars in model for yhat
+  ymat &lt;- as.matrix(cbind(rep(1, nrow(mydata)), a, x, what), ncol = 4, 
+                    nrow = nrow(mydata))
+
+  #estimating function for yhat
+  ef2 &lt;- t(ymat) %*% (y - yhat)               # px1 vector, summed over units
+  ef2_b &lt;- (ymat) * (y - yhat)                # nxp matrix (rows are units)
+  f &lt;- c(ef1, ef2)                            # p-dimensional vector
+  if(out == &quot;full&quot;) return(cbind(ef1_b, ef2_b)) else return(f) # full used in var calculation only
+}
+
+# call m-estimator for PCL
+mpcl_mest &lt;- function(dat){
+  theta_start &lt;- rep(.05, 8)
+  results &lt;- mestimator(pcl_m2, init = theta_start, dat, mydata = dat)
+  return(results)
+}
+
+##&#39; M-estimation engine
+mestimator &lt;- function(ef, init, dat, ...){
+  # get estimated coefficients
+  fit &lt;- multiroot(ef, start = init, out = &quot;ef&quot;,
+                   rtol = 1e-9, atol = 1e-12, ctol = 1e-12, ...  )
+  betahat &lt;- fit$root
+  n &lt;- nrow(dat)
+
+  # bread
+  # derivative of estimating function at betahat
+  pd &lt;- gradient(ef, betahat, out = &quot;ef&quot;, ...) 
+  pd &lt;- as.matrix(pd)
+  bread &lt;- -pd/n
+  se_mod &lt;- sqrt(abs(diag(-solve(pd))))
+  
+  # meat1
+  efhat &lt;- ef(betahat, out = &quot;full&quot;, ...)
+  meat &lt;- list()
+  meat1 &lt;- (t(efhat) %*% efhat)/n
+  
+  # sandwich
+  sandwich1 &lt;- (solve(bread) %*% meat1 %*% t(solve(bread)))/n
+  se_sandwich1 &lt;- sqrt(diag(sandwich1))
+  
+  results &lt;- data.frame(betahat, se_sandwich1, se_mod)
+  return(results)
+}</code></pre>
+<pre class="r"><code>rmpcl &lt;- unname(mpcl_mest(data_sim)[6, c(1:2)])
+rmpcl</code></pre>
+<pre><code>##                      
+## 6 2.015819 0.01857075</code></pre>
+<pre class="r"><code>#mpcl_mest(data_sim)</code></pre>
+<p>Both the 2sls and the m-estimation give us the same estimate of the causal effect of treatment on outcome, which is 2. The m estimator can be more general. 2sls is good for the linear case.</p>
+<p>However, the main issue is the assumption that there is no link from A1 to Y1.</p>
+</div>
