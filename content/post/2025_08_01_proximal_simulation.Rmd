@@ -74,19 +74,19 @@ library(dplyr)
 library(rootSolve)
 library(tidyverse)
 
-gen_data <- function(seed, n, t){
+gen_data <- function(seed, n){
   set.seed(seed)
   u <- rnorm(n, mean = 0, sd = 1)  # unobserved confounder
   x1 <- rnorm(n, mean = 0, sd = 1)  # observed confounder
   x2 <- rnorm(n, mean = 0, sd = 1)  # observed confounder
-  a1 <- rbinom(n, 1, plogis(u + x1))  # treatment at time 1
+  a1 <- rbinom(n, 1, plogis(2*u + 1.5*x1))  # treatment at time 1
   a2 <- rbinom(n, 1, plogis(u + a1 +  x1))  # treatment at time 2
-  y1 <-  u + x1  +  rnorm(n, mean = 0, sd = 1)  # outcome at time 1
-  y2 <-  y1 + u + x1 + 2*a2 + rnorm(n, mean = 0, sd = 1)  # outcome at time 2
+  y1 <-  1.5*u + .5*x1  +  rnorm(n, mean = 0, sd = 1)  # outcome at time 1
+  y2 <-  y1 + 2.5*u + 2.5*x1 + 3*a2 + rnorm(n, mean = 0, sd = 1)  # outcome at time 2
   data <- data.frame(u=u, x1=x1, x2=x2, a1=a1, a2=a2, y1=y1, y2=y2)
   return(data)
 }
-data <- gen_data(333, 100000, 2)  
+data <- gen_data(333, 100000)  
 
 ```
 
@@ -111,7 +111,7 @@ summary(lm2)
 
 ```
 
-Or we can use more sophisticated methods.  Here I use the m-estimation code by Paul Zivich:  https://github.com/pzivich/publications-code/blob/master/ProximalCI/proximal_sims_r.R
+Or we can use more sophisticated methods.  Here I use the m-estimation code by Paul Zivich:  https://github.com/pzivich/publications-code/blob/master/ProximalCI/proximal_sims_r.R.  This code is to contruct estimating equations, then use root finding to find the parameter estimates.
 
 
 ```{r sim3, include=TRUE, warning=FALSE,  cache=TRUE, message=FALSE, echo=TRUE}
@@ -193,7 +193,11 @@ rmpcl
 #mpcl_mest(data_sim)
 ```
 
-Both the 2sls and the m-estimation give us the same estimate of the causal effect of treatment on outcome, which is 2.  The m estimator can be more general.  2sls is good for the linear case.
+Both the 2sls and the m-estimation give us the same estimate of the causal effect of treatment on outcome, which is 3.  The m estimator can be more general.  2sls is good for the linear case.
 
 However, the main issue is the assumption that there is no link from A1 to Y1.  
+
+To think about it from a different angle: this is similar to DiD setting.  Basically we need A1 to be 0.  There is no effect in period 1.  If we only have A1 as 0, then it makes sense to have no link from A1 to Y1 (no anticipation assumption).  
+
+
 

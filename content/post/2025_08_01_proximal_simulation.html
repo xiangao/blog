@@ -23,19 +23,19 @@ categories:
 library(rootSolve)
 library(tidyverse)
 
-gen_data &lt;- function(seed, n, t){
+gen_data &lt;- function(seed, n){
   set.seed(seed)
   u &lt;- rnorm(n, mean = 0, sd = 1)  # unobserved confounder
   x1 &lt;- rnorm(n, mean = 0, sd = 1)  # observed confounder
   x2 &lt;- rnorm(n, mean = 0, sd = 1)  # observed confounder
-  a1 &lt;- rbinom(n, 1, plogis(u + x1))  # treatment at time 1
+  a1 &lt;- rbinom(n, 1, plogis(2*u + 1.5*x1))  # treatment at time 1
   a2 &lt;- rbinom(n, 1, plogis(u + a1 +  x1))  # treatment at time 2
-  y1 &lt;-  u + x1  +  rnorm(n, mean = 0, sd = 1)  # outcome at time 1
-  y2 &lt;-  y1 + u + x1 + 2*a2 + rnorm(n, mean = 0, sd = 1)  # outcome at time 2
+  y1 &lt;-  1.5*u + .5*x1  +  rnorm(n, mean = 0, sd = 1)  # outcome at time 1
+  y2 &lt;-  y1 + 2.5*u + 2.5*x1 + 3*a2 + rnorm(n, mean = 0, sd = 1)  # outcome at time 2
   data &lt;- data.frame(u=u, x1=x1, x2=x2, a1=a1, a2=a2, y1=y1, y2=y2)
   return(data)
 }
-data &lt;- gen_data(333, 100000, 2)  </code></pre>
+data &lt;- gen_data(333, 100000)  </code></pre>
 <pre class="r"><code>data_sim &lt;- data |&gt; 
   select(a1, a2, y2,  x1, x2, y1) |&gt; 
   rename(a = a2, y = y2,  x = x1, w = y1, z=a1)</code></pre>
@@ -49,22 +49,22 @@ summary(lm2)</code></pre>
 ## lm(formula = y ~ a + x + what, data = data_sim)
 ## 
 ## Residuals:
-##    Min     1Q Median     3Q    Max 
-## -9.290 -1.504 -0.003  1.510 11.902 
+##      Min       1Q   Median       3Q      Max 
+## -16.4284  -2.3083   0.0071   2.3020  20.7590 
 ## 
 ## Coefficients:
 ##             Estimate Std. Error t value Pr(&gt;|t|)    
-## (Intercept) -0.01191    0.01858  -0.641    0.522    
-## a            2.01582    0.02951  68.315   &lt;2e-16 ***
-## x            0.01156    0.02373   0.487    0.626    
-## what         1.99213    0.02733  72.886   &lt;2e-16 ***
+## (Intercept) -0.01293    0.02315  -0.558    0.577    
+## a            3.02113    0.03528  85.625   &lt;2e-16 ***
+## x            1.67203    0.01245 134.327   &lt;2e-16 ***
+## what         2.66578    0.01747 152.631   &lt;2e-16 ***
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
 ## 
-## Residual standard error: 2.241 on 99996 degrees of freedom
-## Multiple R-squared:  0.6419,	Adjusted R-squared:  0.6419 
-## F-statistic: 5.974e+04 on 3 and 99996 DF,  p-value: &lt; 2.2e-16</code></pre>
-<p>Or we can use more sophisticated methods. Here I use the m-estimation code by Paul Zivich: <a href="https://github.com/pzivich/publications-code/blob/master/ProximalCI/proximal_sims_r.R" class="uri">https://github.com/pzivich/publications-code/blob/master/ProximalCI/proximal_sims_r.R</a></p>
+## Residual standard error: 3.456 on 99996 degrees of freedom
+## Multiple R-squared:  0.6822,	Adjusted R-squared:  0.6822 
+## F-statistic: 7.155e+04 on 3 and 99996 DF,  p-value: &lt; 2.2e-16</code></pre>
+<p>Or we can use more sophisticated methods. Here I use the m-estimation code by Paul Zivich: <a href="https://github.com/pzivich/publications-code/blob/master/ProximalCI/proximal_sims_r.R" class="uri">https://github.com/pzivich/publications-code/blob/master/ProximalCI/proximal_sims_r.R</a>. This code is to contruct estimating equations, then use root finding to find the parameter estimates.</p>
 <pre class="r"><code>pcl_m2 &lt;- function(theta, mydata, out = &quot;ef&quot;){
   # read in variables
   a &lt;- mydata$a
@@ -133,9 +133,10 @@ mestimator &lt;- function(ef, init, dat, ...){
 }</code></pre>
 <pre class="r"><code>rmpcl &lt;- unname(mpcl_mest(data_sim)[6, c(1:2)])
 rmpcl</code></pre>
-<pre><code>##                      
-## 6 2.015819 0.01857075</code></pre>
+<pre><code>##                     
+## 6 3.021126 0.0198433</code></pre>
 <pre class="r"><code>#mpcl_mest(data_sim)</code></pre>
-<p>Both the 2sls and the m-estimation give us the same estimate of the causal effect of treatment on outcome, which is 2. The m estimator can be more general. 2sls is good for the linear case.</p>
+<p>Both the 2sls and the m-estimation give us the same estimate of the causal effect of treatment on outcome, which is 3. The m estimator can be more general. 2sls is good for the linear case.</p>
 <p>However, the main issue is the assumption that there is no link from A1 to Y1.</p>
+<p>To think about it from a different angle: this is similar to DiD setting. Basically we need A1 to be 0. There is no effect in period 1. If we only have A1 as 0, then it makes sense to have no link from A1 to Y1 (no anticipation assumption).</p>
 </div>
