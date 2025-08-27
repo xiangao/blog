@@ -56,7 +56,7 @@ ggdag(g) +
 </div>
 <div id="modified-treatment-policy" class="section level2">
 <h2>modified treatment policy</h2>
-<p>Let’s look at a simulated data set.</p>
+<p>Let’s look at a simulated data set to see how exactly we can estimate it.</p>
 <p>This simulation is from Susmann et al. (2024) “Longitudinal Generalizations of the Average Treatment Effect on the Treated for Multi-valued and Continuous Treatments”. I modified slightly to fit the DAG above.</p>
 <pre class="r"><code>library(tidyverse)
 library(tidyr)
@@ -211,7 +211,7 @@ summary(m1)</code></pre>
 mean(m1_d)</code></pre>
 <pre><code>## [1] 0.4197166</code></pre>
 <p>Note this recursive process is based on Diaz, et al. (2023) “Nonparametric Causal Effects Based on Longitudinal Modified Treatment Policies”.</p>
-<p>We start with the last time point. Regress it on previous treatment and confounders, and then get the predicted value with <span class="math inline">\(A\)</span> changed based on the MTP. Regress that predicted value on the previous treatment and confounders, get predicted values with <span class="math inline">\(A\)</span> changed based on MTP. Repeat until the first time point. The average of the predicted value at time 1 is the expected value under this MTP.</p>
+<p>Here is how exactly we estimate it: we start with the last time point. Regress it on previous treatment and confounders, and then get the predicted value with <span class="math inline">\(A\)</span> changed based on the MTP. Regress that predicted value on the previous treatment and confounders, get predicted values with <span class="math inline">\(A\)</span> changed based on MTP. Repeat until the first time point. The average of the predicted value at time 1 is the expected value under this MTP.</p>
 <p>This is basicall g-formula extended to longitudinal data.</p>
 </div>
 <div id="estimators" class="section level2">
