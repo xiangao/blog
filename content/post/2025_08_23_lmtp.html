@@ -1,0 +1,265 @@
+---
+title: "longitudinal modified treatment policy (LMTP) "
+author: Xiang Ao
+date: '2025-08-23'
+tags: R; 
+categories:
+- R
+---
+
+
+
+<p>I read a few papers with longitudinal modified treatment policy (LMTP), and found it interesting. It has been used in epidemiology and biostatistics, but I have not seen it in applied econometrics yet.</p>
+<p>Here I am mostly following Nicholas Williams: <a href="https://beyondtheate.com/" class="uri">https://beyondtheate.com/</a></p>
+<p>We are usually interested in ATE, the average treatment effect. However, there could be more complicated situations that the treatment is continuous, or the treatment is multivalued, or the treatment is time-varying. For example, if we have such a DAG:</p>
+<pre class="r"><code>library(ggplot2)
+library(ggdag)
+
+g &lt;- dagify(
+  A1 ~ L1,
+  L2 ~ L1,
+  L2 ~ A1,
+  A2 ~ A1,
+  A2 ~ L2,
+  Y ~ A2,
+  Y ~ L2,
+  Y ~ A1,
+  exposure = &quot;A2&quot;,
+  outcome = &quot;Y&quot;,
+  coords = list(x = c(L1 = 1,  L2 = 2, Y = 3, A1 = 1.5, A2 = 2.5),
+                y = c(L1 = 1,  L2 = 1, Y = 1, A1 = 1.5, A2 = 1.5))
+)
+
+ggdag(g) + 
+  theme_dag() </code></pre>
+<p><img src="/post/2025_08_23_lmtp_files/figure-html/dag1-1.png" width="672" /></p>
+<p>We have multiple time points, and the treatment <span class="math inline">\(A\)</span> is time-varying. We are interested in not only the ATE of <span class="math inline">\(A_2\)</span> on <span class="math inline">\(Y\)</span>, but also some other hypothetical interventions.</p>
+<div id="definitions-and-assumptions" class="section level1">
+<h1>Definitions and assumptions</h1>
+<div id="assumptions" class="section level2">
+<h2>Assumptions</h2>
+<ol style="list-style-type: decimal">
+<li><p>Positivity. Basically if there is a unit with <span class="math inline">\(a_t\)</span> and <span class="math inline">\(h_t\)</span>, then there is a unit with <span class="math inline">\(d(a_t, h_t)\)</span> and <span class="math inline">\(h_t\)</span>.</p></li>
+<li><p>Sequential unconfoundedness. There is no unmeasured confounders.</p></li>
+</ol>
+</div>
+<div id="dynamic-treatment-regime" class="section level2">
+<h2>dynamic treatment regime</h2>
+<p>Some notations commonly used in this literature: We observe <span class="math inline">\(Z = (L_0, A_0, L_1, A_1, Y)\)</span>, where <span class="math inline">\(L\)</span> is the observed confounder, <span class="math inline">\(A\)</span> is the treatment, and <span class="math inline">\(Y\)</span> is the outcome. The treatment <span class="math inline">\(A\)</span> can be time-varying. We can also have multiple treatments at different time points. For example, we can have <span class="math inline">\(A_2\)</span>, <span class="math inline">\(A_3\)</span>, etc. In this graph, baseline <span class="math inline">\(L_0\)</span> affects <span class="math inline">\(A_0\)</span>, which in turn affects <span class="math inline">\(L_1\)</span>, which then affects <span class="math inline">\(A_1\)</span>, and finally <span class="math inline">\(A_1\)</span> affects the outcome <span class="math inline">\(Y\)</span>.</p>
+<p>History <span class="math inline">\(H_t\)</span> is the history of data up to time <span class="math inline">\(t\)</span>, right before <span class="math inline">\(A_t\)</span>. for example, <span class="math inline">\(H_1 = (L_0, A_0, L_1)\)</span>, and <span class="math inline">\(H_2 = (L_0, A_0, L_1, A_1)\)</span>. <span class="math inline">\(d\)</span> is the hypothetical intervention function, or shift function, which is a function of the history <span class="math inline">\(H_t\)</span> and the treatment <span class="math inline">\(A_t\)</span>. For example, <span class="math inline">\(d_0(a_0,h_0,\epsilon_0)\)</span> is a user-given function to map <span class="math inline">\(a_0\)</span>, <span class="math inline">\(h_0\)</span>, and <span class="math inline">\(\epsilon_0\)</span> to a potential treatment value. The function <span class="math inline">\(d\)</span> can be deterministic, or it can be stochastic. Then we can replace <span class="math inline">\(A_0\)</span> with <span class="math inline">\(A_0^d = d_0(A_0, H_0, \epsilon_0)\)</span>. Then after that <span class="math inline">\(A_1(A_0^d)\)</span> is called the natural value of treatment.</p>
+<p>This is very general, comparing to the static treatment regime.</p>
+<p>Suppose treatment <span class="math inline">\(A\)</span> is a function of the history of treatment and confounders, for example, <span class="math inline">\(A = d(A_1, L_1, A_2, L_2)\)</span>. <span class="math inline">\(A\)</span> can be set to a fixed value, say 1 or 0, or some value <span class="math inline">\(A^d\)</span>. This function <span class="math inline">\(d\)</span> can be anything, it can be taking a determinstic value, or it can be a function that takes the natural treatment value <span class="math inline">\(A\)</span> as input. In the package “lmtp”, this is called a shift function, or hypothetical intervention. For example, <span class="math inline">\(d\)</span> can be set to 1 if <span class="math inline">\(age &lt; 30\)</span>, or <span class="math inline">\(d\)</span> can be set to double the natural value of <span class="math inline">\(A\)</span>. Many possibilities.</p>
+<p>In comparison, for ATE, we only need to set <span class="math inline">\(A\)</span> to 0 or 1.</p>
+<p>Under this LMTP, the causal parameter is</p>
+<p><span class="math display">\[ \theta = E[Y^{\bar A^d}] \]</span></p>
+<p><span class="math inline">\(Y^{\bar A^d}\)</span> is the potential outcome under the hypothetical intervention <span class="math inline">\(\bar A^d\)</span>. At time 1, <span class="math inline">\(A^d_1 = d(A_1,H_1)\)</span>.</p>
+</div>
+<div id="modified-treatment-policy" class="section level2">
+<h2>modified treatment policy</h2>
+<p>Let’s look at a simulated data set.</p>
+<p>This simulation is from Susmann et al. (2024) “Longitudinal Generalizations of the Average Treatment Effect on the Treated for Multi-valued and Continuous Treatments”. I modified slightly to fit the DAG above.</p>
+<pre class="r"><code>library(tidyverse)
+library(tidyr)
+
+mtp &lt;- function(data, trt) {
+  a &lt;- data[[trt]]
+  a * 0 + 1
+}
+simulate_data &lt;- function(seed, N, tau, sigma = 0.5) {
+  set.seed(seed)
+  
+  data &lt;- tibble(id = 1:N)
+  
+  for(t in 1:tau) {
+    Lt &lt;- paste0(&quot;L_&quot;, t)
+    Ltd &lt;- paste0(&quot;L_&quot;, t, &quot;d&quot;)
+    
+    At &lt;- paste0(&quot;A_&quot;, t)
+    Atd &lt;- paste0(&quot;A_&quot;, t, &quot;d&quot;)
+    
+    Lt1 &lt;- paste0(&quot;L_&quot;, t - 1)
+    Lt1d &lt;- paste0(&quot;L_&quot;, t - 1, &quot;d&quot;)
+    
+    At1 &lt;- paste0(&quot;A_&quot;, t - 1)
+    At1d &lt;- paste0(&quot;A_&quot;, t - 1, &quot;d&quot;)
+    
+    if(t == 1) {
+      data[[Lt]] &lt;- runif(N, 0, 1)
+      data[[Ltd]] &lt;- data[[Lt]]
+      
+      data[[At]] &lt;- rbinom(N, size = 1, prob = 0.5)
+    } 
+    else {
+      data[[Lt]] &lt;- rnorm(N, mean = 0.25 * data[[Lt1]], 0.5)
+      data[[Ltd]] &lt;- rnorm(N, mean = 0.25 * data[[Lt1d]], 0.5)
+      
+      data[[At]] &lt;- rbinom(N, size = 1, prob = plogis(0.5 - 0.2 * data[[At1]] + 0.1 * data[[Lt1]]))
+    }
+    
+    data[[Atd]] &lt;- mtp(data, At)
+  }
+  data$Y  &lt;- rnorm(N, data[[At]] + data[[Lt]], sigma)
+  data$Yd &lt;- rnorm(N, data[[Atd]] + data[[Ltd]], sigma)
+  data
+}
+
+simulated_data1 &lt;- simulate_data(seed = 123, N = 10000, tau = 2)
+
+mean(simulated_data1$Yd)</code></pre>
+<pre><code>## [1] 1.128593</code></pre>
+<pre class="r"><code>mtp &lt;- function(data, trt) {
+  a &lt;- data[[trt]]
+  a * 0 + 0
+}
+
+simulated_data2 &lt;- simulate_data(seed = 123, N = 1000, tau = 2)
+
+mean(simulated_data2$Yd)</code></pre>
+<pre><code>## [1] 0.114403</code></pre>
+<pre class="r"><code>mean(simulated_data1$Yd) - mean(simulated_data2$Yd)</code></pre>
+<pre><code>## [1] 1.01419</code></pre>
+<p>Note in this simulation the variables ending with “d” are the variables under hypothetical intervention, or modified treatment policy. <span class="math inline">\(L_1\)</span> is from <span class="math inline">\(uniform(0,1)\)</span>, and <span class="math inline">\(L_2\)</span> is from <span class="math inline">\(N(0.25 * L_1, 0.5)\)</span>. The treatment <span class="math inline">\(A_1\)</span> is from a Bernoulli distribution with probability 0.5, and the treatment <span class="math inline">\(A_2\)</span> is from a Bernoulli distribution with probability <span class="math inline">\(plogis(0.5 - 0.2 * A_1 + 0.1 * L_2)\)</span>. The outcome <span class="math inline">\(Y\)</span> is from a normal distribution with mean <span class="math inline">\(A2 + L2\)</span>. In the simulated data, the modified treatment policy is to set the treatment to 0, then 1. The difference would be SATE.</p>
+<p>In this case, we can just do a linear regression to get the effect of A2 on Y, knowing the exact DAG.</p>
+<pre class="r"><code>m1 &lt;- glm(Y ~ L_2 + A_1   + A_2, data = simulated_data1)
+summary(m1)</code></pre>
+<pre><code>## 
+## Call:
+## glm(formula = Y ~ L_2 + A_1 + A_2, data = simulated_data1)
+## 
+## Coefficients:
+##               Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept) -3.453e-05  9.615e-03  -0.004    0.997    
+## L_2          9.998e-01  9.889e-03 101.103   &lt;2e-16 ***
+## A_1         -6.042e-03  1.001e-02  -0.604    0.546    
+## A_2          1.000e+00  1.027e-02  97.380   &lt;2e-16 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## (Dispersion parameter for gaussian family taken to be 0.2500364)
+## 
+##     Null deviance: 7400.0  on 9999  degrees of freedom
+## Residual deviance: 2499.4  on 9996  degrees of freedom
+## AIC: 14523
+## 
+## Number of Fisher Scoring iterations: 2</code></pre>
+<p>Let’s try a different MTP: set half of the time to 0, the other half remain unchanged.<br />
+<span class="math display">\[
+d(a_t, \epsilon_t) = \begin{cases}
+    0, &amp; \text{if } \epsilon_t &lt; .5 \ and \ a_t =1 \\
+    a_t, &amp; \text{otherwise}
+\end{cases}
+\]</span></p>
+<p>This is, say, to set half of smokers to non-smokers, and the other half remain smokers.</p>
+<pre class="r"><code># mtp &lt;- function(data, trt) {
+#   a &lt;- data[[trt]]
+#   epsilon &lt;- rbinom(nrow(data), size = 1, prob = 0.5)
+#   ifelse(epsilon &lt;.5 &amp; a == 1, 0, a)
+# }
+d &lt;- function(a) {
+  epsilon &lt;- runif(length(a))
+  ifelse(epsilon &lt; 0.5 &amp; a == 1, 0, a)
+}
+simulated_data1$m3_d &lt;- simulated_data1$Y 
+
+m2 &lt;- glm(m3_d ~ L_1 + A_1 + L_2 + A_2, data = simulated_data1)
+summary(m2)</code></pre>
+<pre><code>## 
+## Call:
+## glm(formula = m3_d ~ L_1 + A_1 + L_2 + A_2, data = simulated_data1)
+## 
+## Coefficients:
+##              Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept) -0.005815   0.012842  -0.453    0.651    
+## L_1          0.011964   0.017621   0.679    0.497    
+## A_1         -0.005956   0.010012  -0.595    0.552    
+## L_2          0.998831   0.009987 100.015   &lt;2e-16 ***
+## A_2          0.999873   0.010273  97.334   &lt;2e-16 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## (Dispersion parameter for gaussian family taken to be 0.2500499)
+## 
+##     Null deviance: 7400.0  on 9999  degrees of freedom
+## Residual deviance: 2499.2  on 9995  degrees of freedom
+## AIC: 14525
+## 
+## Number of Fisher Scoring iterations: 2</code></pre>
+<pre class="r"><code>simulated_data1$m2_d &lt;- predict(m2, mutate(simulated_data1, A_2 = d(A_2)))
+
+m1 &lt;- glm(m2_d ~ L_1 + A_1, data = simulated_data1)
+summary(m1)</code></pre>
+<pre><code>## 
+## Call:
+## glm(formula = m2_d ~ L_1 + A_1, data = simulated_data1)
+## 
+## Coefficients:
+##              Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)  0.277598   0.015072  18.418   &lt;2e-16 ***
+## L_1          0.289658   0.023474  12.339   &lt;2e-16 ***
+## A_1         -0.008247   0.013462  -0.613     0.54    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## (Dispersion parameter for gaussian family taken to be 0.4528119)
+## 
+##     Null deviance: 4596.0  on 9999  degrees of freedom
+## Residual deviance: 4526.8  on 9997  degrees of freedom
+## AIC: 20461
+## 
+## Number of Fisher Scoring iterations: 2</code></pre>
+<pre class="r"><code>m1_d &lt;- predict(m1, mutate(simulated_data1, A_1 = d(A_1)))
+mean(m1_d)</code></pre>
+<pre><code>## [1] 0.4197166</code></pre>
+<p>Note this recursive process is based on Diaz, et al. (2023) “Nonparametric Causal Effects Based on Longitudinal Modified Treatment Policies”.</p>
+<p>We start with the last time point. Regress it on previous treatment and confounders, and then get the predicted value with <span class="math inline">\(A\)</span> changed based on the MTP. Regress that predicted value on the previous treatment and confounders, get predicted values with <span class="math inline">\(A\)</span> changed based on MTP. Repeat until the first time point. The average of the predicted value at time 1 is the expected value under this MTP.</p>
+<p>This is basicall g-formula extended to longitudinal data.</p>
+</div>
+<div id="estimators" class="section level2">
+<h2>Estimators</h2>
+<p>The authors advocate two estimators, TMLE and SDR (sequentially doubly robust estimatro). The procedures are the same, starting from the last time point, then apply TMLE or SDR, iterate to the first time point.</p>
+</div>
+</div>
+<div id="using-lmtp-package" class="section level1">
+<h1>Using lmtp package</h1>
+<pre><code>##       Estimate: 1.117
+##     Std. error: 0.008</code></pre>
+<pre><code>##       Estimate: 0.117
+##     Std. error: 0.009</code></pre>
+<pre><code>## 
+##   shift   ref estimate std.error conf.low conf.high p.value
+## 1  1.12 0.117        1    0.0102     0.98      1.02  &lt;0.001</code></pre>
+</div>
+<div id="another-example" class="section level1">
+<h1>another example</h1>
+<p>The data set bmi, from the DynTxRegime package, are simulated to reflect a two-stage RCT {A1, A2} that studied the effect of meal replacement (MR) shakes versus a calorie deficit (CD) diet on adolescent</p>
+<div id="shift-function-1" class="section level2">
+<h2>shift function 1</h2>
+<p>Consider a shift function that assigns meal replacement to all observations at time 1, but only meal replacement at time 2 to those observations whose 4-month BMI is greater than 30.</p>
+<pre><code>## Rows: 210
+## Columns: 8
+## $ gender      &lt;int&gt; 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1…
+## $ race        &lt;int&gt; 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 0, 1, 0…
+## $ parentBMI   &lt;dbl&gt; 31.59683, 30.17564, 30.27918, 27.49256, 26.42350, 29.30970…
+## $ baselineBMI &lt;dbl&gt; 35.84005, 37.30396, 36.83889, 36.70679, 34.84207, 36.68640…
+## $ month4BMI   &lt;dbl&gt; 34.22717, 36.38014, 34.42168, 32.52011, 33.72922, 32.06622…
+## $ month12BMI  &lt;dbl&gt; 34.27263, 36.38401, 34.41447, 32.52397, 33.73546, 32.15977…
+## $ A1          &lt;chr&gt; &quot;CD&quot;, &quot;CD&quot;, &quot;MR&quot;, &quot;CD&quot;, &quot;CD&quot;, &quot;MR&quot;, &quot;CD&quot;, &quot;CD&quot;, &quot;CD&quot;, &quot;CD&quot;…
+## $ A2          &lt;chr&gt; &quot;MR&quot;, &quot;MR&quot;, &quot;CD&quot;, &quot;CD&quot;, &quot;CD&quot;, &quot;MR&quot;, &quot;MR&quot;, &quot;CD&quot;, &quot;MR&quot;, &quot;MR&quot;…</code></pre>
+<pre><code>##       Estimate: 35.853
+##     Std. error: 0.362</code></pre>
+</div>
+<div id="shift-function-2" class="section level2">
+<h2>shift function 2</h2>
+<p>Suppose we are interested in comparing the dynamic treatment regime to a static treatment regime where all patients receive meal replacement at both time points. Using the SDR estimator, estimate the effect of this static intervention.</p>
+<pre><code>##       Estimate: 35.831
+##     Std. error: 0.361</code></pre>
+<p>Let’s also estimate the effect of an intervention where all patients receive a calorie deficit diet at both time points.</p>
+<pre><code>##       Estimate: 35.053
+##     Std. error: 0.301</code></pre>
+<p>Finally, we can compare the three treatment regimes using the <code>lmtp_contrast</code> function.</p>
+<pre><code>## 
+##   shift  ref estimate std.error conf.low conf.high p.value
+## 1  35.9 35.1    0.801     0.335    0.144      1.46  0.0169
+## 2  35.8 35.1    0.778     0.335    0.122      1.43  0.0201</code></pre>
+</div>
+</div>
