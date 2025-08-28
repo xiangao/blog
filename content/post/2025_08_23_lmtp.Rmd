@@ -192,7 +192,7 @@ The authors advocate two estimators, TMLE and SDR (sequentially doubly robust es
 
 # Using lmtp package
 
-```{r sim3, include=TRUE, warning=FALSE,  cache=TRUE, message=FALSE, echo=FALSE}
+```{r sim3, include=TRUE, warning=FALSE,  cache=TRUE, message=FALSE, echo=TRUE}
 library(tidyverse)
 library(lmtp)
 d1 <- function(data, trt) {
@@ -219,7 +219,7 @@ treat <- lmtp_tmle(
 print(treat)
 ```
 
-```{r sim4, include=TRUE, warning=FALSE,  cache=TRUE, message=FALSE, echo=FALSE}
+```{r sim4, include=TRUE, warning=FALSE,  cache=TRUE, message=FALSE, echo=TRUE}
 d2 <- function(data, trt) {
   rep(0, nrow(data))
 }
@@ -255,7 +255,7 @@ The data set bmi, from the DynTxRegime package, are simulated to reflect a two-s
 Consider a shift function that assigns meal replacement to all observations at time 1, but only meal replacement at time 2 to those observations whose 4-month BMI is greater than 30.
 
 
-```{r sim5, include=TRUE, warning=FALSE,  cache=TRUE, message=FALSE, echo=FALSE}
+```{r sim5, include=TRUE, warning=FALSE,  cache=TRUE, message=FALSE, echo=TRUE}
 library(DynTxRegime)
 data(bmiData)
 bmi <- bmiData
@@ -289,7 +289,7 @@ Suppose we are interested in comparing the dynamic treatment regime to a static 
 
 
 
-```{r sim6, include=TRUE, warning=FALSE,  cache=TRUE, message=FALSE, echo=FALSE}
+```{r sim6, include=TRUE, warning=FALSE,  cache=TRUE, message=FALSE, echo=TRUE}
 fit_MR <- lmtp_sdr(
   data = bmi, 
   trt = c("A1", "A2"), 
@@ -307,7 +307,7 @@ fit_MR
 ```
 Let’s also estimate the effect of an intervention where all patients receive a calorie deficit diet at both time points.
 
-```{r sim7, include=TRUE, warning=FALSE,  cache=TRUE, message=FALSE, echo=FALSE}
+```{r sim7, include=TRUE, warning=FALSE,  cache=TRUE, message=FALSE, echo=TRUE}
 fit_CD <- lmtp_sdr(
   data = bmi, 
   trt = c("A1", "A2"), 
@@ -326,7 +326,7 @@ fit_CD
 
 Finally, we can compare the three treatment regimes using the `lmtp_contrast` function.
 
-```{r sim8, include=TRUE, warning=FALSE,  cache=TRUE, message=FALSE, echo=FALSE}
+```{r sim8, include=TRUE, warning=FALSE,  cache=TRUE, message=FALSE, echo=TRUE}
 lmtp_contrast(fit_dtr, fit_MR, ref = fit_CD)
 
 ```

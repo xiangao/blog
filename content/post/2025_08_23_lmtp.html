@@ -221,10 +221,57 @@ mean(m1_d)</code></pre>
 </div>
 <div id="using-lmtp-package" class="section level1">
 <h1>Using lmtp package</h1>
+<pre class="r"><code>library(tidyverse)
+library(lmtp)
+d1 &lt;- function(data, trt) {
+  rep(1, nrow(data))
+}
+A &lt;- &quot;A_2&quot;
+Y &lt;- &quot;Y&quot;
+W &lt;- c(&quot;L_1&quot;, &quot;L_2&quot;, &quot;A_1&quot;)
+
+set.seed(34465)
+
+treat &lt;- lmtp_tmle(
+  data = simulated_data1, 
+  trt = &quot;A_2&quot;, 
+  outcome = &quot;Y&quot;, 
+  baseline = W, 
+  outcome_type = &quot;continuous&quot;, 
+  shift = d1, 
+  folds = 1, 
+  learners_trt = &quot;SL.glm&quot;, 
+  learners_outcome = &quot;SL.glm&quot;
+)
+
+print(treat)</code></pre>
 <pre><code>##       Estimate: 1.117
 ##     Std. error: 0.008</code></pre>
+<pre class="r"><code>d2 &lt;- function(data, trt) {
+  rep(0, nrow(data))
+}
+A &lt;- &quot;A_2&quot;
+Y &lt;- &quot;Y&quot;
+W &lt;- c(&quot;L_1&quot;, &quot;L_2&quot;, &quot;A_1&quot;)
+
+set.seed(34465)
+
+control &lt;- lmtp_tmle(
+  data = simulated_data1, 
+  trt = &quot;A_2&quot;, 
+  outcome = &quot;Y&quot;, 
+  baseline = W, 
+  outcome_type = &quot;continuous&quot;, 
+  shift = d2, 
+  folds = 1, 
+  learners_trt = &quot;SL.glm&quot;, 
+  learners_outcome = &quot;SL.glm&quot;
+)
+
+print(control)</code></pre>
 <pre><code>##       Estimate: 0.117
 ##     Std. error: 0.009</code></pre>
+<pre class="r"><code>lmtp_contrast(treat, ref = control)</code></pre>
 <pre><code>## 
 ##   shift   ref estimate std.error conf.low conf.high p.value
 ## 1  1.12 0.117        1    0.0102     0.98      1.02  &lt;0.001</code></pre>
@@ -235,6 +282,10 @@ mean(m1_d)</code></pre>
 <div id="shift-function-1" class="section level2">
 <h2>shift function 1</h2>
 <p>Consider a shift function that assigns meal replacement to all observations at time 1, but only meal replacement at time 2 to those observations whose 4-month BMI is greater than 30.</p>
+<pre class="r"><code>library(DynTxRegime)
+data(bmiData)
+bmi &lt;- bmiData
+glimpse(bmi)</code></pre>
 <pre><code>## Rows: 210
 ## Columns: 8
 ## $ gender      &lt;int&gt; 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1…
@@ -245,18 +296,67 @@ mean(m1_d)</code></pre>
 ## $ month12BMI  &lt;dbl&gt; 34.27263, 36.38401, 34.41447, 32.52397, 33.73546, 32.15977…
 ## $ A1          &lt;chr&gt; &quot;CD&quot;, &quot;CD&quot;, &quot;MR&quot;, &quot;CD&quot;, &quot;CD&quot;, &quot;MR&quot;, &quot;CD&quot;, &quot;CD&quot;, &quot;CD&quot;, &quot;CD&quot;…
 ## $ A2          &lt;chr&gt; &quot;MR&quot;, &quot;MR&quot;, &quot;CD&quot;, &quot;CD&quot;, &quot;CD&quot;, &quot;MR&quot;, &quot;MR&quot;, &quot;CD&quot;, &quot;MR&quot;, &quot;MR&quot;…</code></pre>
+<pre class="r"><code>d_dtr &lt;- function(data, trt) {
+  if (trt == &quot;A1&quot;) return(rep(&quot;MR&quot;, nrow(data)))
+  
+  ifelse(data$month4BMI &gt; 30, &quot;MR&quot;, &quot;CD&quot;)
+}
+
+fit_dtr &lt;- lmtp_sdr(
+  data = bmi, 
+  trt = c(&quot;A1&quot;, &quot;A2&quot;), 
+  outcome = &quot;month12BMI&quot;, 
+  baseline = c(&quot;gender&quot;, &quot;race&quot;, &quot;parentBMI&quot;), 
+  time_vary = list(&quot;baselineBMI&quot;, &quot;month4BMI&quot;),
+  shift = d_dtr, 
+  outcome_type = &quot;continuous&quot;,
+  folds = 1,
+  learners_trt = &quot;SL.glm&quot;, 
+  learners_outcome = c(&quot;SL.mean&quot;, &quot;SL.glm&quot;, &quot;SL.gam&quot;)
+)
+
+fit_dtr</code></pre>
 <pre><code>##       Estimate: 35.853
 ##     Std. error: 0.362</code></pre>
 </div>
 <div id="shift-function-2" class="section level2">
 <h2>shift function 2</h2>
 <p>Suppose we are interested in comparing the dynamic treatment regime to a static treatment regime where all patients receive meal replacement at both time points. Using the SDR estimator, estimate the effect of this static intervention.</p>
+<pre class="r"><code>fit_MR &lt;- lmtp_sdr(
+  data = bmi, 
+  trt = c(&quot;A1&quot;, &quot;A2&quot;), 
+  outcome = &quot;month12BMI&quot;, 
+  baseline = c(&quot;gender&quot;, &quot;race&quot;, &quot;parentBMI&quot;), 
+  time_vary = list(&quot;baselineBMI&quot;, &quot;month4BMI&quot;),
+  shift = \(data, trt) rep(&quot;MR&quot;, nrow(data)), 
+  outcome_type = &quot;continuous&quot;,
+  folds = 1,
+  learners_trt = &quot;SL.glm&quot;, 
+  learners_outcome = c(&quot;SL.mean&quot;, &quot;SL.glm&quot;, &quot;SL.gam&quot;)
+)
+
+fit_MR</code></pre>
 <pre><code>##       Estimate: 35.831
 ##     Std. error: 0.361</code></pre>
 <p>Let’s also estimate the effect of an intervention where all patients receive a calorie deficit diet at both time points.</p>
+<pre class="r"><code>fit_CD &lt;- lmtp_sdr(
+  data = bmi, 
+  trt = c(&quot;A1&quot;, &quot;A2&quot;), 
+  outcome = &quot;month12BMI&quot;, 
+  baseline = c(&quot;gender&quot;, &quot;race&quot;, &quot;parentBMI&quot;), 
+  time_vary = list(&quot;baselineBMI&quot;, &quot;month4BMI&quot;),
+  shift = \(data, trt) rep(&quot;CD&quot;, nrow(data)), 
+  outcome_type = &quot;continuous&quot;,
+  folds = 1,
+  learners_trt = &quot;SL.glm&quot;, 
+  learners_outcome = c(&quot;SL.mean&quot;, &quot;SL.glm&quot;, &quot;SL.gam&quot;)
+)
+
+fit_CD</code></pre>
 <pre><code>##       Estimate: 35.053
 ##     Std. error: 0.301</code></pre>
 <p>Finally, we can compare the three treatment regimes using the <code>lmtp_contrast</code> function.</p>
+<pre class="r"><code>lmtp_contrast(fit_dtr, fit_MR, ref = fit_CD)</code></pre>
 <pre><code>## 
 ##   shift  ref estimate std.error conf.low conf.high p.value
 ## 1  35.9 35.1    0.801     0.335    0.144      1.46  0.0169
