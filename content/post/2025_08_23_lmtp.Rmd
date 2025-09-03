@@ -58,7 +58,7 @@ History $H_t$ is the history of data up to time $t$, right before $A_t$. for exa
 This is very general, comparing to the static treatment regime.  
 
 
-Suppose treatment $A$ is a function of the history of treatment and confounders, for example, $A = d(A_1, L_1, A_2, L_2)$.  $A$ can be set to a fixed value, say 1 or 0, or some value $A^d$.  This function $d$ can be anything, it can be taking a determinstic value, or it can be a function that takes the natural treatment value $A$ as input.  In the package "lmtp", this is called a shift function, or hypothetical intervention.  For example, $d$ can be set to 1 if $age < 30$, or $d$ can be set to double the natural value of $A$.  Many possibilities.
+Suppose treatment $A$ is a function of the history of treatment and confounders, for example, $A = d(A_1, L_1, A_2, L_2)$.  $A$ can be set to a fixed value, say 1 or 0, or some value $A^d$.  This function $d$ can be anything, it can be taking a deterministic value, or it can be a function that takes the natural treatment value $A$ as input.  In the package "lmtp", this is called a shift function, or hypothetical intervention.  For example, $d$ can be set to 1 if $age < 30$, or $d$ can be set to double the natural value of $A$.  Many possibilities.
 
 In comparison, for ATE, we only need to set $A$ to 0 or 1.
 
@@ -185,7 +185,7 @@ Note this recursive process is based on Diaz, et al. (2023) "Nonparametric Causa
 
 Here is how exactly we estimate it:  we start with the last time point.  Regress it on previous treatment and confounders, and then get the predicted value with $A$ changed based on the MTP.  Regress that predicted value on the previous treatment and confounders, get predicted values with $A$ changed based on MTP.  Repeat until the first time point.   The average of the predicted value at time 1 is the expected value under this MTP.
 
-This is basicall g-formula extended to longitudinal data.  
+This is basically g-formula extended to longitudinal data.  
 
 In a general case, this is the generalized g-formula to estimate $\theta$:
 
