@@ -11,7 +11,9 @@ I read a few papers with longitudinal modified treatment policy (LMTP), and foun
 
 Here I am mostly following Nicholas Williams:  https://beyondtheate.com/
 
-We are usually interested in ATE, the average treatment effect.  However, there could be more complicated situations that the treatment is continuous, or the treatment is multivalued, or the treatment is time-varying.  For example, if we have such a DAG:
+We are usually interested in ATE, the average treatment effect.  However, there could be more complicated situations that the treatment is continuous, or the treatment is multivalued, or the treatment is time-varying.  The static interventions have problems.  For example, the hyphothetical interventions that treatment applies to everyone might be inconceivable.  Or such intervention could make positivity assumption fail.  
+
+Suppose we have such a DAG:
 
 
 ```{r dag1, include=TRUE, warning=FALSE,  cache=FALSE, message=FALSE, echo=TRUE}
@@ -184,6 +186,16 @@ Note this recursive process is based on Diaz, et al. (2023) "Nonparametric Causa
 Here is how exactly we estimate it:  we start with the last time point.  Regress it on previous treatment and confounders, and then get the predicted value with $A$ changed based on the MTP.  Regress that predicted value on the previous treatment and confounders, get predicted values with $A$ changed based on MTP.  Repeat until the first time point.   The average of the predicted value at time 1 is the expected value under this MTP.
 
 This is basicall g-formula extended to longitudinal data.  
+
+In a general case, this is the generalized g-formula to estimate $\theta$:
+
+Set $m_{\tau + 1} = Y$, let $A_t^d = d(A_t, H_t)$.   For $t = \tau, \ldots, 1$, recursively define:
+
+$$ m_t : (a_t, h_t)  = E[m_{t + 1} (A_{t+1}^d, H_{t+1}) | A_t = a_t, H_t =h_t] $$
+
+Then $\theta = E[m_1(A_1^d, L_1)]$.
+
+We start from the last period.  Regress $m_{\tau + 1}$, which is $Y$ on $A_{\tau}$ and $H_{\tau}$.  Then get the predicted value with $A_{\tau}$ changed based on the MTP.  Then regress that predicted value on $A_{\tau - 1}$ and $H_{\tau - 1}$.  Repeat until the first time point.  The average of the predicted value at time 1 is the expected value under this MTP.
 
 ## Estimators
 

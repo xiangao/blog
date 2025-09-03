@@ -11,7 +11,8 @@ categories:
 
 <p>I read a few papers with longitudinal modified treatment policy (LMTP), and found it interesting. It has been used in epidemiology and biostatistics, but I have not seen it in applied econometrics yet.</p>
 <p>Here I am mostly following Nicholas Williams: <a href="https://beyondtheate.com/" class="uri">https://beyondtheate.com/</a></p>
-<p>We are usually interested in ATE, the average treatment effect. However, there could be more complicated situations that the treatment is continuous, or the treatment is multivalued, or the treatment is time-varying. For example, if we have such a DAG:</p>
+<p>We are usually interested in ATE, the average treatment effect. However, there could be more complicated situations that the treatment is continuous, or the treatment is multivalued, or the treatment is time-varying. The static interventions have problems. For example, the hyphothetical interventions that treatment applies to everyone might be inconceivable. Or such intervention could make positivity assumption fail.</p>
+<p>Suppose we have such a DAG:</p>
 <pre class="r"><code>library(ggplot2)
 library(ggdag)
 
@@ -213,6 +214,11 @@ mean(m1_d)</code></pre>
 <p>Note this recursive process is based on Diaz, et al. (2023) “Nonparametric Causal Effects Based on Longitudinal Modified Treatment Policies”.</p>
 <p>Here is how exactly we estimate it: we start with the last time point. Regress it on previous treatment and confounders, and then get the predicted value with <span class="math inline">\(A\)</span> changed based on the MTP. Regress that predicted value on the previous treatment and confounders, get predicted values with <span class="math inline">\(A\)</span> changed based on MTP. Repeat until the first time point. The average of the predicted value at time 1 is the expected value under this MTP.</p>
 <p>This is basicall g-formula extended to longitudinal data.</p>
+<p>In a general case, this is the generalized g-formula to estimate <span class="math inline">\(\theta\)</span>:</p>
+<p>Set <span class="math inline">\(m_{\tau + 1} = Y\)</span>, let <span class="math inline">\(A_t^d = d(A_t, H_t)\)</span>. For <span class="math inline">\(t = \tau, \ldots, 1\)</span>, recursively define:</p>
+<p><span class="math display">\[ m_t : (a_t, h_t)  = E[m_{t + 1} (A_{t+1}^d, H_{t+1}) | A_t = a_t, H_t =h_t] \]</span></p>
+<p>Then <span class="math inline">\(\theta = E[m_1(A_1^d, L_1)]\)</span>.</p>
+<p>We start from the last period. Regress <span class="math inline">\(m_{\tau + 1}\)</span>, which is <span class="math inline">\(Y\)</span> on <span class="math inline">\(A_{\tau}\)</span> and <span class="math inline">\(H_{\tau}\)</span>. Then get the predicted value with <span class="math inline">\(A_{\tau}\)</span> changed based on the MTP. Then regress that predicted value on <span class="math inline">\(A_{\tau - 1}\)</span> and <span class="math inline">\(H_{\tau - 1}\)</span>. Repeat until the first time point. The average of the predicted value at time 1 is the expected value under this MTP.</p>
 </div>
 <div id="estimators" class="section level2">
 <h2>Estimators</h2>
